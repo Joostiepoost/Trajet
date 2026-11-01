@@ -26,4 +26,15 @@ Other options:
 
 | Step | Content | State |
 | --- | --- | --- |
-| 0 | Toolchain: blank window | done when it opens on your Mac |
+| 0 | Toolchain: blank window | done |
+| 1 | Plugin host: scan, load, open editor, audio settings, parameter list, held note | testing |
+
+## Using step 1
+
+1. **Plugins...** opens the plugin list. Click *Options* at the bottom, then *Scan for new or updated AudioUnit plug-ins* (and VST3 if you like). Scanning can take a minute.
+2. **Load plugin** shows the scanned instruments; pick Aalto.
+3. **Edit patch** opens Aalto's own panel. Turn a dial and watch its value move in the parameter list.
+4. **Audio...** chooses the output device and sample rate (up to 96 kHz, if the device supports it).
+5. **Held note** sends a sustained note for synths that need one; set its pitch and velocity next to it.
+
+The last loaded plugin is reloaded automatically when Trajet starts.
