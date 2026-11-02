@@ -94,6 +94,7 @@ MainComponent::MainComponent()
     addAndMakeVisible (outputStrip);
     transportBar.onAddLane   = [this] (juce::Component& b) { showParameterPicker (b); };
     transportBar.onZoomToFit = [this] { scoreView.zoomToFit(); };
+    transportBar.onAddNoteLane = [this] { addNoteLane(); };
     scoreView.onStatus       = [this] (const juce::String& text) { showStatus (text); };
     inspector.showStatus     = [this] (const juce::String& text) { showStatus (text); };
     scoreView.onOpenItemEditor = [this] (juce::ValueTree item) { openItemEditor (item); };
@@ -524,11 +525,21 @@ void MainComponent::addLaneForParameter (int paramIndex)
     }
 
     project.getUndoManager().beginNewTransaction ("Add lane");
-    auto lane = project.addLane (paramIndex, plugin->getParameters()[paramIndex]->getName (128));
+    placeNewLane (project.addLane (paramIndex, plugin->getParameters()[paramIndex]->getName (128)));
+}
 
+void MainComponent::addNoteLane()
+{
+    project.getUndoManager().beginNewTransaction ("Add note lane");
+    placeNewLane (project.addNoteLane());
+    showStatus ("Note lane added. Double-click its item to open the piano roll.");
+}
+
+void MainComponent::placeNewLane (juce::ValueTree lane)
+{
     // A new lane goes right below the active lane, in the same group.
     auto active = scoreView.getSelection().getActiveLane();
-    if (active.isValid() && active.getParent().isValid())
+    if (active.isValid() && active.getParent().isValid() && active != lane)
     {
         if (auto group = project.groupOf (active); group.isValid())
             group.setProperty (IDs::folded, false, nullptr);   // show where the new lane went
@@ -561,7 +572,7 @@ void MainComponent::openItemEditor (juce::ValueTree item)
 {
     if (itemEditorWindow != nullptr)
     {
-        if (auto* ed = itemEditorWindow->getEditor(); ed != nullptr && ed->getItem() == item)
+        if (itemEditorWindow->getItem() == item)
         {
             itemEditorWindow->toFront (true);
             return;
@@ -569,16 +580,23 @@ void MainComponent::openItemEditor (juce::ValueTree item)
         itemEditorWindow = nullptr;
     }
 
-    auto editor = std::make_unique<ItemEditor> (project, host, controller, snap, scoreView.getSelection(), item);
     juce::Component::SafePointer<MainComponent> safeThis (this);
-    itemEditorWindow = std::make_unique<ItemEditorWindow> (std::move (editor), [safeThis]
+    auto onClose = [safeThis]
     {
         juce::MessageManager::callAsync ([safeThis]
         {
             if (safeThis != nullptr)
                 safeThis->itemEditorWindow = nullptr;
         });
-    });
+    };
+
+    if (Project::isNoteItem (item))
+        itemEditorWindow = std::make_unique<ItemEditorWindow> (std::make_unique<NoteEditor> (project, host, controller, snap, item),
+                                                               onClose, "Piano roll");
+    else
+        itemEditorWindow = std::make_unique<ItemEditorWindow> (std::make_unique<ItemEditor> (project, host, controller, snap,
+                                                                                             scoreView.getSelection(), item),
+                                                               onClose);
 }
 
 void MainComponent::showParameterPicker (juce::Component& button)
@@ -651,7 +669,7 @@ void MainComponent::getAllCommands (juce::Array<juce::CommandID>& commands)
                          cmdNudgeLeft, cmdNudgeRight, cmdNudgeUp, cmdNudgeDown,
                          cmdNudgeLeftBig, cmdNudgeRightBig, cmdNudgeUpBig, cmdNudgeDownBig,
                          cmdSelectAll, cmdSmooth, cmdThin, cmdReverse, cmdInvert, cmdOpenItemEditor,
-                         cmdRender, cmdExportCsv, cmdNewGroup, cmdFoldAll, cmdOpenAll });
+                         cmdRender, cmdExportCsv, cmdNewGroup, cmdFoldAll, cmdOpenAll, cmdAddNoteLane });
 }
 
 void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommandInfo& info)
@@ -669,6 +687,8 @@ void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommand
                         info.addDefaultKeypress ('s', cmd); break;
         case cmdSaveAs: info.setInfo ("Save as...", "Save the project under a new name", "File", 0);
                         info.addDefaultKeypress ('s', cmd | shift); break;
+        case cmdAddNoteLane: info.setInfo ("Add note lane", "A lane of MIDI notes for the plugin (with a piano roll)", "Edit", 0);
+                        info.addDefaultKeypress ('n', cmd | shift); break;
         case cmdNewGroup: info.setInfo ("New group from lane", "Make a group holding the active lane", "Edit", 0);
                         info.addDefaultKeypress ('g', cmd); break;
         case cmdFoldAll: info.setInfo ("Fold all groups", "Fold every group into one compact row", "View", 0);
@@ -799,6 +819,7 @@ bool MainComponent::perform (const InvocationInfo& info)
         case cmdSaveAs:     saveProject (true); break;
         case cmdRender:     showRenderDialog (false); break;
         case cmdNewGroup:   scoreView.groupActiveLane(); break;
+        case cmdAddNoteLane: addNoteLane(); break;
         case cmdFoldAll:    scoreView.setAllGroupsFolded (true); break;
         case cmdOpenAll:    scoreView.setAllGroupsFolded (false); break;
         case cmdExportCsv:  showRenderDialog (true); break;
@@ -882,6 +903,9 @@ juce::PopupMenu MainComponent::getMenuForIndex (int menuIndex, const juce::Strin
         menu.addCommandItem (&commandManager, cmdPaste);
         menu.addCommandItem (&commandManager, cmdDuplicate);
         menu.addCommandItem (&commandManager, cmdDelete);
+        menu.addSeparator();
+        menu.addCommandItem (&commandManager, cmdAddNoteLane);
+        menu.addCommandItem (&commandManager, cmdNewGroup);
         menu.addSeparator();
         menu.addCommandItem (&commandManager, cmdSnap);
     }

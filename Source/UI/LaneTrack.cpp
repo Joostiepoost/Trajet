@@ -253,6 +253,22 @@ void LaneTrack::paint (juce::Graphics& g)
     auto* param = getParameter();
     const bool muted = (bool) lane[IDs::mute];
 
+    // Note lanes: the pitch range shown fits all notes of the lane.
+    const bool noteLane = Project::isNoteLane (lane);
+    juce::Range<int> pitches (60, 72);
+    if (noteLane)
+    {
+        int lo = 128, hi = -1;
+        for (const auto& item : lane)
+            for (const auto& n : item)
+                if (n.hasType (IDs::NOTE)) { lo = juce::jmin (lo, (int) n[IDs::pitch]); hi = juce::jmax (hi, (int) n[IDs::pitch]); }
+        if (hi >= lo)
+        {
+            const int centre = (lo + hi) / 2, span = juce::jmax (12, hi - lo + 4);
+            pitches = { centre - span / 2, centre - span / 2 + span };
+        }
+    }
+
     for (const auto& item : lane)
     {
         if (! item.hasType (IDs::ITEM))
@@ -361,6 +377,12 @@ void LaneTrack::paint (juce::Graphics& g)
                 g.drawText (label, stripText.toNearestInt(), juce::Justification::centredLeft, true);
         }
 
+        if (noteLane)
+        {
+            paintNotes (g, item, r, pitches, colour, muted);
+            continue;
+        }
+
         // Curve: evaluated at every pixel, the same maths the engine uses.
         auto points = generator.type == Automation::GeneratorType::none ? Project::getPoints (item) : std::vector<Automation::Point>();
         if (! points.empty())
@@ -449,6 +471,46 @@ void LaneTrack::paint (juce::Graphics& g)
     g.drawHorizontalLine (getHeight() - 1, 0.0f, w);
 
     juce::ignoreUnused (param);
+}
+
+void LaneTrack::paintNotes (juce::Graphics& g, const juce::ValueTree& item, juce::Rectangle<float> r,
+                            juce::Range<int> pitches, juce::Colour colour, bool muted)
+{
+    juce::Graphics::ScopedSaveState save (g);
+    g.reduceClipRegion (r.toNearestInt());
+
+    auto area = r.withTrimmedTop ((float) stripHeight + 3.0f).withTrimmedBottom (3.0f);
+    const float rowH = area.getHeight() / (float) juce::jmax (1, pitches.getLength() + 1);
+    const ItemTime it (item);
+    int count = 0;
+
+    // Faint lines at every C.
+    for (int p = pitches.getStart(); p <= pitches.getEnd(); ++p)
+        if (p % 12 == 0)
+        {
+            const float y = area.getBottom() - (float) (p - pitches.getStart() + 1) * rowH;
+            g.setColour (juce::Colours::white.withAlpha (0.06f));
+            g.drawHorizontalLine ((int) (y + rowH), area.getX(), area.getRight());
+        }
+
+    for (const auto& n : item)
+    {
+        if (! n.hasType (IDs::NOTE)) continue;
+        ++count;
+        const double t0 = n[IDs::time], t1 = t0 + (double) n[IDs::length];
+        const float x0 = ctx.timeView.toX (it.absolute (t0)), x1 = ctx.timeView.toX (it.absolute (t1));
+        const float y = area.getBottom() - (float) ((int) n[IDs::pitch] - pitches.getStart() + 1) * rowH;
+        const float vel = (float) (int) n[IDs::velocity] / 127.0f;
+        g.setColour (colour.withAlpha ((muted ? 0.35f : 1.0f) * (0.35f + 0.65f * vel)));
+        g.fillRect (juce::Rectangle<float> (x0, y, juce::jmax (2.0f, x1 - x0 - 1.0f), juce::jmax (2.0f, rowH - 1.0f)));
+    }
+
+    g.setColour (juce::Colours::black.withAlpha (0.75f));
+    g.setFont (juce::FontOptions (10.5f, juce::Font::bold));
+    auto strip = r.withHeight ((float) stripHeight).reduced (6.0f, 0.0f);
+    if (it.isMusical()) strip = strip.withTrimmedLeft (juce::jmin (strip.getWidth() * 0.5f, 120.0f));
+    if (r.getWidth() > 60.0f)
+        g.drawText (juce::String (count) + (count == 1 ? " note" : " notes"), strip.toNearestInt(), juce::Justification::centredLeft, true);
 }
 
 //==============================================================================
@@ -552,7 +614,7 @@ void LaneTrack::mouseDown (const juce::MouseEvent& e)
         }
         origPoints.clear();
         for (auto p : item)
-            if (p.hasType (IDs::POINT))
+            if (p.hasType (IDs::POINT) || p.hasType (IDs::NOTE))
                 origPoints.push_back ({ p, (double) p[IDs::time], (float) (double) p[IDs::value] });
         mode = (zone == Zone::leftEdge) ? Mode::trimLeft : Mode::trimRight;
         return;
@@ -571,8 +633,8 @@ void LaneTrack::mouseDown (const juce::MouseEvent& e)
     // Curve area.
     auto hit = pointAt (item, e.position);
 
-    // Generator items have no points to edit: clicking selects the item.
-    if (ItemTime::isGenerator (item))
+    // Generator and note items have no points to edit here: clicking selects the item.
+    if (ItemTime::isGenerator (item) || Project::isNoteItem (item))
     {
         if (add) ctx.selection.selectItem (item, true); else ctx.selection.selectItem (item);
         mode = Mode::rubberBand;
@@ -903,8 +965,8 @@ void LaneTrack::dragItem (const juce::MouseEvent& e)
     const double wanted = juce::jmax (0.0, ctx.snap.snap (origStart + dt, bypass));
     auto currentLane = dragItemTree.getParent();
     auto targetLane = ctx.laneAt ? ctx.laneAt (e.getScreenPosition()) : currentLane;
-    if (! targetLane.isValid())
-        targetLane = currentLane;
+    if (! targetLane.isValid() || Project::isNoteLane (targetLane) != Project::isNoteLane (currentLane))
+        targetLane = currentLane;   // notes stay in note lanes, automation in automation lanes
 
     if (mode == Mode::copyItem && ! copyCreated)
     {
@@ -1139,9 +1201,12 @@ void LaneTrack::showItemMenu (juce::ValueTree item)
     generators.addItem (13, "Formula", true, genType == "formula");
     m.addItem (1, "Duplicate after itself");
     m.addItem (3, musical ? "Make linear (seconds)" : "Make musical (bars and beats)");
-    m.addSubMenu ("Generator", generators);
-    m.addItem (14, "Bake generator to points", ItemTime::isGenerator (item));
-    m.addItem (4, "Open in item editor");
+    if (! Project::isNoteItem (item))
+    {
+        m.addSubMenu ("Generator", generators);
+        m.addItem (14, "Bake generator to points", ItemTime::isGenerator (item));
+    }
+    m.addItem (4, Project::isNoteItem (item) ? "Open in piano roll" : "Open in item editor");
     m.addSeparator();
     m.addItem (2, "Delete item");
 

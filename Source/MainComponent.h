@@ -13,6 +13,7 @@
 #include "UI/ScoreView.h"
 #include "UI/Inspector.h"
 #include "UI/ItemEditor.h"
+#include "UI/NoteEditor.h"
 #include "UI/TransportBar.h"
 #include "UI/RenderDialog.h"
 #include "UI/OutputStrip.h"
@@ -46,7 +47,7 @@ public:
         cmdNudgeLeftBig, cmdNudgeRightBig, cmdNudgeUpBig, cmdNudgeDownBig,
         cmdSelectAll, cmdSmooth, cmdThin, cmdReverse, cmdInvert, cmdOpenItemEditor,
         cmdRender, cmdExportCsv,
-        cmdNewGroup, cmdFoldAll, cmdOpenAll
+        cmdNewGroup, cmdFoldAll, cmdOpenAll, cmdAddNoteLane
     };
 
     juce::ApplicationCommandTarget* getNextCommandTarget() override   { return nullptr; }
@@ -81,6 +82,8 @@ private:
     void updateWindowTitle();
     void timerCallback() override;
     void addLaneForParameter (int paramIndex);
+    void addNoteLane();
+    void placeNewLane (juce::ValueTree lane);
     void showParameterPicker (juce::Component& button);
     void showStatus (const juce::String& text);
     void openItemEditor (juce::ValueTree item);

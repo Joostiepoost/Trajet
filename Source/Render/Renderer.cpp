@@ -63,8 +63,8 @@ juce::String AutomationCsv::write (const juce::File& file, Project& project, Plu
     // Every lane, muted or not: the CSV shows what is written in the score.
     for (const auto& laneTree : project.getLanes())
     {
-        if (! laneTree.hasType (IDs::LANE))
-            continue;
+        if (! laneTree.hasType (IDs::LANE) || Project::isNoteLane (laneTree))
+            continue;   // note lanes have no values to list
         Column c;
         c.name = laneTree[IDs::name].toString();
         const int index = controller.resolveParameterIndex (laneTree);

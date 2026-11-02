@@ -20,6 +20,8 @@
 //           TEMPO (beat, bpm, ramp)               -- musical items: the tempo map
 //           POINT (time, value, shape, tension)   -- time from the item start, in seconds
 //                                                    (linear items) or beats (musical items)
+//           NOTE  (time, length, pitch, velocity) -- in note lanes (LANE kind = "notes");
+//                                                    time and length in the item's units
 
 #pragma once
 
@@ -37,6 +39,7 @@ namespace IDs
     TRAJET_ID (LANE)
     TRAJET_ID (ITEM)
     TRAJET_ID (POINT)
+    TRAJET_ID (NOTE)
     TRAJET_ID (TEMPO)
     TRAJET_ID (GROUPS)
     TRAJET_ID (GROUP)
@@ -45,6 +48,10 @@ namespace IDs
     TRAJET_ID (groupId)
     TRAJET_ID (folded)
     TRAJET_ID (group)
+
+    // Note lanes
+    TRAJET_ID (kind)
+    TRAJET_ID (pitch)
 
     // PROJECT properties
     TRAJET_ID (formatVersion)

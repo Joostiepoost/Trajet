@@ -35,7 +35,8 @@ Other options:
 | 6 | Time bases: linear (seconds) and musical items (bars/beats, own metre, tempo map with ramps) | done |
 | 7 | Generator items: LFO, random, formula; bake to points | done |
 | 8 | Render to WAV (offline, 44.1–96 kHz, 16/24/32-float), automation CSV, output limiter | done |
-| 9 | Lane groups (fold, colour, move, group mute/solo), recent files | testing |
+| 9 | Lane groups (fold, colour, move, group mute/solo), recent files | done |
+| 10 | Note lanes: MIDI notes with a piano roll and velocity strip | testing |
 
 ## Using step 1
 
@@ -56,6 +57,22 @@ The last loaded plugin is reloaded automatically when Trajet starts.
 - **Edit menu**: Undo (⌘Z) and Redo (⇧⌘Z). For now only the held-note settings are undoable; lanes and points join from step 3 on.
 - **Audio menu**: audio processing on/off (⇧⌘A) and the plugin's panel (⌘E).
 - Trajet reopens the last project when it starts, and asks to save unsaved changes when you quit.
+
+## Note lanes (step 10)
+
+For synths that need notes (and for melodies on top of the automation). A note lane holds items like an automation lane: move, trim, copy, make musical, delete them the same way. The notes are sent to the plugin on MIDI channel 1 while playing and rendering. Notes are not chased: starting in the middle of a note does not sound it.
+
+- **Add one**: **+ Notes** in the transport bar, or Edit → Add note lane (**⇧⌘N**). It goes below the lane you clicked last, in the same group.
+- **Double-click an item** (or right-click → *Open in piano roll*) to edit its notes:
+  - **Option-drag** on empty space draws a note (the drag sets its length); **double-click** empty space adds a note, double-click a note deletes it.
+  - **Drag a note** to move it (time snaps to the grid, up/down changes pitch; Shift keeps one direction; Cmd: no snap). **Option-drag** copies.
+  - **Drag the right edge** of a note to change its length (all selected notes together).
+  - **Drag on empty space** for a rubber-band selection; Shift/Cmd-click adds or removes notes.
+  - **Velocity strip** (bottom): drag a bar up or down (all selected notes together; **Shift** scales them proportionally; **Cmd** for fine steps). **Option-drag** draws a line across the strip: the notes under it get velocities along the line (crescendo, diminuendo).
+  - **Keys**: arrows move by the grid / a semitone (Shift-up/down: an octave), Delete, Cmd-A, Cmd-C/X/V (paste at the playhead), Cmd-Z, Space plays.
+  - **Grid**: in musical items 1 to 1/16 beat (triplets included); in linear items 10 ms to 1 s. New notes are one grid step long, with the velocity set in *New notes*.
+  - Click a key of the keyboard to hear the pitch; drawn and moved notes sound too (when the audio is on).
+- The main window shows the notes small, in the lane's colour (brighter = louder).
 
 ## Groups (step 9)
 

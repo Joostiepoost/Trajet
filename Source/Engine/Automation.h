@@ -276,9 +276,17 @@ namespace Automation
         std::vector<Item> items;     // sorted by start, never overlapping
     };
 
+    /** A note of a note lane, in absolute seconds. */
+    struct Note
+    {
+        double start = 0.0, end = 0.0;
+        int pitch = 60, velocity = 100;
+    };
+
     struct Snapshot
     {
         std::vector<Lane> lanes;
+        std::vector<Note> notes;     // all note lanes together, sorted by start
     };
 
     /** Value of a lane at time t: the patch value before its first item,

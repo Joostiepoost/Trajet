@@ -39,7 +39,7 @@ public:
         g.setOrigin (headerWidth, 0);
 
         const double step = rulerStep (tv.getPixelsPerSecond());
-        const int decimals = step >= 1.0 ? 0 : (step >= 0.1 ? 1 : 2);
+        const int decimals = step >= 1.0 ? 0 : (std::abs (step * 10.0 - std::round (step * 10.0)) < 1.0e-9 ? 1 : 2);
         const float w = (float) (getWidth() - headerWidth);
         g.setFont (juce::FontOptions (11.0f));
 
@@ -150,7 +150,11 @@ public:
             g.setFont (juce::FontOptions (11.5f));
             juce::String text;
             const int index = owner.controller.resolveParameterIndex (lane);
-            if (auto* plugin = owner.host.getPlugin(); plugin != nullptr && index >= 0)
+            if (Project::isNoteLane (lane))
+            {
+                text = "MIDI notes";
+            }
+            else if (auto* plugin = owner.host.getPlugin(); plugin != nullptr && index >= 0)
             {
                 auto* p = plugin->getParameters()[index];
                 text = p->getCurrentValueAsText();
@@ -512,6 +516,8 @@ private:
 
         for (auto& laneTree : lanes)
         {
+            if (Project::isNoteLane (laneTree))
+                continue;
             Automation::Lane lane;
             AutomationController::buildItems (laneTree, lane);
             if (lane.items.empty()) continue;
@@ -1045,6 +1051,7 @@ void ScoreView::copySelection()
     {
         auto copy = item.createCopy();
         copy.setProperty ("sourceLane", item.getParent()[IDs::laneId], nullptr);
+        if (Project::isNoteItem (item)) copy.setProperty ("fromNoteLane", true, nullptr);
         clipboard.add (copy);
     }
     if (! clipboard.isEmpty())
@@ -1148,10 +1155,13 @@ void ScoreView::paste()
 
         const double start = at + ((double) c[IDs::start] - earliest);
         const double length = c[IDs::length];
+        const bool hasNotes = c.getChildWithName (IDs::NOTE).isValid() || (bool) c.getProperty ("fromNoteLane", false);
+        if (hasNotes != Project::isNoteLane (lane)) { ++skipped; continue; }
         if (! project.isFree (lane, start, length)) { ++skipped; continue; }
 
         auto item = c.createCopy();
         item.removeProperty ("sourceLane", nullptr);
+        item.removeProperty ("fromNoteLane", nullptr);
         item.setProperty (IDs::start, start, nullptr);
         lane.appendChild (item, &um);
         pasted.add (item);

@@ -76,6 +76,8 @@ private:
 
     juce::ValueTree itemAt (float x) const;
     juce::Rectangle<float> itemBounds (const juce::ValueTree& item) const;
+    void paintNotes (juce::Graphics&, const juce::ValueTree& item, juce::Rectangle<float> itemArea,
+                     juce::Range<int> pitches, juce::Colour, bool muted);
     Zone zoneFor (const juce::ValueTree& item, juce::Point<float> pos) const;
     juce::ValueTree pointAt (const juce::ValueTree& item, juce::Point<float> pos) const;
 

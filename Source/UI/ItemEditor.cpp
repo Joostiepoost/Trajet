@@ -882,7 +882,8 @@ void ItemEditor::paint (juce::Graphics& g)
     for (double s : { 0.001, 0.005, 0.01, 0.05, 0.1, 0.25, 0.5, 1.0, 2.0, 5.0, 10.0, 30.0, 60.0 })
         if (s * timeView.getPixelsPerSecond() >= 70.0) { step = s; break; }
 
-    const int decimals = step >= 1.0 ? 0 : (step >= 0.1 ? 1 : (step >= 0.01 ? 2 : 3));
+    int decimals = 0;
+    while (decimals < 3 && std::abs (step * std::pow (10.0, decimals) - std::round (step * std::pow (10.0, decimals))) > 1.0e-9) ++decimals;
     g.setFont (juce::FontOptions (11.0f));
     for (double t = std::floor (timeView.getOffset() / step) * step; timeView.toX (t) < (float) ruler.getWidth(); t += step)
     {
