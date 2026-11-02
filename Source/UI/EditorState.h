@@ -107,10 +107,18 @@ public:
 
     bool isSelected (const juce::ValueTree& t) const   { return items.contains (t) || points.contains (t); }
 
+    /** The lane you last clicked in: where Paste goes. */
+    juce::ValueTree getActiveLane() const               { return activeLane; }
+    void setActiveLane (const juce::ValueTree& lane)
+    {
+        if (activeLane != lane) { activeLane = lane; sendChangeMessage(); }
+    }
+
     void selectItem (const juce::ValueTree& item, bool addToSelection = false)
     {
         if (! addToSelection) { items.clearQuick(); points.clearQuick(); }
         items.addIfNotAlreadyThere (item);
+        activeLane = item.getParent();
         sendChangeMessage();
     }
 
@@ -119,6 +127,7 @@ public:
         if (! addToSelection) { points.clearQuick(); items.clearQuick(); }
         points.addIfNotAlreadyThere (point);
         items.addIfNotAlreadyThere (point.getParent());
+        activeLane = point.getParent().getParent();
         sendChangeMessage();
     }
 
@@ -144,12 +153,15 @@ public:
         const int before = items.size() + points.size();
         items.removeIf (gone);
         points.removeIf (gone);
+        if (activeLane.isValid() && ! activeLane.getParent().isValid())
+            activeLane = {};
         if (items.size() + points.size() != before)
             sendChangeMessage();
     }
 
 private:
     juce::Array<juce::ValueTree> items, points;
+    juce::ValueTree activeLane;
 };
 
 //==============================================================================

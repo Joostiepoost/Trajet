@@ -65,7 +65,7 @@ public:
     /** Lane colours: a palette of distinct hues. */
     static juce::Colour laneColour (const juce::ValueTree& lane);
     static juce::Colour paletteColour (int index);
-    static constexpr int paletteSize = 8;
+    static constexpr int paletteSize = 16;
 
     /** An item's points as Automation::Point, sorted, times relative to the item. */
     static std::vector<Automation::Point> getPoints (const juce::ValueTree& item);

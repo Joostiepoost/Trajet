@@ -131,9 +131,10 @@ public:
 
     void paint (juce::Graphics& g) override
     {
-        g.fillAll (headerColour);
+        const bool active = owner.selection.getActiveLane() == lane;
+        g.fillAll (active ? headerColour.brighter (0.12f) : headerColour);
         g.setColour (Project::laneColour (lane));
-        g.fillRect (0, 0, 4, getHeight());
+        g.fillRect (0, 0, active ? 7 : 4, getHeight());
 
         if (getHeight() >= 40)
         {
@@ -176,6 +177,7 @@ public:
     void mouseDown (const juce::MouseEvent& e) override
     {
         dragMode = none;
+        owner.selection.setActiveLane (lane);
         if (e.mods.isPopupMenu()) { showMenu(); return; }
 
         if (e.y >= getHeight() - 5)
@@ -410,13 +412,18 @@ void ScoreView::paintOverChildren (juce::Graphics& g)
 //==============================================================================
 void ScoreView::handleWheel (const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel, juce::Component& source)
 {
-    const float delta = std::abs (wheel.deltaX) > std::abs (wheel.deltaY) ? wheel.deltaX : wheel.deltaY;
+    if (handlingWheel)
+        return;
+    const juce::ScopedValueSetter<bool> guard (handlingWheel, true);
 
     if (e.mods.isCommandDown())
     {
-        // Zoom around the mouse.
+        // Zoom around the mouse (trackpad momentum after the gesture is ignored).
+        if (wheel.isInertial)
+            return;
         const float x = (float) e.getEventRelativeTo (this).x - (float) headerWidth;
-        timeView.zoomAround (std::pow (2.0, (double) wheel.deltaY * 2.0), juce::jmax (0.0f, x));
+        const double factor = juce::jlimit (0.5, 2.0, std::pow (2.0, (double) wheel.deltaY * 1.5));
+        timeView.zoomAround (factor, juce::jmax (0.0f, x));
         return;
     }
 
@@ -424,7 +431,7 @@ void ScoreView::handleWheel (const juce::MouseEvent& e, const juce::MouseWheelDe
     {
         // Resize the lane under the mouse.
         for (auto* row : rows)
-            if (row->isParentOf (&source) || row == &source)
+            if (row == &source || row->isParentOf (&source))
             {
                 const int h = juce::jlimit (32, 400, row->preferredHeight() + juce::roundToInt (wheel.deltaY * 60.0f));
                 row->lane.setProperty (IDs::height, h, nullptr);
@@ -435,11 +442,18 @@ void ScoreView::handleWheel (const juce::MouseEvent& e, const juce::MouseWheelDe
 
     if (e.mods.isShiftDown() || std::abs (wheel.deltaX) > std::abs (wheel.deltaY))
     {
+        const float delta = std::abs (wheel.deltaX) > std::abs (wheel.deltaY) ? wheel.deltaX : wheel.deltaY;
         timeView.scrollBy (-(double) delta * timeView.visibleSeconds() * 0.25);
         return;
     }
 
-    viewport.mouseWheelMove (e.getEventRelativeTo (&viewport), wheel);
+    // Vertical: move the lanes directly (never hand the event back to the viewport).
+    const int maxY = juce::jmax (0, rowHolder.getHeight() - viewport.getViewHeight());
+    if (maxY > 0)
+    {
+        const int dy = juce::roundToInt (wheel.deltaY * (wheel.isReversed ? -1.0f : 1.0f) * 400.0f);
+        viewport.setViewPosition (0, juce::jlimit (0, maxY, viewport.getViewPositionY() - dy));
+    }
 }
 
 void ScoreView::mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel)
@@ -546,18 +560,30 @@ void ScoreView::paste()
     if (clipboard.isEmpty())
         return;
 
-    // Paste at the playhead, keeping the copied items' spacing.
+    auto lanes = project.getLanes();
+    auto laneIndexOf = [&lanes] (const juce::var& id)
+    {
+        for (int i = 0; i < lanes.getNumChildren(); ++i)
+            if (lanes.getChild (i)[IDs::laneId] == id)
+                return i;
+        return -1;
+    };
+
+    // Paste at the playhead, keeping the copied items' spacing in time...
     double earliest = 1.0e12;
+    int topSource = 1 << 30;
     for (auto& c : clipboard)
+    {
         earliest = juce::jmin (earliest, (double) c[IDs::start]);
+        const int li = laneIndexOf (c["sourceLane"]);
+        if (li >= 0) topSource = juce::jmin (topSource, li);
+    }
+
+    // ...and in lanes: the topmost copied lane lands on the lane you clicked last.
+    auto active = selection.getActiveLane();
+    const int laneShift = (active.isValid() && topSource < (1 << 30)) ? lanes.indexOf (active) - topSource : 0;
 
     const double at = snap.snap (host.getEngine().getPositionSeconds());
-
-    // One target lane if one item is selected; otherwise each item goes back to its own lane.
-    juce::ValueTree targetLane;
-    if (selection.getItems().size() == 1)
-        targetLane = selection.getItems().getFirst().getParent();
-
     auto& um = project.getUndoManager();
     um.beginNewTransaction ("Paste");
     int skipped = 0;
@@ -565,12 +591,9 @@ void ScoreView::paste()
 
     for (auto& c : clipboard)
     {
-        auto lane = targetLane;
-        if (! lane.isValid())
-            for (auto l : project.getLanes())
-                if (l[IDs::laneId] == c["sourceLane"])
-                    lane = l;
-
+        const int source = laneIndexOf (c["sourceLane"]);
+        const int target = source >= 0 ? source + laneShift : lanes.indexOf (active);
+        auto lane = lanes.getChild (target);
         if (! lane.isValid()) { ++skipped; continue; }
 
         const double start = at + ((double) c[IDs::start] - earliest);
@@ -587,9 +610,11 @@ void ScoreView::paste()
     selection.clear();
     for (auto& item : pasted)
         selection.selectItem (item, true);
+    if (active.isValid())
+        selection.setActiveLane (active);
 
     if (skipped > 0)
-        showStatus (juce::String (skipped) + " item(s) not pasted: no free room at the playhead.");
+        showStatus (juce::String (skipped) + " item(s) not pasted: no free room there.");
 }
 
 void ScoreView::duplicateSelection()

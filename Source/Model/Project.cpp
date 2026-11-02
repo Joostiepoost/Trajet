@@ -244,7 +244,8 @@ juce::ValueTree Project::addItem (juce::ValueTree lane, double start, double len
 juce::Colour Project::paletteColour (int index)
 {
     static const juce::uint32 colours[paletteSize] = {
-        0xffe07b4f, 0xff3fb98a, 0xff5b9bd5, 0xffd4a73a, 0xffc0679f, 0xff4fb8c9, 0xff8f86e0, 0xff9ab54a };
+        0xffe07b4f, 0xff3fb98a, 0xff5b9bd5, 0xffd4a73a, 0xffc0679f, 0xff4fb8c9, 0xff8f86e0, 0xff9ab54a,
+        0xffe05a5a, 0xff2e9e6b, 0xff3d6fd1, 0xffb8862b, 0xffe39ac4, 0xff7fd6e0, 0xffb7a9f0, 0xffcfd96a };
     return juce::Colour (colours[(size_t) juce::jlimit (0, paletteSize - 1, index)]);
 }
 

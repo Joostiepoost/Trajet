@@ -57,17 +57,18 @@ The last loaded plugin is reloaded automatically when Trajet starts.
 **Lanes**
 - **+ Lane** opens the parameter list; double-click a parameter to add its lane (type in the filter first, e.g. `osc`).
 - Drag a lane header up or down to reorder; drag its lower edge to resize (or Option-scroll over the lane).
-- Double-click the name to rename. **M** mutes (the lane plays its patch value), **S** solos. Right-click the header for colour and *Remove lane*.
+- Double-click the name to rename. **M** mutes (the lane plays its patch value), **S** solos. Right-click the header for colour (16 choices) and *Remove lane*.
 
 **Items**
 - Double-click empty space in a lane: new item (up to 4 s, in the free space). Items never overlap.
 - Drag the coloured title strip to move; Option-drag it to copy; drag an edge to trim.
-- Right-click an item: duplicate or delete. ⌘C / ⌘X / ⌘V (paste at the playhead) / ⌘D (duplicate right after) / Delete.
+- Right-click an item: duplicate or delete. ⌘C / ⌘X / ⌘V / ⌘D (duplicate right after) / Delete.
+- Click empty space in a lane to make it the paste target and move the playhead there; ⌘V pastes there. Items copied from several lanes keep their layout, starting at that lane.
 
 **Points** (inside an item, below the title strip)
 - ⌥-click: add a point · ⌥-drag: draw freehand (points are thinned automatically) · ⌥⇧-drag: straight ramp, replacing points underneath.
 - Drag a point to move it (all selected points move together); ⇧ locks to time or value; ⌘ moves finely without snapping.
-- ⌘-click adds a point to the selection · ⌃-drag a segment bends it · double-click a point to type its time and value · right-click for the segment shape.
+- ⌘-click adds a point to the selection · ⌘⌥-drag a segment bends it · double-click a point to type its time and value · right-click for the segment shape.
 
 **View and snap**
 - Scroll: lanes up/down · ⇧-scroll or trackpad sideways: time · ⌘-scroll: zoom around the mouse · **Fit** or ⌘0: whole project · ⌘= / ⌘-: zoom in/out.

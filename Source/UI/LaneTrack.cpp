@@ -282,8 +282,9 @@ void LaneTrack::mouseMove (const juce::MouseEvent& e)
         case Zone::rightEdge: setMouseCursor (juce::MouseCursor::LeftRightResizeCursor); break;
         case Zone::strip:     setMouseCursor (e.mods.isAltDown() ? juce::MouseCursor::CopyingCursor
                                                                  : juce::MouseCursor::DraggingHandCursor); break;
-        case Zone::curve:     setMouseCursor (e.mods.isAltDown() ? juce::MouseCursor::CrosshairCursor
-                                                                 : juce::MouseCursor::NormalCursor); break;
+        case Zone::curve:     setMouseCursor (e.mods.isAltDown() && e.mods.isCommandDown() ? juce::MouseCursor::UpDownResizeCursor
+                                              : e.mods.isAltDown() ? juce::MouseCursor::CrosshairCursor
+                                                                   : juce::MouseCursor::NormalCursor); break;
         case Zone::none:      setMouseCursor (juce::MouseCursor::NormalCursor); break;
     }
 }
@@ -299,7 +300,15 @@ void LaneTrack::mouseDown (const juce::MouseEvent& e)
     if (! item.isValid())
     {
         if (! e.mods.isPopupMenu())
+        {
+            // Empty space: this lane becomes the paste target, and the playhead moves here.
             ctx.selection.clear();
+            ctx.selection.setActiveLane (lane);
+            auto t = ctx.timeView.toTime (e.position.x);
+            if (! e.mods.isCommandDown())
+                t = ctx.snap.snap (t);
+            ctx.controller.locate (t);
+        }
         return;
     }
 
@@ -341,29 +350,7 @@ void LaneTrack::mouseDown (const juce::MouseEvent& e)
     // Curve area.
     auto hit = pointAt (item, e.position);
 
-    if (e.mods.isAltDown() && e.mods.isShiftDown())
-    {
-        um.beginNewTransaction ("Draw ramp");
-        const double t = relativeTime (item, e.position.x, false);
-        const float v = yToValue (e.position.y);
-        auto a = ctx.project.addPoint (item, t, v);
-        rampEnd = ctx.project.addPoint (item, t, v);
-        dragAnchor = rampEnd;
-        drawnPoints = { a, rampEnd };
-        ctx.selection.selectItem (item);
-        mode = Mode::ramp;
-    }
-    else if (e.mods.isAltDown())
-    {
-        um.beginNewTransaction ("Draw");
-        const double t = relativeTime (item, e.position.x, ! ctx.snap.isOn());
-        drawnPoints = { ctx.project.addPoint (item, t, yToValue (e.position.y)) };
-        lastDrawX = e.position.x;
-        lastDrawTime = t;
-        ctx.selection.selectItem (item);
-        mode = Mode::draw;
-    }
-    else if (e.mods.isCtrlDown())
+    if (e.mods.isAltDown() && e.mods.isCommandDown())
     {
         // Bend the segment under the mouse.
         auto points = Project::getPoints (item);
@@ -386,8 +373,31 @@ void LaneTrack::mouseDown (const juce::MouseEvent& e)
             bendPoint = a;
             bendRising = bValue >= aValue;
             origTension = ((int) a[IDs::shape] == (int) Automation::Shape::curve) ? (double) a[IDs::tension] : 0.0;
+            ctx.selection.selectItem (item);
             mode = Mode::bend;
         }
+    }
+    else if (e.mods.isAltDown() && e.mods.isShiftDown())
+    {
+        um.beginNewTransaction ("Draw ramp");
+        const double t = relativeTime (item, e.position.x, false);
+        const float v = yToValue (e.position.y);
+        auto a = ctx.project.addPoint (item, t, v);
+        rampEnd = ctx.project.addPoint (item, t, v);
+        dragAnchor = rampEnd;
+        drawnPoints = { a, rampEnd };
+        ctx.selection.selectItem (item);
+        mode = Mode::ramp;
+    }
+    else if (e.mods.isAltDown())
+    {
+        um.beginNewTransaction ("Draw");
+        const double t = relativeTime (item, e.position.x, ! ctx.snap.isOn());
+        drawnPoints = { ctx.project.addPoint (item, t, yToValue (e.position.y)) };
+        lastDrawX = e.position.x;
+        lastDrawTime = t;
+        ctx.selection.selectItem (item);
+        mode = Mode::draw;
     }
     else if (hit.isValid())
     {

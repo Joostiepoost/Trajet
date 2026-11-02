@@ -91,7 +91,7 @@ private:
 
     int dropIndicatorY = -1;
     double lastPosition = -1.0;
-    bool rebuildPending = false;
+    bool rebuildPending = false, handlingWheel = false;
 
     static juce::Array<juce::ValueTree> clipboard;   // copied items (with their lane id)
 

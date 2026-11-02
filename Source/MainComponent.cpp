@@ -767,9 +767,8 @@ void MainComponent::paint (juce::Graphics& g)
     const juce::String opt  = juce::String (juce::CharPointer_UTF8 ("\xe2\x8c\xa5"));
     const juce::String sh   = juce::String (juce::CharPointer_UTF8 ("\xe2\x87\xa7"));
     const juce::String cmdk = juce::String (juce::CharPointer_UTF8 ("\xe2\x8c\x98"));
-    const juce::String ctl  = juce::String (juce::CharPointer_UTF8 ("\xe2\x8c\x83"));
     const auto gestures = opt + "-click add  " + dot + "  " + opt + "-drag draw  " + dot + "  " + opt + sh + "-drag ramp  " + dot + "  "
-                          + sh + " constrain  " + dot + "  " + cmdk + " fine  " + dot + "  " + ctl + "-drag bend  " + dot + "  "
+                          + sh + " constrain  " + dot + "  " + cmdk + " fine  " + dot + "  " + cmdk + opt + "-drag bend  " + dot + "  "
                           + "S snap  " + dot + "  " + cmdk + "-scroll zoom";
     g.setColour (juce::Colours::white.withAlpha (0.4f));
     g.drawText (gestures, status.reduced (12, 0), juce::Justification::centredRight);
