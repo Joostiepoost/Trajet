@@ -9,8 +9,10 @@
 //   PROJECT  (formatVersion, lengthSeconds, outputGain dB, limiter, limiterCeiling dB)
 //     PLUGIN   (description = XML text, state = base64 text)
 //     HELDNOTE (on, note, velocity)
+//     GROUPS
+//       GROUP  (groupId, name, colour, folded)     -- a group's lanes always sit together
 //     LANES
-//       LANE   (laneId, paramIndex, paramName, name, colour, height, mute, solo)
+//       LANE   (laneId, paramIndex, paramName, name, colour, height, mute, solo, group = groupId or 0)
 //         ITEM (start, length, timebase)          -- start/length always in seconds
 //              musical items also: beatsPerBar, beatUnit, gridBeats, lengthBeats
 //              generator items also: generator (lfo/random/formula), genShape, genRate,
@@ -36,6 +38,13 @@ namespace IDs
     TRAJET_ID (ITEM)
     TRAJET_ID (POINT)
     TRAJET_ID (TEMPO)
+    TRAJET_ID (GROUPS)
+    TRAJET_ID (GROUP)
+
+    // GROUP properties (also name, colour)
+    TRAJET_ID (groupId)
+    TRAJET_ID (folded)
+    TRAJET_ID (group)
 
     // PROJECT properties
     TRAJET_ID (formatVersion)

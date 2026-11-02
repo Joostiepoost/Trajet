@@ -155,6 +155,18 @@ public:
         sendChangeMessage();
     }
 
+    /** Drops everything in lanes that are not shown (e.g. in a folded group). */
+    void keepOnlyLanes (const std::function<bool (const juce::ValueTree& lane)>& shown)
+    {
+        const int before = items.size() + points.size();
+        items.removeIf ([&] (const juce::ValueTree& t) { return ! shown (t.getParent()); });
+        points.removeIf ([&] (const juce::ValueTree& t) { return ! shown (t.getParent().getParent()); });
+        const bool laneGone = activeLane.isValid() && ! shown (activeLane);
+        if (laneGone) activeLane = {};
+        if (laneGone || items.size() + points.size() != before)
+            sendChangeMessage();
+    }
+
     /** Removes anything that is no longer part of the project (after undo, delete...). */
     void prune()
     {

@@ -54,6 +54,7 @@ void OutputStrip::refresh()
 {
     const auto& st = project.getState();
     gainSlider.setValue (st.getProperty (IDs::outputGain, 0.0), juce::dontSendNotification);
+    gainSlider.updateText();
     limiterButton.setToggleState ((bool) st.getProperty (IDs::limiter, false), juce::dontSendNotification);
     const double ceiling = st.getProperty (IDs::limiterCeiling, -0.3);
     limiterButton.setButtonText ("Limit " + juce::String (ceiling, 1));

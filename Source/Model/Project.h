@@ -52,6 +52,29 @@ public:
 
     juce::ValueTree addPoint (juce::ValueTree item, double time, float value);
 
+    //==============================================================================
+    // Groups (undoable). A lane belongs to at most one group; a group's lanes are
+    // always next to each other in the lane order.
+    juce::ValueTree getGroups()                     { return state.getChildWithName (IDs::GROUPS); }
+    juce::ValueTree findGroup (const juce::var& groupId);
+    juce::ValueTree groupOf (const juce::ValueTree& lane);
+    juce::Array<juce::ValueTree> lanesInGroup (const juce::ValueTree& group);
+    static juce::Colour groupColour (const juce::ValueTree& group);
+
+    /** Makes a new group holding these lanes (moved together at the first one's place). */
+    juce::ValueTree createGroup (const juce::String& name, const juce::Array<juce::ValueTree>& lanes);
+    /** Moves a lane into a group (at its end), or out of any group (invalid group). */
+    void setLaneGroup (juce::ValueTree lane, const juce::ValueTree& group);
+    /** Dissolves a group; its lanes stay where they are. */
+    void ungroup (juce::ValueTree group);
+    /** Removes a group together with its lanes. */
+    void removeGroupWithLanes (juce::ValueTree group);
+    /** Moves all lanes of a group so they start at this index in the lane order
+        (counted without the group's own lanes). */
+    void moveGroup (const juce::ValueTree& group, int toIndex);
+    /** Keeps each group's lanes together and removes empty groups. */
+    void normaliseGroups();
+
     // Items: never overlapping on one lane.
     static constexpr double minItemLength = 0.01;
     static juce::Array<juce::ValueTree> getSortedItems (const juce::ValueTree& lane);

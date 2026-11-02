@@ -193,6 +193,54 @@ void MainComponent::openProject()
     });
 }
 
+juce::RecentlyOpenedFilesList MainComponent::getRecentFiles()
+{
+    juce::RecentlyOpenedFilesList recent;
+    recent.setMaxNumberOfItems (12);
+    recent.restoreFromString (host.appProperties.getUserSettings()->getValue ("recentFiles"));
+    recent.removeNonExistentFiles();
+    return recent;
+}
+
+void MainComponent::menuItemSelected (int menuItemID, int)
+{
+    if (host.isRendering())
+        return;
+
+    if (menuItemID == 4999)
+    {
+        host.appProperties.getUserSettings()->removeValue ("recentFiles");
+        host.appProperties.getUserSettings()->saveIfNeeded();
+        menuItemsChanged();
+    }
+    else if (menuItemID >= 5000 && menuItemID < 5100)
+    {
+        openRecentProject (getRecentFiles().getFile (menuItemID - 5000));
+    }
+}
+
+void MainComponent::openRecentProject (const juce::File& file)
+{
+    if (! file.existsAsFile())
+        return;
+
+    juce::Component::SafePointer<MainComponent> safeThis (this);
+    project.saveIfNeededAndUserAgreesAsync ([safeThis, file] (juce::FileBasedDocument::SaveResult r)
+    {
+        if (safeThis == nullptr || r != juce::FileBasedDocument::savedOk)
+            return;
+
+        safeThis->project.loadFromAsync (file, true, [safeThis] (juce::Result)
+        {
+            if (safeThis != nullptr)
+            {
+                safeThis->updateWindowTitle();
+                safeThis->menuItemsChanged();
+            }
+        });
+    });
+}
+
 void MainComponent::saveProject (bool saveAs)
 {
     juce::Component::SafePointer<MainComponent> safeThis (this);
@@ -476,7 +524,22 @@ void MainComponent::addLaneForParameter (int paramIndex)
     }
 
     project.getUndoManager().beginNewTransaction ("Add lane");
-    project.addLane (paramIndex, plugin->getParameters()[paramIndex]->getName (128));
+    auto lane = project.addLane (paramIndex, plugin->getParameters()[paramIndex]->getName (128));
+
+    // A new lane goes right below the active lane, in the same group.
+    auto active = scoreView.getSelection().getActiveLane();
+    if (active.isValid() && active.getParent().isValid())
+    {
+        if (auto group = project.groupOf (active); group.isValid())
+            group.setProperty (IDs::folded, false, nullptr);   // show where the new lane went
+        auto lanes = project.getLanes();
+        const int to = lanes.indexOf (active) + 1;
+        lanes.moveChild (lanes.indexOf (lane), to, &project.getUndoManager());
+        if (auto group = project.groupOf (active); group.isValid())
+            lane.setProperty (IDs::group, group[IDs::groupId], &project.getUndoManager());
+        project.normaliseGroups();
+    }
+    scoreView.getSelection().setActiveLane (lane);
 }
 
 void MainComponent::showStatus (const juce::String& text)
@@ -540,6 +603,13 @@ void MainComponent::showParameterPicker (juce::Component& button)
 
 void MainComponent::updateWindowTitle()
 {
+    // The file may have changed: refresh File > Open recent.
+    if (project.getFile() != lastTitleFile)
+    {
+        lastTitleFile = project.getFile();
+        menuItemsChanged();
+    }
+
     if (auto* window = findParentComponentOfClass<juce::DocumentWindow>())
     {
         auto title = project.getDocumentTitle() + (project.hasChangedSinceSaved() ? " *" : "")
@@ -581,7 +651,7 @@ void MainComponent::getAllCommands (juce::Array<juce::CommandID>& commands)
                          cmdNudgeLeft, cmdNudgeRight, cmdNudgeUp, cmdNudgeDown,
                          cmdNudgeLeftBig, cmdNudgeRightBig, cmdNudgeUpBig, cmdNudgeDownBig,
                          cmdSelectAll, cmdSmooth, cmdThin, cmdReverse, cmdInvert, cmdOpenItemEditor,
-                         cmdRender, cmdExportCsv });
+                         cmdRender, cmdExportCsv, cmdNewGroup, cmdFoldAll, cmdOpenAll });
 }
 
 void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommandInfo& info)
@@ -599,6 +669,12 @@ void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommand
                         info.addDefaultKeypress ('s', cmd); break;
         case cmdSaveAs: info.setInfo ("Save as...", "Save the project under a new name", "File", 0);
                         info.addDefaultKeypress ('s', cmd | shift); break;
+        case cmdNewGroup: info.setInfo ("New group from lane", "Make a group holding the active lane", "Edit", 0);
+                        info.addDefaultKeypress ('g', cmd); break;
+        case cmdFoldAll: info.setInfo ("Fold all groups", "Fold every group into one compact row", "View", 0);
+                        info.addDefaultKeypress ('[', cmd); break;
+        case cmdOpenAll: info.setInfo ("Open all groups", "Show the lanes of every group", "View", 0);
+                        info.addDefaultKeypress (']', cmd); break;
         case cmdRender: info.setInfo ("Render to WAV...", "Render the score to an audio file", "File", 0);
                         info.addDefaultKeypress ('r', cmd);
                         info.setActive (host.getPlugin() != nullptr && ! host.isRendering()); break;
@@ -722,6 +798,9 @@ bool MainComponent::perform (const InvocationInfo& info)
         case cmdSave:       saveProject (false); break;
         case cmdSaveAs:     saveProject (true); break;
         case cmdRender:     showRenderDialog (false); break;
+        case cmdNewGroup:   scoreView.groupActiveLane(); break;
+        case cmdFoldAll:    scoreView.setAllGroupsFolded (true); break;
+        case cmdOpenAll:    scoreView.setAllGroupsFolded (false); break;
         case cmdExportCsv:  showRenderDialog (true); break;
         case cmdUndo:       project.getUndoManager().undo(); break;
         case cmdRedo:       project.getUndoManager().redo(); break;
@@ -776,6 +855,16 @@ juce::PopupMenu MainComponent::getMenuForIndex (int menuIndex, const juce::Strin
     {
         menu.addCommandItem (&commandManager, cmdNew);
         menu.addCommandItem (&commandManager, cmdOpen);
+
+        juce::PopupMenu recentMenu;
+        auto recent = getRecentFiles();
+        recent.createPopupMenuItems (recentMenu, 5000, true, true);
+        if (recent.getNumFiles() > 0)
+        {
+            recentMenu.addSeparator();
+            recentMenu.addItem (4999, "Clear menu");
+        }
+        menu.addSubMenu ("Open recent", recentMenu, recent.getNumFiles() > 0);
         menu.addSeparator();
         menu.addCommandItem (&commandManager, cmdSave);
         menu.addCommandItem (&commandManager, cmdSaveAs);
@@ -812,6 +901,9 @@ juce::PopupMenu MainComponent::getMenuForIndex (int menuIndex, const juce::Strin
         menu.addCommandItem (&commandManager, cmdZoomIn);
         menu.addCommandItem (&commandManager, cmdZoomOut);
         menu.addCommandItem (&commandManager, cmdZoomFit);
+        menu.addSeparator();
+        menu.addCommandItem (&commandManager, cmdFoldAll);
+        menu.addCommandItem (&commandManager, cmdOpenAll);
     }
     else if (menuIndex == 4)
     {
