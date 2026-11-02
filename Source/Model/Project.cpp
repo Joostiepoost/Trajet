@@ -76,8 +76,12 @@ void Project::storePluginState()
     if (plugin == nullptr)
         return;
 
+    if (beforeStoringPluginState) beforeStoringPluginState();
+
     juce::MemoryBlock data;
     plugin->getStateInformation (data);
+
+    if (afterStoringPluginState) afterStoringPluginState();
 
     // Stored without undo and without marking the project as changed.
     state.removeListener (this);
@@ -113,6 +117,88 @@ void Project::valueTreePropertyChanged (juce::ValueTree& tree, const juce::Ident
 
     if (tree.hasType (IDs::HELDNOTE) && onHeldNoteChanged)
         onHeldNoteChanged();
+}
+
+//==============================================================================
+// Lanes
+
+void Project::setLengthSeconds (double seconds)
+{
+    const double oldLength = getLengthSeconds();
+    const double newLength = juce::jlimit (1.0, 7200.0, seconds);
+    state.setProperty (IDs::lengthSeconds, newLength, &undoManager);
+
+    // Items that spanned the whole project keep doing so (until step 4 brings real item editing).
+    for (auto lane : getLanes())
+        for (auto item : lane)
+            if (item.hasType (IDs::ITEM) && std::abs ((double) item[IDs::start]) < 1.0e-9
+                && std::abs ((double) item[IDs::length] - oldLength) < 1.0e-9)
+                item.setProperty (IDs::length, newLength, &undoManager);
+}
+
+juce::ValueTree Project::addLane (int paramIndex, const juce::String& paramName)
+{
+    juce::ValueTree lane (IDs::LANE);
+    lane.setProperty (IDs::laneId, juce::Uuid().toString(), nullptr);
+    lane.setProperty (IDs::paramIndex, paramIndex, nullptr);
+    lane.setProperty (IDs::paramName, paramName, nullptr);
+    lane.setProperty (IDs::name, paramName, nullptr);
+
+    juce::ValueTree item (IDs::ITEM);
+    item.setProperty (IDs::start, 0.0, nullptr);
+    item.setProperty (IDs::length, getLengthSeconds(), nullptr);
+    item.setProperty (IDs::timebase, "linear", nullptr);
+    lane.appendChild (item, nullptr);
+
+    getLanes().appendChild (lane, &undoManager);
+    return lane;
+}
+
+void Project::removeLane (juce::ValueTree lane)
+{
+    getLanes().removeChild (lane, &undoManager);
+}
+
+juce::ValueTree Project::findLaneForParameter (int paramIndex)
+{
+    for (auto lane : getLanes())
+        if ((int) lane[IDs::paramIndex] == paramIndex)
+            return lane;
+    return {};
+}
+
+juce::ValueTree Project::addPoint (juce::ValueTree item, double time, float value)
+{
+    juce::ValueTree point (IDs::POINT);
+    point.setProperty (IDs::time, time, nullptr);
+    point.setProperty (IDs::value, value, nullptr);
+    point.setProperty (IDs::shape, (int) Automation::Shape::linear, nullptr);
+    point.setProperty (IDs::tension, 0.0, nullptr);
+    item.appendChild (point, &undoManager);
+    return point;
+}
+
+std::vector<Automation::Point> Project::getPoints (const juce::ValueTree& item)
+{
+    std::vector<Automation::Point> points;
+    points.reserve ((size_t) item.getNumChildren());
+
+    for (const auto& p : item)
+    {
+        if (! p.hasType (IDs::POINT))
+            continue;
+
+        Automation::Point pt;
+        pt.time    = p[IDs::time];
+        pt.value   = (float) (double) p[IDs::value];
+        pt.shape   = (Automation::Shape) juce::jlimit (0, 3, (int) p[IDs::shape]);
+        pt.tension = (float) (double) p[IDs::tension];
+        points.push_back (pt);
+    }
+
+    std::stable_sort (points.begin(), points.end(),
+                      [] (const auto& a, const auto& b) { return a.time < b.time; });
+    return points;
 }
 
 //==============================================================================

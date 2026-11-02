@@ -9,6 +9,9 @@
 #include "PluginWindow.h"
 #include "ParameterListComponent.h"
 #include "Model/Project.h"
+#include "Engine/AutomationController.h"
+#include "UI/LanesView.h"
+#include "UI/TransportBar.h"
 
 class MainComponent : public juce::Component,
                       public juce::ApplicationCommandTarget,
@@ -31,7 +34,8 @@ public:
     {
         cmdNew = 0x2000, cmdOpen, cmdSave, cmdSaveAs,
         cmdUndo, cmdRedo,
-        cmdAudioOnOff, cmdEditPatch
+        cmdAudioOnOff, cmdEditPatch,
+        cmdPlayStop, cmdToStart, cmdPatchMode
     };
 
     juce::ApplicationCommandTarget* getNextCommandTarget() override   { return nullptr; }
@@ -63,9 +67,11 @@ private:
     void updateAudioOnButton();
     void updateWindowTitle();
     void timerCallback() override;
+    void addLaneForParameter (int paramIndex);
 
     PluginHost host;
     Project project { host };
+    AutomationController controller { project, host };
     juce::ApplicationCommandManager commandManager;
 
     juce::TextButton scanButton    { "Plugins..." },
@@ -77,6 +83,8 @@ private:
     juce::ToggleButton heldNoteToggle { "Held note" };
     juce::Slider     noteSlider, velocitySlider;
 
+    TransportBar transportBar { project, host, controller };
+    LanesView lanesView { project, host, controller };
     ParameterListComponent parameterList;
     juce::String statusText, lastUndoState;
 

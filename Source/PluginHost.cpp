@@ -85,7 +85,8 @@ void PluginHost::loadPlugin (const juce::PluginDescription& description,
 
             plugin = std::move (instance);
             plugin->addListener (this);
-            player.setProcessor (plugin.get());
+            engine.setPlugin (plugin.get());
+            player.setProcessor (&engine);
 
             if (auto xml = description.createXml())
                 appProperties.getUserSettings()->setValue (keyLastPlugin, xml.get());
@@ -105,6 +106,7 @@ void PluginHost::unloadPlugin()
 
     soundingNote = -1;
     player.setProcessor (nullptr);
+    engine.setPlugin (nullptr);
     plugin->removeListener (this);
     plugin.reset();
 

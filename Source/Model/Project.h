@@ -7,6 +7,7 @@
 #include <JuceHeader.h>
 #include "Identifiers.h"
 #include "../PluginHost.h"
+#include "../Engine/Automation.h"
 
 class Project : public juce::FileBasedDocument,
                 private juce::ValueTree::Listener
@@ -37,6 +38,26 @@ public:
     // Held note (undoable)
     juce::ValueTree getHeldNote()                   { return state.getChildWithName (IDs::HELDNOTE); }
     void setHeldNote (bool on, int note, int velocity);
+
+    //==============================================================================
+    // Lanes, items and points (all undoable)
+    juce::ValueTree getLanes()                      { return state.getChildWithName (IDs::LANES); }
+    double getLengthSeconds() const                 { return state[IDs::lengthSeconds]; }
+    void setLengthSeconds (double seconds);
+
+    /** Adds a lane for a parameter, with one item spanning the whole project. */
+    juce::ValueTree addLane (int paramIndex, const juce::String& paramName);
+    void removeLane (juce::ValueTree lane);
+    juce::ValueTree findLaneForParameter (int paramIndex);
+
+    juce::ValueTree addPoint (juce::ValueTree item, double time, float value);
+
+    /** An item's points as Automation::Point, sorted, times relative to the item. */
+    static std::vector<Automation::Point> getPoints (const juce::ValueTree& item);
+
+    /** Called just before / after the plugin state is read for saving, so the
+        automation can step aside and the plain patch gets saved. */
+    std::function<void()> beforeStoringPluginState, afterStoringPluginState;
 
     //==============================================================================
     /** Called after a project file has been loaded, so the UI and audio can follow. */

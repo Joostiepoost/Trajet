@@ -37,7 +37,8 @@ ParameterListComponent::~ParameterListComponent()
 void ParameterListComponent::setPlugin (juce::AudioPluginInstance* newPlugin)
 {
     plugin = newPlugin;
-    titleLabel.setText (plugin != nullptr ? "Parameters of " + plugin->getName() : juce::String ("Parameters"),
+    titleLabel.setText (plugin != nullptr ? "Parameters of " + plugin->getName() + "  (double-click to add a lane)"
+                                         : juce::String ("Parameters"),
                         juce::dontSendNotification);
     rebuildVisibleList();
 }
@@ -141,6 +142,12 @@ void ParameterListComponent::paintCell (juce::Graphics& g, int row, int columnId
         default:
             break;
     }
+}
+
+void ParameterListComponent::cellDoubleClicked (int row, int, const juce::MouseEvent&)
+{
+    if (juce::isPositiveAndBelow (row, (int) visible.size()) && onParameterDoubleClicked)
+        onParameterDoubleClicked (visible[(size_t) row]);
 }
 
 void ParameterListComponent::timerCallback()

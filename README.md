@@ -28,7 +28,8 @@ Other options:
 | --- | --- | --- |
 | 0 | Toolchain: blank window | done |
 | 1 | Plugin host: scan, load, open editor, audio settings, parameter list, held note, audio on/off | done |
-| 2 | Projects: new, open, save (with the plugin's patch), undo/redo, menu bar | testing |
+| 2 | Projects: new, open, save (with the plugin's patch), undo/redo, menu bar | done |
+| 3 | Playback engine: transport, lanes with points, automation driving the plugin, chase / patch | testing |
 
 ## Using step 1
 
@@ -49,3 +50,11 @@ The last loaded plugin is reloaded automatically when Trajet starts.
 - **Edit menu**: Undo (⌘Z) and Redo (⇧⌘Z). For now only the held-note settings are undoable; lanes and points join from step 3 on.
 - **Audio menu**: audio processing on/off (⇧⌘A) and the plugin's panel (⌘E).
 - Trajet reopens the last project when it starts, and asks to save unsaved changes when you quit.
+
+## Using step 3
+
+- **Add a lane**: double-click a parameter in the list at the bottom (filter first, e.g. `timbre`).
+- **Points** (temporary editor, step 4 brings the real one): click in a lane to add a point and keep dragging to place it; drag a point to move it; double-click a point to delete it; right-click a point to choose the shape of the segment that starts there (linear, curve slow/fast start, smooth, hold). Undo works for all of it.
+- **Transport**: Play/Stop (Space), back to start (Return), Loop (whole project). Click or drag in the time ruler to move the playhead.
+- **Score vs patch**: when you move the playhead or press Play, the plugin follows the score: stopped, it sounds like the score at the playhead. **Patch** (or the P key) shows the plain patch instead, so you can edit the starting state; the ruler shows which one is active. Before a lane's first point the patch value applies. The project always saves the plain patch.
+- **Length (s)** sets the project length. **Live update** sets how often parameters are updated during playback: *per buffer* (default) or finer, at more CPU.

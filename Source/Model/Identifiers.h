@@ -9,7 +9,10 @@
 //   PROJECT  (formatVersion, lengthSeconds)
 //     PLUGIN   (description = XML text, state = base64 text)
 //     HELDNOTE (on, note, velocity)
-//     LANES    -- lanes, groups, items and points arrive in steps 3-6
+//     LANES
+//       LANE   (laneId, paramIndex, paramName, name)
+//         ITEM (start, length, timebase)          -- seconds; musical items in step 6
+//           POINT (time, value, shape, tension)   -- time relative to the item start
 
 #pragma once
 
@@ -24,6 +27,9 @@ namespace IDs
     TRAJET_ID (PLUGIN)
     TRAJET_ID (HELDNOTE)
     TRAJET_ID (LANES)
+    TRAJET_ID (LANE)
+    TRAJET_ID (ITEM)
+    TRAJET_ID (POINT)
 
     // PROJECT properties
     TRAJET_ID (formatVersion)
@@ -37,6 +43,23 @@ namespace IDs
     TRAJET_ID (on)
     TRAJET_ID (note)
     TRAJET_ID (velocity)
+
+    // LANE properties
+    TRAJET_ID (laneId)
+    TRAJET_ID (paramIndex)
+    TRAJET_ID (paramName)
+    TRAJET_ID (name)
+
+    // ITEM properties
+    TRAJET_ID (start)
+    TRAJET_ID (length)
+    TRAJET_ID (timebase)
+
+    // POINT properties
+    TRAJET_ID (time)
+    TRAJET_ID (value)
+    TRAJET_ID (shape)
+    TRAJET_ID (tension)
 
     #undef TRAJET_ID
 }

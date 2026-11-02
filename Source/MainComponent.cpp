@@ -88,7 +88,10 @@ MainComponent::MainComponent()
         s->onValueChange = [this] { heldNoteControlsChanged(); };
     }
 
+    addAndMakeVisible (transportBar);
+    addAndMakeVisible (lanesView);
     addAndMakeVisible (parameterList);
+    parameterList.onParameterDoubleClicked = [this] (int index) { addLaneForParameter (index); };
 
     // Commands, keyboard shortcuts and the macOS menu bar.
     commandManager.registerAllCommandsForTarget (this);
@@ -312,6 +315,7 @@ void MainComponent::loadPluginFromProject()
         else
         {
             safeThis->project.restorePluginState();
+            safeThis->controller.pluginReady();   // start in patch mode, from the restored patch
 
             // Restoring the patch makes the plugin report changes; those are not edits.
             juce::Timer::callAfterDelay (500, [safeThis]
@@ -389,6 +393,7 @@ void MainComponent::pluginChanged()
 
     editButton.setEnabled (plugin != nullptr);
     parameterList.setPlugin (plugin);
+    controller.pluginReady();
     commandManager.commandStatusChanged();
     repaint();
 }
@@ -439,6 +444,25 @@ void MainComponent::updateAudioOnButton()
 
 //==============================================================================
 
+void MainComponent::addLaneForParameter (int paramIndex)
+{
+    auto* plugin = host.getPlugin();
+    if (plugin == nullptr || ! juce::isPositiveAndBelow (paramIndex, plugin->getParameters().size()))
+        return;
+
+    if (project.findLaneForParameter (paramIndex).isValid())
+    {
+        statusText = "That parameter already has a lane.";
+        repaint();
+        juce::Component::SafePointer<MainComponent> safeThis (this);
+        juce::Timer::callAfterDelay (2500, [safeThis] { if (safeThis != nullptr) { safeThis->statusText = {}; safeThis->repaint(); } });
+        return;
+    }
+
+    project.getUndoManager().beginNewTransaction ("Add lane");
+    project.addLane (paramIndex, plugin->getParameters()[paramIndex]->getName (128));
+}
+
 void MainComponent::updateWindowTitle()
 {
     if (auto* window = findParentComponentOfClass<juce::DocumentWindow>())
@@ -475,7 +499,8 @@ void MainComponent::timerCallback()
 
 void MainComponent::getAllCommands (juce::Array<juce::CommandID>& commands)
 {
-    commands.addArray ({ cmdNew, cmdOpen, cmdSave, cmdSaveAs, cmdUndo, cmdRedo, cmdAudioOnOff, cmdEditPatch });
+    commands.addArray ({ cmdNew, cmdOpen, cmdSave, cmdSaveAs, cmdUndo, cmdRedo, cmdAudioOnOff, cmdEditPatch,
+                         cmdPlayStop, cmdToStart, cmdPatchMode });
 }
 
 void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommandInfo& info)
@@ -525,6 +550,24 @@ void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommand
             info.addDefaultKeypress ('e', cmd);
             break;
 
+        case cmdPlayStop:
+            info.setInfo ("Play / stop", "Start or stop playback", "Transport", 0);
+            info.setActive (host.getPlugin() != nullptr);
+            info.addDefaultKeypress (juce::KeyPress::spaceKey, 0);
+            break;
+
+        case cmdToStart:
+            info.setInfo ("Back to start", "Move the playhead to the start", "Transport", 0);
+            info.addDefaultKeypress (juce::KeyPress::returnKey, 0);
+            break;
+
+        case cmdPatchMode:
+            info.setInfo ("Show patch", "Show the plain patch (off: follow the score)", "Transport", 0);
+            info.setTicked (controller.isPatchMode());
+            info.setActive (host.getPlugin() != nullptr);
+            info.addDefaultKeypress ('p', 0);
+            break;
+
         default: break;
     }
 }
@@ -541,6 +584,9 @@ bool MainComponent::perform (const InvocationInfo& info)
         case cmdRedo:       project.getUndoManager().redo(); break;
         case cmdAudioOnOff: setAudioEnabled (! host.isAudioEnabled()); break;
         case cmdEditPatch:  togglePluginWindow(); break;
+        case cmdPlayStop:   controller.togglePlay(); break;
+        case cmdToStart:    controller.toStart(); break;
+        case cmdPatchMode:  controller.setPatchMode (! controller.isPatchMode()); break;
         default:            return false;
     }
 
@@ -550,7 +596,7 @@ bool MainComponent::perform (const InvocationInfo& info)
 
 juce::StringArray MainComponent::getMenuBarNames()
 {
-    return { "File", "Edit", "Audio" };
+    return { "File", "Edit", "Transport", "Audio" };
 }
 
 juce::PopupMenu MainComponent::getMenuForIndex (int menuIndex, const juce::String&)
@@ -571,6 +617,13 @@ juce::PopupMenu MainComponent::getMenuForIndex (int menuIndex, const juce::Strin
         menu.addCommandItem (&commandManager, cmdRedo);
     }
     else if (menuIndex == 2)
+    {
+        menu.addCommandItem (&commandManager, cmdPlayStop);
+        menu.addCommandItem (&commandManager, cmdToStart);
+        menu.addSeparator();
+        menu.addCommandItem (&commandManager, cmdPatchMode);
+    }
+    else if (menuIndex == 3)
     {
         menu.addCommandItem (&commandManager, cmdAudioOnOff);
         menu.addCommandItem (&commandManager, cmdEditPatch);
@@ -636,5 +689,7 @@ void MainComponent::resized()
 
     pluginLabel.setBounds (toolbar);
 
-    parameterList.setBounds (area);
+    transportBar.setBounds (area.removeFromTop (40));
+    parameterList.setBounds (area.removeFromBottom (juce::jmax (180, area.getHeight() / 3)));
+    lanesView.setBounds (area);
 }

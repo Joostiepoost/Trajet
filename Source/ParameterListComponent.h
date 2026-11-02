@@ -19,6 +19,9 @@ public:
     void resized() override;
     void paint (juce::Graphics&) override;
 
+    /** Called with the parameter index when a row is double-clicked. */
+    std::function<void (int)> onParameterDoubleClicked;
+
 private:
     enum ColumnIds { colIndex = 1, colName, colValue, colBar };
 
@@ -26,6 +29,7 @@ private:
     int getNumRows() override;
     void paintRowBackground (juce::Graphics&, int row, int width, int height, bool selected) override;
     void paintCell (juce::Graphics&, int row, int columnId, int width, int height, bool selected) override;
+    void cellDoubleClicked (int row, int columnId, const juce::MouseEvent&) override;
 
     // Timer: refresh values while you turn dials in the plugin's editor.
     void timerCallback() override;

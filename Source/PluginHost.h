@@ -7,6 +7,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Engine/AutomationEngine.h"
 
 class PluginHost : private juce::ChangeListener,
                    private juce::AudioProcessorListener
@@ -35,6 +36,9 @@ public:
 
     juce::AudioPluginInstance* getPlugin() const noexcept   { return plugin.get(); }
 
+    /** The transport and automation engine that drives the plugin. */
+    AutomationEngine& getEngine() noexcept                  { return engine; }
+
     /** The plugin loaded last time the app ran, if any. */
     std::unique_ptr<juce::PluginDescription> getLastPluginDescription();
 
@@ -60,7 +64,13 @@ private:
     void changeListenerCallback (juce::ChangeBroadcaster*) override;
 
     // AudioProcessorListener: may be called from any thread, so it only sets a flag.
-    void audioProcessorParameterChanged (juce::AudioProcessor*, int, float) override   { patchChanged = true; }
+    void audioProcessorParameterChanged (juce::AudioProcessor*, int index, float) override
+    {
+        // Values written by the automation are not patch edits.
+        if (engine.isParameterAutomated (index) && (! engine.isPatchMode() || engine.areWritesPaused()))
+            return;
+        patchChanged = true;
+    }
     void audioProcessorChanged (juce::AudioProcessor*, const ChangeDetails& d) override
     {
         if (d.parameterInfoChanged || d.programChanged || d.nonParameterStateChanged)
@@ -70,6 +80,7 @@ private:
     void sendNoteOff();
     bool deviceIsRunning() const;
 
+    AutomationEngine engine;
     juce::AudioProcessorPlayer player;
     std::unique_ptr<juce::AudioPluginInstance> plugin;
 
