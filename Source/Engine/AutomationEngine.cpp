@@ -172,6 +172,18 @@ void AutomationEngine::playNotes (juce::int64 pos, int len, bool isPlaying)
     const double rate = currentRate.load();
     const juce::int64 chunkEnd = pos + len;
 
+    // Note-offs due in this piece for notes already sounding: before any new note-on,
+    // so a synth with few voices frees them first.
+    for (int p = 0; p < 128; ++p)
+    {
+        const auto end = noteEnds[(size_t) p];
+        if (end >= 0 && end < chunkEnd)
+        {
+            chunkMidi.addEvent (juce::MidiMessage::noteOff (1, p), (int) juce::jlimit ((juce::int64) 0, (juce::int64) len - 1, end - pos));
+            noteEnds[(size_t) p] = -1;
+        }
+    }
+
     // Note-ons starting in this piece.
     const auto& notes = snapshot->notes;
     const double t0 = ((double) pos - 0.5) / rate;     // half a sample early: rounding never skips a note
@@ -193,7 +205,7 @@ void AutomationEngine::playNotes (juce::int64 pos, int len, bool isPlaying)
         noteEnds[p] = juce::jmax (startSample + 1, (juce::int64) std::llround (it->end * rate));
     }
 
-    // Note-offs due in this piece (also of notes that started in it).
+    // Note-offs of notes that started and ended within this piece.
     for (int p = 0; p < 128; ++p)
     {
         const auto end = noteEnds[(size_t) p];

@@ -90,7 +90,14 @@ MainComponent::MainComponent()
 
     addAndMakeVisible (transportBar);
     addAndMakeVisible (scoreView);
-    addAndMakeVisible (inspector);
+    const juce::Colour tabColour (0xff262a31);
+    rightTabs.addTab ("Inspector", tabColour, &inspector, false);
+    rightTabs.addTab ("Library", tabColour, &libraryPanel, false);
+    rightTabs.setTabBarDepth (26);
+    rightTabs.setOutline (0);
+    addAndMakeVisible (rightTabs);
+    libraryPanel.showStatus = [this] (const juce::String& text) { showStatus (text); };
+    scoreView.onSaveToLibrary = [this] { saveSelectedItemToLibrary(); };
     addAndMakeVisible (outputStrip);
     transportBar.onAddLane   = [this] (juce::Component& b) { showParameterPicker (b); };
     transportBar.onZoomToFit = [this] { scoreView.zoomToFit(); };
@@ -669,7 +676,8 @@ void MainComponent::getAllCommands (juce::Array<juce::CommandID>& commands)
                          cmdNudgeLeft, cmdNudgeRight, cmdNudgeUp, cmdNudgeDown,
                          cmdNudgeLeftBig, cmdNudgeRightBig, cmdNudgeUpBig, cmdNudgeDownBig,
                          cmdSelectAll, cmdSmooth, cmdThin, cmdReverse, cmdInvert, cmdOpenItemEditor,
-                         cmdRender, cmdExportCsv, cmdNewGroup, cmdFoldAll, cmdOpenAll, cmdAddNoteLane });
+                         cmdRender, cmdExportCsv, cmdNewGroup, cmdFoldAll, cmdOpenAll, cmdAddNoteLane,
+                         cmdExportLanes, cmdSaveToLibrary, cmdShowLibrary });
 }
 
 void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommandInfo& info)
@@ -687,6 +695,14 @@ void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommand
                         info.addDefaultKeypress ('s', cmd); break;
         case cmdSaveAs: info.setInfo ("Save as...", "Save the project under a new name", "File", 0);
                         info.addDefaultKeypress ('s', cmd | shift); break;
+        case cmdExportLanes: info.setInfo ("Export lanes...", "Write lanes as a MIDI file or for REAPER", "File", 0);
+                        info.addDefaultKeypress ('e', cmd | juce::ModifierKeys::altModifier);
+                        info.setActive (! host.isRendering()); break;
+        case cmdSaveToLibrary: info.setInfo ("Save item to library...", "Keep the selected item for reuse", "Edit", 0);
+                        info.addDefaultKeypress ('l', cmd);
+                        info.setActive (scoreView.getSelection().getItems().size() == 1); break;
+        case cmdShowLibrary: info.setInfo ("Show library", "Show the library of saved items", "View", 0);
+                        info.addDefaultKeypress ('l', cmd | shift); break;
         case cmdAddNoteLane: info.setInfo ("Add note lane", "A lane of MIDI notes for the plugin (with a piano roll)", "Edit", 0);
                         info.addDefaultKeypress ('n', cmd | shift); break;
         case cmdNewGroup: info.setInfo ("New group from lane", "Make a group holding the active lane", "Edit", 0);
@@ -820,6 +836,9 @@ bool MainComponent::perform (const InvocationInfo& info)
         case cmdRender:     showRenderDialog (false); break;
         case cmdNewGroup:   scoreView.groupActiveLane(); break;
         case cmdAddNoteLane: addNoteLane(); break;
+        case cmdExportLanes: showExportDialog(); break;
+        case cmdSaveToLibrary: saveSelectedItemToLibrary(); break;
+        case cmdShowLibrary: showLibrary(); break;
         case cmdFoldAll:    scoreView.setAllGroupsFolded (true); break;
         case cmdOpenAll:    scoreView.setAllGroupsFolded (false); break;
         case cmdExportCsv:  showRenderDialog (true); break;
@@ -892,6 +911,7 @@ juce::PopupMenu MainComponent::getMenuForIndex (int menuIndex, const juce::Strin
         menu.addSeparator();
         menu.addCommandItem (&commandManager, cmdRender);
         menu.addCommandItem (&commandManager, cmdExportCsv);
+        menu.addCommandItem (&commandManager, cmdExportLanes);
     }
     else if (menuIndex == 1)
     {
@@ -906,6 +926,7 @@ juce::PopupMenu MainComponent::getMenuForIndex (int menuIndex, const juce::Strin
         menu.addSeparator();
         menu.addCommandItem (&commandManager, cmdAddNoteLane);
         menu.addCommandItem (&commandManager, cmdNewGroup);
+        menu.addCommandItem (&commandManager, cmdSaveToLibrary);
         menu.addSeparator();
         menu.addCommandItem (&commandManager, cmdSnap);
     }
@@ -928,6 +949,8 @@ juce::PopupMenu MainComponent::getMenuForIndex (int menuIndex, const juce::Strin
         menu.addSeparator();
         menu.addCommandItem (&commandManager, cmdFoldAll);
         menu.addCommandItem (&commandManager, cmdOpenAll);
+        menu.addSeparator();
+        menu.addCommandItem (&commandManager, cmdShowLibrary);
     }
     else if (menuIndex == 4)
     {
@@ -1014,7 +1037,7 @@ void MainComponent::resized()
     pluginLabel.setBounds (toolbar);
 
     transportBar.setBounds (area.removeFromTop (40));
-    inspector.setBounds (area.removeFromRight (230));
+    rightTabs.setBounds (area.removeFromRight (250));
     scoreView.setBounds (area);
 }
 
@@ -1088,4 +1111,87 @@ void MainComponent::showRenderDialog (bool csvOnly)
             commandManager.commandStatusChanged();
         });
     });
+}
+
+//==============================================================================
+// Export
+
+void MainComponent::showExportDialog()
+{
+    ExportSettings initial;
+    initial.load (*host.appProperties.getUserSettings());
+
+    ExportDialog::show (initial, this, [this] (ExportSettings s)
+    {
+        s.save (*host.appProperties.getUserSettings());
+
+        const bool folder = s.format == ExportSettings::Format::reaperItems;
+        const auto ext = s.format == ExportSettings::Format::midi ? juce::String (".mid") : juce::String (".rpp");
+        auto start = folder ? defaultExportFile ("").getParentDirectory().getChildFile (defaultExportFile ("").getFileName() + " automation items")
+                            : defaultExportFile (ext);
+        if (folder) start.createDirectory();
+
+        exportChooser = std::make_unique<juce::FileChooser> (folder ? "Choose a folder for the automation items" : "Export lanes",
+                                                             start, folder ? juce::String() : "*" + ext);
+        const auto chooserFlags = folder ? juce::FileBrowserComponent::openMode | juce::FileBrowserComponent::canSelectDirectories
+                                  : juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles
+                                        | juce::FileBrowserComponent::warnAboutOverwriting;
+
+        exportChooser->launchAsync (chooserFlags, [this, s, folder, ext] (const juce::FileChooser& fc) mutable
+        {
+            auto file = fc.getResult();
+            if (file == juce::File()) return;
+            s.output = folder ? file : file.withFileExtension (ext);
+            lastExportFolder = folder ? file.getParentDirectory() : file.getParentDirectory();
+
+            juce::String summary;
+            const auto error = Exporter::run (s, project, controller, scoreView.getSelection().getActiveLane(), summary);
+            const auto message = error.isEmpty() ? summary : "Export failed: " + error;
+            showStatus (message);
+            juce::AlertWindow::showMessageBoxAsync (error.isEmpty() ? juce::MessageBoxIconType::InfoIcon : juce::MessageBoxIconType::WarningIcon,
+                                                    "Export", message, "OK", this);
+        });
+    });
+}
+
+//==============================================================================
+// Library
+
+void MainComponent::showLibrary()
+{
+    rightTabs.setCurrentTabIndex (1);
+}
+
+void MainComponent::saveSelectedItemToLibrary()
+{
+    auto& items = scoreView.getSelection().getItems();
+    if (items.size() != 1)
+    {
+        showStatus ("Select one item to save it to the library.");
+        return;
+    }
+    auto item = items.getFirst();
+    auto lane = item.getParent();
+
+    auto* w = new juce::AlertWindow ("Save to library",
+                                     "Name and tags (separated by spaces) for this item. It is saved in "
+                                         + library.getFolder().getFullPathName() + ".",
+                                     juce::MessageBoxIconType::NoIcon, this);
+    w->addTextEditor ("name", lane[IDs::name].toString() + " " + juce::String (library.getEntries().size() + 1), "Name");
+    w->addTextEditor ("tags", {}, "Tags");
+    w->addButton ("Save", 1, juce::KeyPress (juce::KeyPress::returnKey));
+    w->addButton ("Cancel", 0, juce::KeyPress (juce::KeyPress::escapeKey));
+
+    juce::Component::SafePointer<MainComponent> safeThis (this);
+    w->enterModalState (true, juce::ModalCallbackFunction::create ([safeThis, w, item, lane] (int result)
+    {
+        if (safeThis == nullptr || result != 1) return;
+        auto tags = juce::StringArray::fromTokens (w->getTextEditorContents ("tags"), " ,", "\"");
+        tags.removeEmptyStrings();
+        juce::String error;
+        auto file = safeThis->library.save (item, w->getTextEditorContents ("name"), tags, lane[IDs::name].toString(), error);
+        safeThis->showStatus (error.isEmpty() ? "Saved to the library as " + file.getFileName() + "." : error);
+        safeThis->libraryPanel.refresh();
+        safeThis->showLibrary();
+    }), true);
 }

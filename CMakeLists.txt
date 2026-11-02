@@ -60,6 +60,10 @@ target_sources(Trajet PRIVATE
     Source/UI/OutputStrip.cpp
     Source/UI/NoteEditor.cpp
     Source/Render/Renderer.cpp
+    Source/Render/Exporter.cpp
+    Source/UI/ExportDialog.cpp
+    Source/UI/LibraryPanel.cpp
+    Source/Model/Library.cpp
     Source/Model/PointOps.cpp
     Source/UI/TransportBar.cpp)
 

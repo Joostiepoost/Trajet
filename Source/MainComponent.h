@@ -17,10 +17,13 @@
 #include "UI/TransportBar.h"
 #include "UI/RenderDialog.h"
 #include "UI/OutputStrip.h"
+#include "UI/ExportDialog.h"
+#include "UI/LibraryPanel.h"
 
 class MainComponent : public juce::Component,
                       public juce::ApplicationCommandTarget,
                       public juce::MenuBarModel,
+                      public juce::DragAndDropContainer,
                       private juce::Timer
 {
 public:
@@ -47,7 +50,7 @@ public:
         cmdNudgeLeftBig, cmdNudgeRightBig, cmdNudgeUpBig, cmdNudgeDownBig,
         cmdSelectAll, cmdSmooth, cmdThin, cmdReverse, cmdInvert, cmdOpenItemEditor,
         cmdRender, cmdExportCsv,
-        cmdNewGroup, cmdFoldAll, cmdOpenAll, cmdAddNoteLane
+        cmdNewGroup, cmdFoldAll, cmdOpenAll, cmdAddNoteLane, cmdExportLanes, cmdSaveToLibrary, cmdShowLibrary
     };
 
     juce::ApplicationCommandTarget* getNextCommandTarget() override   { return nullptr; }
@@ -88,6 +91,9 @@ private:
     void showStatus (const juce::String& text);
     void openItemEditor (juce::ValueTree item);
     void showRenderDialog (bool csvOnly);
+    void showExportDialog();
+    void saveSelectedItemToLibrary();
+    void showLibrary();
     juce::File defaultExportFile (const juce::String& extension) const;
 
     PluginHost host;
@@ -108,6 +114,9 @@ private:
     TransportBar transportBar { project, host, controller, snap };
     ScoreView scoreView { project, host, controller, snap };
     Inspector inspector { project, host, controller, scoreView.getSelection() };
+    Library library { *host.appProperties.getUserSettings() };
+    LibraryPanel libraryPanel { library, project, scoreView.getSelection(), [this] { return host.getEngine().getPositionSeconds(); } };
+    juce::TabbedComponent rightTabs { juce::TabbedButtonBar::TabsAtTop };
     OutputStrip outputStrip { project, host };
     juce::String statusText, lastUndoState;
 

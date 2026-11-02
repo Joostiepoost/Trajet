@@ -44,6 +44,7 @@ public:
 
     std::function<void (const juce::String&)> onStatus;
     std::function<void (juce::ValueTree item)> onOpenItemEditor;
+    std::function<void()> onSaveToLibrary;
 
     void paint (juce::Graphics&) override;
     void paintOverChildren (juce::Graphics&) override;
