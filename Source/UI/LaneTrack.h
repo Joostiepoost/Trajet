@@ -60,8 +60,17 @@ public:
 
     static constexpr int stripHeight = 14;
 
+    /** Points of this lane whose dots lie inside a rectangle (local coordinates). */
+    void collectPointsIn (juce::Rectangle<float> localArea, juce::Array<juce::ValueTree>& result) const;
+
+    juce::ValueTree getLane() const     { return lane; }
+
+    float valueToY (float v) const;
+    float yToValue (float y) const;
+
 private:
-    enum class Mode { none, moveItem, copyItem, trimLeft, trimRight, movePoints, draw, ramp, bend };
+    enum class Mode { none, moveItem, copyItem, trimLeft, trimRight, movePoints, draw, ramp, bend, rubberBand, scale };
+    enum class Handle { none, left, right, top, bottom };
     enum class Zone { none, strip, leftEdge, rightEdge, curve };
 
     juce::ValueTree itemAt (float x) const;
@@ -70,8 +79,6 @@ private:
     juce::ValueTree pointAt (const juce::ValueTree& item, juce::Point<float> pos) const;
 
     juce::Rectangle<float> curveArea() const;
-    float valueToY (float v) const;
-    float yToValue (float y) const;
     double relativeTime (const juce::ValueTree& item, float x, bool bypassSnap) const;
     juce::AudioProcessorParameter* getParameter() const;
     juce::String valueText (float v) const;
@@ -82,6 +89,11 @@ private:
     void drawFreehand (const juce::MouseEvent&);
     void finishFreehand();
     void finishRamp();
+    juce::Array<juce::ValueTree> selectedPointsHere() const;
+    juce::Rectangle<float> selectionBox() const;
+    Handle handleAt (juce::Point<float>) const;
+    void dragScale (const juce::MouseEvent&);
+    bool startBend (const juce::ValueTree& item, float x);
     void showPointMenu (juce::ValueTree point);
     void showItemMenu (juce::ValueTree item);
     void editPointNumerically (juce::ValueTree point);
@@ -101,6 +113,10 @@ private:
     float lastDrawX = 0.0f;
     double lastDrawTime = 0.0;
     bool bendRising = true, copyCreated = false;
+    Handle scaleHandle = Handle::none;
+    double boxT0 = 0.0, boxT1 = 0.0;          // absolute times of the selection box
+    float boxV0 = 0.0f, boxV1 = 0.0f;         // its value range
+    juce::Rectangle<float> rubberRect;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LaneTrack)
 };

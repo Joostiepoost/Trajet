@@ -14,6 +14,7 @@
 #include "../Engine/AutomationController.h"
 #include "EditorState.h"
 #include "LaneTrack.h"
+#include "../Model/PointOps.h"
 
 class ScoreView : public juce::Component,
                   private juce::ChangeListener,
@@ -34,11 +35,15 @@ public:
     void cutSelection();
     void paste();
     void duplicateSelection();
+    void nudge (int direction, bool vertical, bool large);   // arrow keys
+    void applyPointOp (const juce::String& name);            // "smooth", "thin", "reverse", "invert"
+    void selectAllInActiveLane();
     void zoomIn()                           { timeView.zoomAround (1.5, (float) trackWidth() * 0.5f); }
     void zoomOut()                          { timeView.zoomAround (1.0 / 1.5, (float) trackWidth() * 0.5f); }
     void zoomToFit()                        { timeView.fitAll(); }
 
     std::function<void (const juce::String&)> onStatus;
+    std::function<void (juce::ValueTree item)> onOpenItemEditor;
 
     void paint (juce::Graphics&) override;
     void paintOverChildren (juce::Graphics&) override;
@@ -89,11 +94,16 @@ private:
     juce::ScrollBar hScroll { false };
     juce::Label emptyHint;
 
+    void rubberBand (juce::Rectangle<int> screenArea, bool add, bool finished);
+    juce::Rectangle<int> rubberArea;   // in this component's coordinates
+    juce::Array<juce::ValueTree> selectionBeforeRubberBand;
+
     int dropIndicatorY = -1;
     double lastPosition = -1.0;
     bool rebuildPending = false, handlingWheel = false;
 
     static juce::Array<juce::ValueTree> clipboard;   // copied items (with their lane id)
+    static bool lastCopyWasPoints;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (ScoreView)
 };

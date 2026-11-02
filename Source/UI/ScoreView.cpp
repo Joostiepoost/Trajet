@@ -1,6 +1,7 @@
 #include "ScoreView.h"
 
 juce::Array<juce::ValueTree> ScoreView::clipboard;
+bool ScoreView::lastCopyWasPoints = false;
 
 namespace
 {
@@ -313,6 +314,8 @@ ScoreView::ScoreView (Project& p, PluginHost& h, AutomationController& c, SnapSe
 {
     trackContext.showStatus  = [this] (const juce::String& text) { showStatus (text); };
     trackContext.handleWheel = [this] (const juce::MouseEvent& e, const juce::MouseWheelDetails& w, juce::Component& src) { handleWheel (e, w, src); };
+    trackContext.rubberBand  = [this] (juce::Rectangle<int> area, bool add, bool finished) { rubberBand (area, add, finished); };
+    trackContext.openItemEditor = [this] (juce::ValueTree item) { if (onOpenItemEditor) onOpenItemEditor (item); };
     trackContext.laneAt      = [this] (juce::Point<int> screenPos)
     {
         for (auto* row : rows)
@@ -409,6 +412,14 @@ void ScoreView::paint (juce::Graphics& g)
 
 void ScoreView::paintOverChildren (juce::Graphics& g)
 {
+    if (! rubberArea.isEmpty())
+    {
+        g.setColour (accent.withAlpha (0.10f));
+        g.fillRect (rubberArea);
+        g.setColour (accent.withAlpha (0.7f));
+        g.drawRect (rubberArea, 1);
+    }
+
     if (dropIndicatorY >= 0)
     {
         const int y = viewport.getY() + dropIndicatorY - viewport.getViewPositionY();
@@ -505,7 +516,81 @@ void ScoreView::laneDragEnded (LaneRow& row)
 }
 
 //==============================================================================
+// Rubber band across lanes
+
+void ScoreView::rubberBand (juce::Rectangle<int> screenArea, bool add, bool finished)
+{
+    if (rubberArea.isEmpty())
+        selectionBeforeRubberBand = add ? selection.getPoints() : juce::Array<juce::ValueTree>();
+
+    juce::Array<juce::ValueTree> found = selectionBeforeRubberBand;
+    for (auto* row : rows)
+    {
+        auto local = row->track.getLocalArea (nullptr, screenArea).toFloat();
+        if (local.intersects (row->track.getLocalBounds().toFloat()))
+            row->track.collectPointsIn (local, found);
+    }
+
+    selection.clear();
+    for (auto& p : found)
+        selection.selectPoint (p, true);
+
+    rubberArea = finished ? juce::Rectangle<int>() : getLocalArea (nullptr, screenArea);
+    repaint();
+}
+
+//==============================================================================
 // Editing commands
+
+void ScoreView::nudge (int direction, bool vertical, bool large)
+{
+    auto points = selection.getPoints();
+    if (points.isEmpty())
+        return;
+
+    auto& um = project.getUndoManager();
+    um.beginNewTransaction ("Nudge points");
+    const double dt = vertical ? 0.0 : direction * snap.getGrid() * (large ? 10.0 : 1.0);
+    const float dv = vertical ? (float) direction * (large ? 0.1f : 0.01f) : 0.0f;
+    PointOps::nudge (points, dt, dv, um);
+}
+
+void ScoreView::applyPointOp (const juce::String& name)
+{
+    auto points = selection.getPoints();
+    if (points.size() < 2)
+    {
+        showStatus ("Select two or more points first.");
+        return;
+    }
+
+    auto& um = project.getUndoManager();
+    um.beginNewTransaction (name.substring (0, 1).toUpperCase() + name.substring (1) + " points");
+
+    if (name == "smooth")       PointOps::smooth (points, um);
+    else if (name == "reverse") PointOps::reverse (points, um);
+    else if (name == "invert")  PointOps::invert (points, um);
+    else if (name == "thin")
+    {
+        const int removed = PointOps::thin (points, um);
+        selection.prune();
+        showStatus (juce::String (removed) + " point(s) removed.");
+    }
+}
+
+void ScoreView::selectAllInActiveLane()
+{
+    auto lane = selection.getActiveLane();
+    if (! lane.isValid())
+        return;
+
+    selection.clear();
+    for (auto item : lane)
+        for (auto p : item)
+            if (p.hasType (IDs::POINT))
+                selection.selectPoint (p, true);
+    selection.setActiveLane (lane);
+}
 
 void ScoreView::deleteSelection()
 {
@@ -532,6 +617,15 @@ void ScoreView::deleteSelection()
 
 void ScoreView::copySelection()
 {
+    if (! selection.getPoints().isEmpty())
+    {
+        PointOps::copy (selection.getPoints());
+        lastCopyWasPoints = true;
+        showStatus (juce::String (selection.getPoints().size()) + " point(s) copied.");
+        return;
+    }
+
+    lastCopyWasPoints = false;
     clipboard.clearQuick();
     for (auto& item : selection.getItems())
     {
@@ -545,6 +639,13 @@ void ScoreView::copySelection()
 
 void ScoreView::cutSelection()
 {
+    if (! selection.getPoints().isEmpty())
+    {
+        copySelection();
+        deleteSelection();
+        return;
+    }
+
     copySelection();
     if (! clipboard.isEmpty())
     {
@@ -565,6 +666,31 @@ void ScoreView::cutSelection()
 
 void ScoreView::paste()
 {
+    if (lastCopyWasPoints && PointOps::hasCopiedPoints())
+    {
+        // Points go into the item under the playhead, in the selected or active lane.
+        const double at = snap.snap (host.getEngine().getPositionSeconds());
+        auto lane = selection.getItems().size() == 1 ? selection.getItems().getFirst().getParent() : selection.getActiveLane();
+        juce::ValueTree target;
+        for (auto item : lane)
+            if (item.hasType (IDs::ITEM) && at >= (double) item[IDs::start] - 1.0e-9
+                && at <= (double) item[IDs::start] + (double) item[IDs::length] + 1.0e-9)
+                target = item;
+
+        if (! target.isValid())
+        {
+            showStatus ("To paste points, put the playhead inside an item of the lane (click in it).");
+            return;
+        }
+
+        auto& um = project.getUndoManager();
+        um.beginNewTransaction ("Paste points");
+        auto added = PointOps::paste (target, at, um);
+        selection.clear();
+        for (auto& p : added) selection.selectPoint (p, true);
+        return;
+    }
+
     if (clipboard.isEmpty())
         return;
 

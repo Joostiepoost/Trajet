@@ -53,6 +53,8 @@ target_sources(Trajet PRIVATE
     Source/UI/ScoreView.cpp
     Source/UI/LaneTrack.cpp
     Source/UI/Inspector.cpp
+    Source/UI/ItemEditor.cpp
+    Source/Model/PointOps.cpp
     Source/UI/TransportBar.cpp)
 
 target_compile_definitions(Trajet PRIVATE

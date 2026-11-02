@@ -12,6 +12,7 @@
 #include "Engine/AutomationController.h"
 #include "UI/ScoreView.h"
 #include "UI/Inspector.h"
+#include "UI/ItemEditor.h"
 #include "UI/TransportBar.h"
 
 class MainComponent : public juce::Component,
@@ -38,7 +39,10 @@ public:
         cmdAudioOnOff, cmdEditPatch,
         cmdPlayStop, cmdToStart, cmdPatchMode,
         cmdDelete, cmdCopy, cmdCut, cmdPaste, cmdDuplicate, cmdSnap,
-        cmdZoomIn, cmdZoomOut, cmdZoomFit
+        cmdZoomIn, cmdZoomOut, cmdZoomFit,
+        cmdNudgeLeft, cmdNudgeRight, cmdNudgeUp, cmdNudgeDown,
+        cmdNudgeLeftBig, cmdNudgeRightBig, cmdNudgeUpBig, cmdNudgeDownBig,
+        cmdSelectAll, cmdSmooth, cmdThin, cmdReverse, cmdInvert, cmdOpenItemEditor
     };
 
     juce::ApplicationCommandTarget* getNextCommandTarget() override   { return nullptr; }
@@ -73,6 +77,7 @@ private:
     void addLaneForParameter (int paramIndex);
     void showParameterPicker (juce::Component& button);
     void showStatus (const juce::String& text);
+    void openItemEditor (juce::ValueTree item);
 
     PluginHost host;
     Project project { host };
@@ -96,6 +101,7 @@ private:
 
     std::unique_ptr<PluginWindow> pluginWindow;
     std::unique_ptr<juce::DocumentWindow> scannerWindow;
+    std::unique_ptr<ItemEditorWindow> itemEditorWindow;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

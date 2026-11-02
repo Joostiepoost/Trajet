@@ -30,7 +30,8 @@ Other options:
 | 1 | Plugin host: scan, load, open editor, audio settings, parameter list, held note, audio on/off | done |
 | 2 | Projects: new, open, save (with the plugin's patch), undo/redo, menu bar | done |
 | 3 | Playback engine: transport, lanes with points, automation driving the plugin, chase / patch | done |
-| 4 | Main window: zoom/scroll, lane headers (reorder, resize, mute/solo, colour), items, point gestures, snap, inspector | testing |
+| 4 | Main window: zoom/scroll, lane headers (reorder, resize, mute/solo, colour), items, point gestures, snap, inspector | done |
+| 5 | Item editor, rubber-band selection, scale box, nudge, point copy/paste, smooth/thin/reverse/invert | testing |
 
 ## Using step 1
 
@@ -51,6 +52,19 @@ The last loaded plugin is reloaded automatically when Trajet starts.
 - **Edit menu**: Undo (⌘Z) and Redo (⇧⌘Z). For now only the held-note settings are undoable; lanes and points join from step 3 on.
 - **Audio menu**: audio processing on/off (⇧⌘A) and the plugin's panel (⌘E).
 - Trajet reopens the last project when it starts, and asks to save unsaved changes when you quit.
+
+## Item editor and point tools (step 5)
+
+- **Double-click inside an item** (not on a point) to open it in the **item editor**: a large view with a value axis in the plugin's units and a table of all points.
+  - Tools: **Select** (1), **Pencil** (2), **Line** (3), **Bend** (4). The modifier gestures of the main window work too.
+  - **Smooth**, **Thin**, **Reverse**, **Invert** act on the selected points, or on the whole item when none are selected.
+  - In the table, click a row to select its point; double-click a time or value to type it, or the shape to change it.
+  - ⌘Z / ⇧⌘Z undo, ⌘A select all, ⌘C/X/V points (paste at the playhead), Delete, arrows nudge. Click the small ruler to move the playhead.
+- **Rubber band** (main window too): drag on empty space to select points, across lanes. ⌘ adds to the selection.
+- **Scale**: with two or more points selected, a dashed box appears; drag its side handles to stretch in time or value (⌥: around the centre).
+- **Nudge**: arrow keys move selected points by one grid step or 1%; with ⇧, 10×.
+- **Copy points** (⌘C with points selected), click in a lane to put the playhead inside an item, ⌘V pastes them there.
+- **Points menu**: smooth, thin, reverse, invert, select all points in the active lane (⌘A), open the item editor (⇧⌘E).
 
 ## Using the main window (step 4)
 

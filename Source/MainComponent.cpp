@@ -94,6 +94,7 @@ MainComponent::MainComponent()
     transportBar.onAddLane   = [this] (juce::Component& b) { showParameterPicker (b); };
     transportBar.onZoomToFit = [this] { scoreView.zoomToFit(); };
     scoreView.onStatus       = [this] (const juce::String& text) { showStatus (text); };
+    scoreView.onOpenItemEditor = [this] (juce::ValueTree item) { openItemEditor (item); };
 
     // Snap settings are remembered between sessions.
     {
@@ -147,6 +148,7 @@ MainComponent::~MainComponent()
     project.onProjectLoaded = nullptr;
     pluginWindow = nullptr;     // the plugin's editor must go before the plugin itself
     scannerWindow = nullptr;
+    itemEditorWindow = nullptr;
 
     auto* settings = host.appProperties.getUserSettings();
     settings->setValue ("snapOn", snap.isOn());
@@ -166,6 +168,7 @@ void MainComponent::newProject()
             return;
 
         safeThis->closePluginWindow();
+        safeThis->itemEditorWindow = nullptr;
         safeThis->host.unloadPlugin();
         safeThis->project.resetToDefault();
         safeThis->updateWindowTitle();
@@ -300,6 +303,7 @@ void MainComponent::loadPluginFromMenu (const juce::PluginDescription& descripti
 void MainComponent::loadPluginFromProject()
 {
     closePluginWindow();
+    itemEditorWindow = nullptr;
     auto description = project.getPluginDescription();
 
     if (description == nullptr)
@@ -488,6 +492,30 @@ void MainComponent::showStatus (const juce::String& text)
     });
 }
 
+void MainComponent::openItemEditor (juce::ValueTree item)
+{
+    if (itemEditorWindow != nullptr)
+    {
+        if (auto* ed = itemEditorWindow->getEditor(); ed != nullptr && ed->getItem() == item)
+        {
+            itemEditorWindow->toFront (true);
+            return;
+        }
+        itemEditorWindow = nullptr;
+    }
+
+    auto editor = std::make_unique<ItemEditor> (project, host, controller, snap, scoreView.getSelection(), item);
+    juce::Component::SafePointer<MainComponent> safeThis (this);
+    itemEditorWindow = std::make_unique<ItemEditorWindow> (std::move (editor), [safeThis]
+    {
+        juce::MessageManager::callAsync ([safeThis]
+        {
+            if (safeThis != nullptr)
+                safeThis->itemEditorWindow = nullptr;
+        });
+    });
+}
+
 void MainComponent::showParameterPicker (juce::Component& button)
 {
     auto* plugin = host.getPlugin();
@@ -547,7 +575,10 @@ void MainComponent::getAllCommands (juce::Array<juce::CommandID>& commands)
     commands.addArray ({ cmdNew, cmdOpen, cmdSave, cmdSaveAs, cmdUndo, cmdRedo, cmdAudioOnOff, cmdEditPatch,
                          cmdPlayStop, cmdToStart, cmdPatchMode,
                          cmdDelete, cmdCopy, cmdCut, cmdPaste, cmdDuplicate, cmdSnap,
-                         cmdZoomIn, cmdZoomOut, cmdZoomFit });
+                         cmdZoomIn, cmdZoomOut, cmdZoomFit,
+                         cmdNudgeLeft, cmdNudgeRight, cmdNudgeUp, cmdNudgeDown,
+                         cmdNudgeLeftBig, cmdNudgeRightBig, cmdNudgeUpBig, cmdNudgeDownBig,
+                         cmdSelectAll, cmdSmooth, cmdThin, cmdReverse, cmdInvert, cmdOpenItemEditor });
 }
 
 void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommandInfo& info)
@@ -638,6 +669,34 @@ void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommand
         case cmdZoomFit:   info.setInfo ("Show whole project", "Fit the whole project in the window", "View", 0);
                            info.addDefaultKeypress ('0', cmd); break;
 
+        case cmdNudgeLeft:     info.setInfo ("Nudge left", "Move selected points one grid step earlier", "Points", 0);
+                               info.addDefaultKeypress (juce::KeyPress::leftKey, 0); break;
+        case cmdNudgeRight:    info.setInfo ("Nudge right", "Move selected points one grid step later", "Points", 0);
+                               info.addDefaultKeypress (juce::KeyPress::rightKey, 0); break;
+        case cmdNudgeUp:       info.setInfo ("Nudge up", "Raise selected points by 1%", "Points", 0);
+                               info.addDefaultKeypress (juce::KeyPress::upKey, 0); break;
+        case cmdNudgeDown:     info.setInfo ("Nudge down", "Lower selected points by 1%", "Points", 0);
+                               info.addDefaultKeypress (juce::KeyPress::downKey, 0); break;
+        case cmdNudgeLeftBig:  info.setInfo ("Nudge left x10", "", "Points", 0);
+                               info.addDefaultKeypress (juce::KeyPress::leftKey, shift); break;
+        case cmdNudgeRightBig: info.setInfo ("Nudge right x10", "", "Points", 0);
+                               info.addDefaultKeypress (juce::KeyPress::rightKey, shift); break;
+        case cmdNudgeUpBig:    info.setInfo ("Nudge up 10%", "", "Points", 0);
+                               info.addDefaultKeypress (juce::KeyPress::upKey, shift); break;
+        case cmdNudgeDownBig:  info.setInfo ("Nudge down 10%", "", "Points", 0);
+                               info.addDefaultKeypress (juce::KeyPress::downKey, shift); break;
+        case cmdSelectAll:     info.setInfo ("Select all points in lane", "Select every point of the active lane", "Points", 0);
+                               info.addDefaultKeypress ('a', cmd); break;
+        case cmdSmooth:        info.setInfo ("Smooth", "Smooth the selected points", "Points", 0); break;
+        case cmdThin:          info.setInfo ("Thin", "Remove points that hardly change the curve", "Points", 0); break;
+        case cmdReverse:       info.setInfo ("Reverse", "Mirror the selected points in time", "Points", 0); break;
+        case cmdInvert:        info.setInfo ("Invert", "Mirror the selected values", "Points", 0); break;
+        case cmdOpenItemEditor:
+            info.setInfo ("Open item editor", "Edit the selected item in its own window", "Points", 0);
+            info.setActive (scoreView.getSelection().getItems().size() == 1);
+            info.addDefaultKeypress ('e', cmd | shift);
+            break;
+
         default: break;
     }
 }
@@ -666,6 +725,23 @@ bool MainComponent::perform (const InvocationInfo& info)
         case cmdZoomIn:     scoreView.zoomIn(); break;
         case cmdZoomOut:    scoreView.zoomOut(); break;
         case cmdZoomFit:    scoreView.zoomToFit(); break;
+        case cmdNudgeLeft:      scoreView.nudge (-1, false, false); break;
+        case cmdNudgeRight:     scoreView.nudge ( 1, false, false); break;
+        case cmdNudgeUp:        scoreView.nudge ( 1, true,  false); break;
+        case cmdNudgeDown:      scoreView.nudge (-1, true,  false); break;
+        case cmdNudgeLeftBig:   scoreView.nudge (-1, false, true);  break;
+        case cmdNudgeRightBig:  scoreView.nudge ( 1, false, true);  break;
+        case cmdNudgeUpBig:     scoreView.nudge ( 1, true,  true);  break;
+        case cmdNudgeDownBig:   scoreView.nudge (-1, true,  true);  break;
+        case cmdSelectAll:      scoreView.selectAllInActiveLane(); break;
+        case cmdSmooth:         scoreView.applyPointOp ("smooth"); break;
+        case cmdThin:           scoreView.applyPointOp ("thin"); break;
+        case cmdReverse:        scoreView.applyPointOp ("reverse"); break;
+        case cmdInvert:         scoreView.applyPointOp ("invert"); break;
+        case cmdOpenItemEditor:
+            if (scoreView.getSelection().getItems().size() == 1)
+                openItemEditor (scoreView.getSelection().getItems().getFirst());
+            break;
         default:            return false;
     }
 
@@ -675,7 +751,7 @@ bool MainComponent::perform (const InvocationInfo& info)
 
 juce::StringArray MainComponent::getMenuBarNames()
 {
-    return { "File", "Edit", "View", "Transport", "Audio" };
+    return { "File", "Edit", "Points", "View", "Transport", "Audio" };
 }
 
 juce::PopupMenu MainComponent::getMenuForIndex (int menuIndex, const juce::String&)
@@ -705,18 +781,29 @@ juce::PopupMenu MainComponent::getMenuForIndex (int menuIndex, const juce::Strin
     }
     else if (menuIndex == 2)
     {
+        menu.addCommandItem (&commandManager, cmdSelectAll);
+        menu.addSeparator();
+        menu.addCommandItem (&commandManager, cmdSmooth);
+        menu.addCommandItem (&commandManager, cmdThin);
+        menu.addCommandItem (&commandManager, cmdReverse);
+        menu.addCommandItem (&commandManager, cmdInvert);
+        menu.addSeparator();
+        menu.addCommandItem (&commandManager, cmdOpenItemEditor);
+    }
+    else if (menuIndex == 3)
+    {
         menu.addCommandItem (&commandManager, cmdZoomIn);
         menu.addCommandItem (&commandManager, cmdZoomOut);
         menu.addCommandItem (&commandManager, cmdZoomFit);
     }
-    else if (menuIndex == 3)
+    else if (menuIndex == 4)
     {
         menu.addCommandItem (&commandManager, cmdPlayStop);
         menu.addCommandItem (&commandManager, cmdToStart);
         menu.addSeparator();
         menu.addCommandItem (&commandManager, cmdPatchMode);
     }
-    else if (menuIndex == 4)
+    else if (menuIndex == 5)
     {
         menu.addCommandItem (&commandManager, cmdAudioOnOff);
         menu.addCommandItem (&commandManager, cmdEditPatch);

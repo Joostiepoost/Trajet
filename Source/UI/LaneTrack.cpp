@@ -155,6 +155,59 @@ juce::String LaneTrack::valueText (float v) const
     return juce::String (v, 3);
 }
 
+void LaneTrack::collectPointsIn (juce::Rectangle<float> area, juce::Array<juce::ValueTree>& result) const
+{
+    for (const auto& item : lane)
+    {
+        if (! item.hasType (IDs::ITEM)) continue;
+        const double start = item[IDs::start];
+        for (const auto& p : item)
+            if (p.hasType (IDs::POINT)
+                && area.contains (ctx.timeView.toX (start + (double) p[IDs::time]), valueToY ((float) (double) p[IDs::value])))
+                result.addIfNotAlreadyThere (p);
+    }
+}
+
+juce::Array<juce::ValueTree> LaneTrack::selectedPointsHere() const
+{
+    juce::Array<juce::ValueTree> pts;
+    for (auto& p : ctx.selection.getPoints())
+        if (p.getParent().getParent() == lane)
+            pts.add (p);
+    return pts;
+}
+
+juce::Rectangle<float> LaneTrack::selectionBox() const
+{
+    auto pts = selectedPointsHere();
+    if (pts.size() < 2)
+        return {};
+
+    float x0 = 1.0e9f, x1 = -1.0e9f, y0 = 1.0e9f, y1 = -1.0e9f;
+    for (auto& p : pts)
+    {
+        const float x = ctx.timeView.toX ((double) p.getParent()[IDs::start] + (double) p[IDs::time]);
+        const float y = valueToY ((float) (double) p[IDs::value]);
+        x0 = juce::jmin (x0, x); x1 = juce::jmax (x1, x);
+        y0 = juce::jmin (y0, y); y1 = juce::jmax (y1, y);
+    }
+    return juce::Rectangle<float>::leftTopRightBottom (x0, y0, x1, y1).expanded (6.0f);
+}
+
+LaneTrack::Handle LaneTrack::handleAt (juce::Point<float> pos) const
+{
+    auto box = selectionBox();
+    if (box.isEmpty())
+        return Handle::none;
+
+    auto near = [pos] (float x, float y) { return pos.getDistanceFrom ({ x, y }) <= 7.0f; };
+    if (near (box.getX(), box.getCentreY()))      return Handle::left;
+    if (near (box.getRight(), box.getCentreY()))  return Handle::right;
+    if (near (box.getCentreX(), box.getY()))      return Handle::top;
+    if (near (box.getCentreX(), box.getBottom())) return Handle::bottom;
+    return Handle::none;
+}
+
 //==============================================================================
 void LaneTrack::paint (juce::Graphics& g)
 {
@@ -262,6 +315,31 @@ void LaneTrack::paint (juce::Graphics& g)
         g.drawText (text, box.reduced (5.0f, 0.0f), juce::Justification::centredLeft);
     }
 
+    // Selection box with scale handles (two or more selected points).
+    auto box = selectionBox();
+    if (! box.isEmpty())
+    {
+        juce::Path outline;
+        outline.addRectangle (box);
+        juce::Path dashed;
+        const float dashes[] = { 4.0f, 3.0f };
+        juce::PathStrokeType (1.0f).createDashedStroke (dashed, outline, dashes, 2);
+        g.setColour (accent.withAlpha (0.8f));
+        g.fillPath (dashed);
+        for (auto c : { juce::Point<float> (box.getX(), box.getCentreY()), juce::Point<float> (box.getRight(), box.getCentreY()),
+                        juce::Point<float> (box.getCentreX(), box.getY()), juce::Point<float> (box.getCentreX(), box.getBottom()) })
+            g.fillRect (juce::Rectangle<float> (7.0f, 7.0f).withCentre (c));
+    }
+
+    // Rubber band (when this track draws its own).
+    if (mode == Mode::rubberBand && ! ctx.rubberBand)
+    {
+        g.setColour (accent.withAlpha (0.12f));
+        g.fillRect (rubberRect);
+        g.setColour (accent.withAlpha (0.7f));
+        g.drawRect (rubberRect, 1.0f);
+    }
+
     // Playhead.
     g.setColour (accent.withAlpha (0.9f));
     g.drawVerticalLine ((int) tv.toX (ctx.host.getEngine().getPositionSeconds()), 0.0f, h);
@@ -275,6 +353,13 @@ void LaneTrack::paint (juce::Graphics& g)
 //==============================================================================
 void LaneTrack::mouseMove (const juce::MouseEvent& e)
 {
+    if (auto hnd = handleAt (e.position); hnd != Handle::none)
+    {
+        setMouseCursor ((hnd == Handle::left || hnd == Handle::right) ? juce::MouseCursor::LeftRightResizeCursor
+                                                                      : juce::MouseCursor::UpDownResizeCursor);
+        return;
+    }
+
     auto item = itemAt (e.position.x);
     switch (zoneFor (item, e.position))
     {
@@ -293,21 +378,51 @@ void LaneTrack::mouseDown (const juce::MouseEvent& e)
 {
     mode = Mode::none;
     auto& um = ctx.project.getUndoManager();
+
+    // Scale handles of the selection box come first.
+    if (! e.mods.isPopupMenu())
+        if (auto hnd = handleAt (e.position); hnd != Handle::none)
+        {
+            um.beginNewTransaction ("Scale points");
+            scaleHandle = hnd;
+            origPoints.clear();
+            boxT0 = 1.0e12; boxT1 = -1.0e12; boxV0 = 1.0f; boxV1 = 0.0f;
+            for (auto& p : selectedPointsHere())
+            {
+                const double t = (double) p.getParent()[IDs::start] + (double) p[IDs::time];
+                const float v = (float) (double) p[IDs::value];
+                origPoints.push_back ({ p, t, v });   // absolute time here
+                boxT0 = juce::jmin (boxT0, t); boxT1 = juce::jmax (boxT1, t);
+                boxV0 = juce::jmin (boxV0, v); boxV1 = juce::jmax (boxV1, v);
+            }
+            mode = Mode::scale;
+            return;
+        }
+
     auto item = itemAt (e.position.x);
     const auto zone = zoneFor (item, e.position);
     const bool add = e.mods.isCommandDown();
+
+    // In the item editor, tools stand in for the modifier keys.
+    const auto tool = ctx.tool != nullptr ? *ctx.tool : Tool::select;
+    const bool wantPencil = e.mods.isAltDown() || tool == Tool::pencil;
+    const bool wantLine   = (e.mods.isAltDown() && e.mods.isShiftDown()) || tool == Tool::line;
+    const bool wantBend   = (e.mods.isAltDown() && e.mods.isCommandDown()) || tool == Tool::bend;
 
     if (! item.isValid())
     {
         if (! e.mods.isPopupMenu())
         {
-            // Empty space: this lane becomes the paste target, and the playhead moves here.
-            ctx.selection.clear();
+            // Empty space: this lane becomes the paste target, the playhead moves here,
+            // and dragging draws a rubber band.
+            if (! add) ctx.selection.clear();
             ctx.selection.setActiveLane (lane);
             auto t = ctx.timeView.toTime (e.position.x);
             if (! e.mods.isCommandDown())
                 t = ctx.snap.snap (t);
             ctx.controller.locate (t);
+            mode = Mode::rubberBand;
+            rubberRect = {};
         }
         return;
     }
@@ -350,34 +465,15 @@ void LaneTrack::mouseDown (const juce::MouseEvent& e)
     // Curve area.
     auto hit = pointAt (item, e.position);
 
-    if (e.mods.isAltDown() && e.mods.isCommandDown())
+    // Clicking right on a point always grabs it (unless Option is held to draw).
+    const bool onPoint = hit.isValid() && ! e.mods.isAltDown();
+
+    if (wantBend && ! onPoint)
     {
-        // Bend the segment under the mouse.
-        auto points = Project::getPoints (item);
-        const double t = ctx.timeView.toTime (e.position.x) - origStart;
-        juce::ValueTree a;
-        float aValue = 0.0f, bValue = 0.0f;
-        double aTime = -1.0, bTime = 1.0e12;
-
-        for (auto p : item)
-        {
-            if (! p.hasType (IDs::POINT)) continue;
-            const double pt = p[IDs::time];
-            if (pt <= t && pt > aTime) { aTime = pt; a = p; aValue = (float) (double) p[IDs::value]; }
-            if (pt > t && pt < bTime)  { bTime = pt; bValue = (float) (double) p[IDs::value]; }
-        }
-
-        if (a.isValid() && bTime < 1.0e12)
-        {
+        if (startBend (item, e.position.x))
             um.beginNewTransaction ("Bend curve");
-            bendPoint = a;
-            bendRising = bValue >= aValue;
-            origTension = ((int) a[IDs::shape] == (int) Automation::Shape::curve) ? (double) a[IDs::tension] : 0.0;
-            ctx.selection.selectItem (item);
-            mode = Mode::bend;
-        }
     }
-    else if (e.mods.isAltDown() && e.mods.isShiftDown())
+    else if (wantLine && ! onPoint)
     {
         um.beginNewTransaction ("Draw ramp");
         const double t = relativeTime (item, e.position.x, false);
@@ -389,7 +485,7 @@ void LaneTrack::mouseDown (const juce::MouseEvent& e)
         ctx.selection.selectItem (item);
         mode = Mode::ramp;
     }
-    else if (e.mods.isAltDown())
+    else if (wantPencil && ! onPoint)
     {
         um.beginNewTransaction ("Draw");
         const double t = relativeTime (item, e.position.x, ! ctx.snap.isOn());
@@ -414,11 +510,81 @@ void LaneTrack::mouseDown (const juce::MouseEvent& e)
     }
     else
     {
+        // Empty curve area: select the item, and dragging draws a rubber band.
         if (add) ctx.selection.selectItem (item, true);
         else     ctx.selection.selectItem (item);
+        mode = Mode::rubberBand;
+        rubberRect = {};
     }
 
     repaint();
+}
+
+bool LaneTrack::startBend (const juce::ValueTree& item, float x)
+{
+    const double t = ctx.timeView.toTime (x) - (double) item[IDs::start];
+    juce::ValueTree a;
+    float aValue = 0.0f, bValue = 0.0f;
+    double aTime = -1.0, bTime = 1.0e12;
+
+    for (auto p : item)
+    {
+        if (! p.hasType (IDs::POINT)) continue;
+        const double pt = p[IDs::time];
+        if (pt <= t && pt > aTime) { aTime = pt; a = p; aValue = (float) (double) p[IDs::value]; }
+        if (pt > t && pt < bTime)  { bTime = pt; bValue = (float) (double) p[IDs::value]; }
+    }
+
+    if (! a.isValid() || bTime >= 1.0e12)
+        return false;
+
+    bendPoint = a;
+    bendRising = bValue >= aValue;
+    origTension = ((int) a[IDs::shape] == (int) Automation::Shape::curve) ? (double) a[IDs::tension] : 0.0;
+    ctx.selection.selectItem (item);
+    mode = Mode::bend;
+    return true;
+}
+
+void LaneTrack::dragScale (const juce::MouseEvent& e)
+{
+    const bool aroundCentre = e.mods.isAltDown();
+    const bool bypass = e.mods.isCommandDown();
+    auto& um = ctx.project.getUndoManager();
+
+    double t0 = boxT0, t1 = boxT1;
+    float v0 = boxV0, v1 = boxV1;
+    const double tm = 0.5 * (boxT0 + boxT1);
+    const float vm = 0.5f * (boxV0 + boxV1);
+
+    const double mouseT = ctx.snap.snap (ctx.timeView.toTime (e.position.x), bypass);
+    const float mouseV = yToValue (e.position.y);
+
+    switch (scaleHandle)
+    {
+        case Handle::left:   t0 = juce::jmin (mouseT, t1 - 0.001); if (aroundCentre) t1 = 2.0 * tm - t0; break;
+        case Handle::right:  t1 = juce::jmax (mouseT, t0 + 0.001); if (aroundCentre) t0 = 2.0 * tm - t1; break;
+        case Handle::top:    v1 = mouseV; if (aroundCentre) v0 = 2.0f * vm - v1; break;
+        case Handle::bottom: v0 = mouseV; if (aroundCentre) v1 = 2.0f * vm - v0; break;
+        case Handle::none:
+        default: return;
+    }
+
+    const double tSpan = boxT1 - boxT0;
+    const float vSpan = boxV1 - boxV0;
+
+    for (auto& o : origPoints)
+    {
+        auto item = o.tree.getParent();
+        if (! item.isValid()) continue;
+        const double start = item[IDs::start], length = item[IDs::length];
+
+        const double t = tSpan > 1.0e-9 ? t0 + (o.time - boxT0) / tSpan * (t1 - t0) : o.time;
+        const float v = vSpan > 1.0e-6f ? v0 + (o.value - boxV0) / vSpan * (v1 - v0) : o.value;
+
+        o.tree.setProperty (IDs::time, juce::jlimit (0.0, length, t - start), &um);
+        o.tree.setProperty (IDs::value, juce::jlimit (0.0f, 1.0f, v), &um);
+    }
 }
 
 void LaneTrack::beginPointDrag (const juce::MouseEvent&, const juce::ValueTree& item, const juce::ValueTree& hit)
@@ -464,6 +630,26 @@ void LaneTrack::mouseDrag (const juce::MouseEvent& e)
             const bool straight = std::abs (tension) < 0.02;
             bendPoint.setProperty (IDs::shape, (int) (straight ? Automation::Shape::linear : Automation::Shape::curve), &um);
             bendPoint.setProperty (IDs::tension, straight ? 0.0 : tension, &um);
+            break;
+        }
+
+        case Mode::scale: dragScale (e); break;
+
+        case Mode::rubberBand:
+        {
+            rubberRect = juce::Rectangle<float> (e.mouseDownPosition, e.position);
+            if (ctx.rubberBand)
+            {
+                auto screenArea = juce::Rectangle<int> (e.getMouseDownScreenPosition(), e.getScreenPosition());
+                ctx.rubberBand (screenArea, e.mods.isCommandDown(), false);
+            }
+            else
+            {
+                juce::Array<juce::ValueTree> found;
+                collectPointsIn (rubberRect, found);
+                if (! e.mods.isCommandDown()) ctx.selection.clear();
+                for (auto& p : found) ctx.selection.selectPoint (p, true);
+            }
             break;
         }
 
@@ -670,10 +856,14 @@ void LaneTrack::finishRamp()
     }
 }
 
-void LaneTrack::mouseUp (const juce::MouseEvent&)
+void LaneTrack::mouseUp (const juce::MouseEvent& e)
 {
     if (mode == Mode::draw)  finishFreehand();
     if (mode == Mode::ramp)  finishRamp();
+    if (mode == Mode::rubberBand && ctx.rubberBand && e.getDistanceFromDragStart() > 2)
+        ctx.rubberBand (juce::Rectangle<int> (e.getMouseDownScreenPosition(), e.getScreenPosition()), e.mods.isCommandDown(), true);
+    scaleHandle = Handle::none;
+    rubberRect = {};
 
     mode = Mode::none;
     dragAnchor = {};
@@ -711,8 +901,8 @@ void LaneTrack::mouseDoubleClick (const juce::MouseEvent& e)
     auto hit = pointAt (item, e.position);
     if (hit.isValid())
         editPointNumerically (hit);
-    else if (zoneFor (item, e.position) == Zone::curve)
-        ctx.showStatus ("The item editor (double-click an item) arrives in step 5.");
+    else if (ctx.openItemEditor)
+        ctx.openItemEditor (item);
 }
 
 void LaneTrack::mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& wheel)

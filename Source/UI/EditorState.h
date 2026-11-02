@@ -45,6 +45,15 @@ public:
         clampAndNotify();
     }
 
+    /** Show exactly the stretch from t0 to t1. */
+    void fitRange (double t0, double t1)
+    {
+        pixelsPerSecond = (double) viewWidth / juce::jmax (0.001, t1 - t0);
+        offset = t0;
+        hasZoomed = true;
+        clampAndNotify();
+    }
+
     void fitAll()
     {
         pixelsPerSecond = (double) viewWidth / length;
