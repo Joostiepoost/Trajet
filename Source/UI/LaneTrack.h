@@ -23,16 +23,29 @@
 class LaneTrack : public juce::Component
 {
 public:
+    /** Tools for the item editor; in the main window gestures use modifier keys instead. */
+    enum class Tool { select, pencil, line, bend };
+
     struct Context
     {
+        Context (Project& p, PluginHost& h, AutomationController& c, TimeView& tv, SnapSettings& s, Selection& sel)
+            : project (p), host (h), controller (c), timeView (tv), snap (s), selection (sel) {}
+
         Project& project;
         PluginHost& host;
         AutomationController& controller;
         TimeView& timeView;
         SnapSettings& snap;
         Selection& selection;
+        Tool* tool = nullptr;
+
         std::function<void (const juce::String&)> showStatus;
         std::function<void (const juce::MouseEvent&, const juce::MouseWheelDetails&, juce::Component&)> handleWheel;
+        /** The lane under a screen position (for dragging items between lanes). */
+        std::function<juce::ValueTree (juce::Point<int>)> laneAt;
+        /** Rubber-band selection across lanes: screen rectangle, add to selection, gesture finished. */
+        std::function<void (juce::Rectangle<int>, bool, bool)> rubberBand;
+        std::function<void (juce::ValueTree item)> openItemEditor;
     };
 
     LaneTrack (Context&, juce::ValueTree lane);

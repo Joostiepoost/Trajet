@@ -545,23 +545,41 @@ void LaneTrack::dragItem (const juce::MouseEvent& e)
     }
 
     // Move or copy: only to places where the item fits without overlapping.
+    // Dragging up or down moves (or copies) the item to the lane under the mouse.
     const double wanted = juce::jmax (0.0, ctx.snap.snap (origStart + dt, bypass));
+    auto currentLane = dragItemTree.getParent();
+    auto targetLane = ctx.laneAt ? ctx.laneAt (e.getScreenPosition()) : currentLane;
+    if (! targetLane.isValid())
+        targetLane = currentLane;
 
     if (mode == Mode::copyItem && ! copyCreated)
     {
         // The copy appears once it can be placed somewhere free (not on top of the original).
-        if (! ctx.project.isFree (lane, wanted, origLength))
+        if (! ctx.project.isFree (targetLane, wanted, origLength))
             return;
         auto copy = dragItemTree.createCopy();
         copy.setProperty (IDs::start, wanted, nullptr);
-        lane.appendChild (copy, &um);
+        targetLane.appendChild (copy, &um);
         dragItemTree = copy;
         copyCreated = true;
         ctx.selection.selectItem (copy);
         return;
     }
 
-    if (ctx.project.isFree (lane, wanted, origLength, dragItemTree))
+    if (targetLane != currentLane)
+    {
+        if (ctx.project.isFree (targetLane, wanted, origLength))
+        {
+            auto item = dragItemTree;
+            currentLane.removeChild (item, &um);
+            item.setProperty (IDs::start, wanted, &um);
+            targetLane.appendChild (item, &um);
+            ctx.selection.selectItem (item);
+        }
+        return;
+    }
+
+    if (ctx.project.isFree (currentLane, wanted, origLength, dragItemTree))
         dragItemTree.setProperty (IDs::start, wanted, &um);
 }
 

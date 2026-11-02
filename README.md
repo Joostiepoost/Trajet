@@ -61,7 +61,7 @@ The last loaded plugin is reloaded automatically when Trajet starts.
 
 **Items**
 - Double-click empty space in a lane: new item (up to 4 s, in the free space). Items never overlap.
-- Drag the coloured title strip to move; Option-drag it to copy; drag an edge to trim.
+- Drag the coloured title strip to move (also up or down into another lane); Option-drag it to copy; drag an edge to trim.
 - Right-click an item: duplicate or delete. ⌘C / ⌘X / ⌘V / ⌘D (duplicate right after) / Delete.
 - Click empty space in a lane to make it the paste target and move the playhead there; ⌘V pastes there. Items copied from several lanes keep their layout, starting at that lane.
 

@@ -309,10 +309,18 @@ public:
 //==============================================================================
 ScoreView::ScoreView (Project& p, PluginHost& h, AutomationController& c, SnapSettings& s)
     : project (p), host (h), controller (c), snap (s),
-      trackContext { p, h, c, timeView, s, selection,
-                     [this] (const juce::String& text) { showStatus (text); },
-                     [this] (const juce::MouseEvent& e, const juce::MouseWheelDetails& w, juce::Component& src) { handleWheel (e, w, src); } }
+      trackContext (p, h, c, timeView, s, selection)
 {
+    trackContext.showStatus  = [this] (const juce::String& text) { showStatus (text); };
+    trackContext.handleWheel = [this] (const juce::MouseEvent& e, const juce::MouseWheelDetails& w, juce::Component& src) { handleWheel (e, w, src); };
+    trackContext.laneAt      = [this] (juce::Point<int> screenPos)
+    {
+        for (auto* row : rows)
+            if (row->getScreenBounds().contains (screenPos))
+                return row->lane;
+        return juce::ValueTree();
+    };
+
     ruler = std::make_unique<Ruler> (*this);
     addAndMakeVisible (*ruler);
 
