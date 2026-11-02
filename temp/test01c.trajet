@@ -392,8 +392,8 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 53.597000000000001,
-                      "value": 0.0,
+                      "time": 54.300000000000004,
+                      "value": 0.387195825576782,
                       "shape": 0,
                       "tension": 0.0
                     },
@@ -464,15 +464,15 @@
               {
                 "type": "ITEM",
                 "properties": {
-                  "start": 58.900000000000006,
-                  "length": 12.489000000000004,
+                  "start": 55.299999999999997,
+                  "length": 16.089000000000013,
                   "timebase": "linear"
                 },
                 "children": [
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 1.110000000000007,
+                      "time": 4.710000000000015,
                       "value": 0.386633843183517,
                       "shape": 0,
                       "tension": 0.0
@@ -482,7 +482,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 11.232000000000006,
+                      "time": 14.832000000000015,
                       "value": 0.347231656312943,
                       "shape": 0,
                       "tension": 0.0
@@ -492,7 +492,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 2.719000000000001,
+                      "time": 6.31900000000001,
                       "value": 0.81029212474823,
                       "shape": 1,
                       "tension": 0.600000023841858
@@ -502,7 +502,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 8.510000000000005,
+                      "time": 12.110000000000014,
                       "value": 0.232846468687057,
                       "shape": 0,
                       "tension": 0.0
@@ -519,7 +519,8 @@
               "laneId": "fb4b1e0ed9a34fca8c0fd98ba661e446",
               "paramIndex": 84,
               "paramName": "osc_index",
-              "name": "osc_index"
+              "name": "osc_index",
+              "height": 129
             },
             "children": [
               {
@@ -534,7 +535,7 @@
                     "type": "POINT",
                     "properties": {
                       "time": 6.516,
-                      "value": 0.630859375,
+                      "value": 0.691506564617157,
                       "shape": 0,
                       "tension": 0.0
                     },
@@ -543,38 +544,8 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 14.006,
-                      "value": 0.364118307828903,
-                      "shape": 0,
-                      "tension": 0.0
-                    },
-                    "children": []
-                  },
-                  {
-                    "type": "POINT",
-                    "properties": {
-                      "time": 19.184999999999999,
-                      "value": 0.9150390625,
-                      "shape": 0,
-                      "tension": 0.0
-                    },
-                    "children": []
-                  },
-                  {
-                    "type": "POINT",
-                    "properties": {
-                      "time": 25.041,
-                      "value": 0.2373046875,
-                      "shape": 0,
-                      "tension": 0.0
-                    },
-                    "children": []
-                  },
-                  {
-                    "type": "POINT",
-                    "properties": {
-                      "time": 31.265999999999998,
-                      "value": 0.734584271907806,
+                      "time": 12.62510029498525,
+                      "value": 0.23608161509037,
                       "shape": 0,
                       "tension": 0.0
                     },
@@ -595,6 +566,16 @@
                     "properties": {
                       "time": 0.0,
                       "value": 0.0,
+                      "shape": 1,
+                      "tension": 0.18642578125
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 8.134218289085547,
+                      "value": 0.818378329277039,
                       "shape": 0,
                       "tension": 0.0
                     },
@@ -603,8 +584,8 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 10.106,
-                      "value": 0.21142578125,
+                      "time": 10.254867256637167,
+                      "value": 0.726976871490479,
                       "shape": 0,
                       "tension": 0.0
                     },
@@ -613,10 +594,90 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 16.812999999999999,
-                      "value": 0.654506146907806,
+                      "time": 11.070501474926255,
+                      "value": 0.633667826652527,
                       "shape": 0,
                       "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 13.843657817109149,
+                      "value": 0.367344319820404,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 16.861504424778765,
+                      "value": 0.310543030500412,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 17.840265486725663,
+                      "value": 0.311058223247528,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 18.819026548672568,
+                      "value": 0.350378423929214,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 20.450294985250743,
+                      "value": 0.472885102033615,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 22.0,
+                      "value": 0.776036620140076,
+                      "shape": 1,
+                      "tension": 0.255436197916667
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 29.600000000000001,
+                      "value": 0.825845658779144,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 33.200000000000003,
+                      "value": 0.808345019817352,
+                      "shape": 1,
+                      "tension": 0.386458333333333
                     },
                     "children": []
                   }
@@ -625,7 +686,7 @@
               {
                 "type": "ITEM",
                 "properties": {
-                  "start": 55.700000000000003,
+                  "start": 53.5,
                   "length": 13.100000000000001,
                   "timebase": "linear"
                 },
@@ -634,7 +695,7 @@
                     "type": "POINT",
                     "properties": {
                       "time": 2.600000000000001,
-                      "value": 0.640285313129425,
+                      "value": 0.620779752731323,
                       "shape": 0,
                       "tension": 0.0
                     },
@@ -645,8 +706,8 @@
                     "properties": {
                       "time": 1.299999999999997,
                       "value": 0.217815890908241,
-                      "shape": 0,
-                      "tension": 0.0
+                      "shape": 1,
+                      "tension": 0.140266927083333
                     },
                     "children": []
                   },
@@ -663,8 +724,8 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 9.799999999999997,
-                      "value": 0.367866843938828,
+                      "time": 12.299999999999997,
+                      "value": 0.203634515404701,
                       "shape": 0,
                       "tension": 0.0
                     },
@@ -673,8 +734,108 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 12.299999999999997,
-                      "value": 0.203634515404701,
+                      "time": 9.099999999999994,
+                      "value": 0.638129591941833,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 9.400000000000006,
+                      "value": 0.638569951057434,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 2.917647058823526,
+                      "value": 0.435457170009613,
+                      "shape": 1,
+                      "tension": 1.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 6.700000000000003,
+                      "value": 0.224927425384521,
+                      "shape": 1,
+                      "tension": 0.5619140625
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 5.767798665858102,
+                      "value": 0.224927425384521,
+                      "shape": 1,
+                      "tension": 0.545540364583333
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 5.301697998787134,
+                      "value": 0.224927425384521,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 4.188235294117653,
+                      "value": 0.270266026258469,
+                      "shape": 0,
+                      "tension": -0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 5.534748332322621,
+                      "value": 0.350106090307236,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 6.400000000000006,
+                      "value": 0.761554896831512,
+                      "shape": 1,
+                      "tension": -0.785286458333333
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 10.700000000000003,
+                      "value": 0.366690039634705,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 9.799999999999997,
+                      "value": 0.366690039634705,
                       "shape": 0,
                       "tension": 0.0
                     },
@@ -1393,6 +1554,16 @@
                       "tension": 0.0
                     },
                     "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 18.699999999999999,
+                      "value": 0.373495727777481,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
                   }
                 ]
               }
@@ -1861,21 +2032,31 @@
                       "tension": 0.0
                     },
                     "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 51.981999999999992,
+                      "value": 0.307070970535278,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
                   }
                 ]
               },
               {
                 "type": "ITEM",
                 "properties": {
-                  "start": 52.300000000000004,
-                  "length": 25.500000000000007,
+                  "start": 51.981999999999992,
+                  "length": 25.818000000000019,
                   "timebase": "linear"
                 },
                 "children": [
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 3.698,
+                      "time": 4.016000000000012,
                       "value": 0.30998882651329,
                       "shape": 0,
                       "tension": 0.0
@@ -1885,7 +2066,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 5.659,
+                      "time": 5.977000000000012,
                       "value": 0.819266200065613,
                       "shape": 0,
                       "tension": 0.0
@@ -1895,7 +2076,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 7.717,
+                      "time": 8.035000000000011,
                       "value": 0.157924100756645,
                       "shape": 0,
                       "tension": 0.0
@@ -1905,7 +2086,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 8.733000000000001,
+                      "time": 9.051000000000013,
                       "value": 0.736607134342194,
                       "shape": 0,
                       "tension": 0.0
@@ -1915,7 +2096,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 10.346,
+                      "time": 10.664000000000012,
                       "value": 0.0,
                       "shape": 0,
                       "tension": 0.0
@@ -1925,7 +2106,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 12.098000000000001,
+                      "time": 12.416000000000013,
                       "value": 0.931919634342194,
                       "shape": 0,
                       "tension": 0.0
@@ -1935,7 +2116,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 12.961,
+                      "time": 13.279000000000012,
                       "value": 0.004185267724097,
                       "shape": 0,
                       "tension": 0.0
@@ -1945,7 +2126,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 14.499999999999988,
+                      "time": 14.818,
                       "value": 0.975203812122345,
                       "shape": 0,
                       "tension": 0.0
@@ -1955,7 +2136,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 15.600000000000005,
+                      "time": 15.918000000000017,
                       "value": 0.0,
                       "shape": 0,
                       "tension": 0.0
@@ -1965,7 +2146,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 16.800000000000008,
+                      "time": 17.11800000000002,
                       "value": 1.0,
                       "shape": 0,
                       "tension": 0.0
@@ -1975,7 +2156,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 17.899999999999995,
+                      "time": 18.218000000000007,
                       "value": 0.0,
                       "shape": 0,
                       "tension": 0.0
@@ -1985,7 +2166,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 18.300000000000004,
+                      "time": 18.618000000000016,
                       "value": 1.0,
                       "shape": 0,
                       "tension": 0.0
@@ -1995,7 +2176,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 19.199999999999996,
+                      "time": 19.518000000000008,
                       "value": 0.017153533175588,
                       "shape": 0,
                       "tension": 0.0
@@ -2005,7 +2186,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 19.800000000000004,
+                      "time": 20.118000000000016,
                       "value": 1.0,
                       "shape": 0,
                       "tension": 0.0
@@ -2015,7 +2196,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 20.399999999999999,
+                      "time": 20.718000000000011,
                       "value": 0.031844429671764,
                       "shape": 0,
                       "tension": 0.0
@@ -2025,7 +2206,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 20.699999999999996,
+                      "time": 21.018000000000008,
                       "value": 0.964928686618805,
                       "shape": 0,
                       "tension": 0.0
@@ -2035,7 +2216,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 21.300000000000004,
+                      "time": 21.618000000000016,
                       "value": 0.038043476641178,
                       "shape": 0,
                       "tension": 0.0
@@ -2045,7 +2226,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 21.399999999999999,
+                      "time": 21.718000000000011,
                       "value": 0.97749662399292,
                       "shape": 0,
                       "tension": 0.0
@@ -2055,7 +2236,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 21.600000000000001,
+                      "time": 21.918000000000013,
                       "value": 0.030570652335882,
                       "shape": 0,
                       "tension": 0.0
@@ -2065,7 +2246,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 21.899999999999999,
+                      "time": 22.218000000000011,
                       "value": 0.944887936115265,
                       "shape": 0,
                       "tension": 0.0
@@ -2075,7 +2256,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 21.999999999999993,
+                      "time": 22.318000000000005,
                       "value": 0.0,
                       "shape": 0,
                       "tension": 0.0
@@ -2085,7 +2266,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 22.499999999999993,
+                      "time": 22.818000000000005,
                       "value": 0.980129063129425,
                       "shape": 0,
                       "tension": 0.0
@@ -2095,7 +2276,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 22.899999999999999,
+                      "time": 23.218000000000011,
                       "value": 0.0,
                       "shape": 0,
                       "tension": 0.0
@@ -2105,7 +2286,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 23.899999999999999,
+                      "time": 24.218000000000011,
                       "value": 1.0,
                       "shape": 0,
                       "tension": 0.0
@@ -2115,7 +2296,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 24.500000000000007,
+                      "time": 24.818000000000019,
                       "value": 0.269870936870575,
                       "shape": 0,
                       "tension": 0.0
@@ -2125,7 +2306,7 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 24.899999999999999,
+                      "time": 25.218000000000011,
                       "value": 0.056810460984707,
                       "shape": 0,
                       "tension": 0.0
@@ -2135,8 +2316,18 @@
                   {
                     "type": "POINT",
                     "properties": {
-                      "time": 25.500000000000007,
+                      "time": 25.818000000000019,
                       "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 0.018000000000008,
+                      "value": 0.293498396873474,
                       "shape": 0,
                       "tension": 0.0
                     },
