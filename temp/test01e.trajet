@@ -39,7 +39,8 @@
               "paramIndex": 98,
               "paramName": "gate_level",
               "name": "gate_level",
-              "mute": false
+              "mute": false,
+              "colour": 0
             },
             "children": [
               {
@@ -400,7 +401,9 @@
               "laneId": "db5f2a3003ab4be190f306bdae7c4eb6",
               "paramIndex": 86,
               "paramName": "osc_pitch",
-              "name": "main pitch"
+              "name": "main pitch",
+              "colour": 1,
+              "group": 1
             },
             "children": [
               {
@@ -582,7 +585,9 @@
               "paramIndex": 84,
               "paramName": "osc_index",
               "name": "osc_index",
-              "height": 129
+              "height": 129,
+              "colour": 2,
+              "group": 1
             },
             "children": [
               {
@@ -913,7 +918,9 @@
               "laneId": "4d29617886b140f8b5aa4982a5dde00c",
               "paramIndex": 82,
               "paramName": "osc_ratio",
-              "name": "osc_ratio"
+              "name": "osc_ratio",
+              "colour": 3,
+              "group": 1
             },
             "children": [
               {
@@ -1174,7 +1181,9 @@
               "laneId": "2b90f813f1494919beda5cdb802e8d71",
               "paramIndex": 85,
               "paramName": "osc_timbre",
-              "name": "osc_timbre"
+              "name": "osc_timbre",
+              "colour": 4,
+              "group": 1
             },
             "children": [
               {
@@ -1345,7 +1354,9 @@
               "laneId": "30bd8597a1a44bf2aeba9f451114e781",
               "paramIndex": 83,
               "paramName": "osc_offset",
-              "name": "osc_offset"
+              "name": "osc_offset",
+              "colour": 5,
+              "group": 1
             },
             "children": [
               {
@@ -1496,7 +1507,9 @@
               "laneId": "f170af28860744c6a380c06be9fdf5cd",
               "paramIndex": 107,
               "paramName": "delay_freq",
-              "name": "delay_freq"
+              "name": "delay_freq",
+              "colour": 6,
+              "group": 2
             },
             "children": [
               {
@@ -1656,7 +1669,8 @@
               "paramName": "delay_peakres",
               "name": "delay_peakres",
               "colour": 8,
-              "height": 72
+              "height": 72,
+              "group": 2
             },
             "children": [
               {
@@ -1828,7 +1842,9 @@
               "paramIndex": 106,
               "paramName": "delay_feedback",
               "name": "delay_feedback",
-              "mute": false
+              "mute": false,
+              "colour": 8,
+              "group": 2
             },
             "children": [
               {
@@ -1991,7 +2007,8 @@
               "paramName": "filter_cutoff",
               "name": "filter_cutoff",
               "colour": 9,
-              "height": 85
+              "height": 85,
+              "group": 3
             },
             "children": [
               {
@@ -2424,7 +2441,8 @@
               "paramName": "filter_mix",
               "name": "filter_mix",
               "colour": 10,
-              "height": 72
+              "height": 72,
+              "group": 3
             },
             "children": [
               {
@@ -5026,6 +5044,43 @@
                 ]
               }
             ]
+          }
+        ]
+      },
+      {
+        "type": "GROUPS",
+        "properties": {
+        },
+        "children": [
+          {
+            "type": "GROUP",
+            "properties": {
+              "groupId": 1,
+              "name": "Osc",
+              "colour": 1,
+              "folded": true
+            },
+            "children": []
+          },
+          {
+            "type": "GROUP",
+            "properties": {
+              "groupId": 2,
+              "name": "Delay",
+              "colour": 6,
+              "folded": true
+            },
+            "children": []
+          },
+          {
+            "type": "GROUP",
+            "properties": {
+              "groupId": 3,
+              "name": "Filter",
+              "colour": 9,
+              "folded": true
+            },
+            "children": []
           }
         ]
       }
