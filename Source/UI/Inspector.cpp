@@ -1,4 +1,5 @@
 #include "Inspector.h"
+#include "../Model/ItemTime.h"
 
 Inspector::Inspector (Project& p, PluginHost& h, AutomationController& c, Selection& s)
     : project (p), host (h), controller (c), selection (s)
@@ -24,6 +25,8 @@ Inspector::Inspector (Project& p, PluginHost& h, AutomationController& c, Select
     startField  = &addField ("Start", true);
     lengthField = &addField ("Length (s)", true);
     countField  = &addField ("Points", false);
+    timebaseField = &addField ("Time base", false);
+    tempoField  = &addField ("Tempo", true);
     timeField   = &addField ("Time", true);
     valueField  = &addField ("Value", true);
 
@@ -55,12 +58,32 @@ Inspector::Inspector (Project& p, PluginHost& h, AutomationController& c, Select
         refresh();
     };
 
+    tempoField->value.onTextChange = [this]
+    {
+        if (! currentItem.isValid() || currentItem[IDs::timebase].toString() != "musical") return;
+        // Sets the first tempo point (the item's starting tempo).
+        juce::ValueTree first;
+        for (auto t : currentItem)
+            if (t.hasType (IDs::TEMPO) && (! first.isValid() || (double) t[IDs::beat] < (double) first[IDs::beat]))
+                first = t;
+        if (! first.isValid()) return;
+
+        auto& um = project.getUndoManager();
+        um.beginNewTransaction ("Change tempo");
+        const double old = first[IDs::bpm];
+        first.setProperty (IDs::bpm, juce::jlimit (10.0, 999.0, tempoField->value.getText().getDoubleValue()), &um);
+        if (! project.refreshMusicalLength (currentItem))
+            first.setProperty (IDs::bpm, old, &um);
+        refresh();
+    };
+
     timeField->value.onTextChange = [this]
     {
         if (! currentPoint.isValid()) return;
-        auto item = currentPoint.getParent();
-        const double t = juce::jlimit (0.0, (double) item[IDs::length],
-                                       TimeFormat::parse (timeField->value.getText()) - (double) item[IDs::start]);
+        const ItemTime it (currentPoint.getParent());
+        const auto text = timeField->value.getText();
+        const double barBeat = it.isMusical() ? it.parseBarBeat (text) : -1.0;
+        const double t = juce::jlimit (0.0, it.localLength(), barBeat >= 0.0 ? barBeat : it.localAt (TimeFormat::parse (text)));
         auto& um = project.getUndoManager();
         um.beginNewTransaction ("Point time");
         currentPoint.setProperty (IDs::time, t, &um);
@@ -142,11 +165,15 @@ void Inspector::refresh()
     const bool hasItem = currentItem.isValid(), hasPoint = currentPoint.isValid();
     hint.setVisible (! hasItem);
     itemHeading.setVisible (hasItem);
-    for (auto* f : { laneField, startField, lengthField, countField })
+    const bool musical = hasItem && currentItem[IDs::timebase].toString() == "musical";
+    for (auto* f : { laneField, startField, lengthField, countField, timebaseField })
     {
         f->name.setVisible (hasItem);
         f->value.setVisible (hasItem);
     }
+    tempoField->name.setVisible (musical);
+    tempoField->value.setVisible (musical);
+    lengthField->value.setEditable (! musical, ! musical, false);
     pointHeading.setVisible (hasPoint);
     for (auto* f : { timeField, valueField })
     {
@@ -175,13 +202,31 @@ void Inspector::refresh()
         startField->value.setText (TimeFormat::format (currentItem[IDs::start]), juce::dontSendNotification);
         lengthField->value.setText (juce::String ((double) currentItem[IDs::length], 3), juce::dontSendNotification);
         countField->value.setText (juce::String (numPoints), juce::dontSendNotification);
+
+        const ItemTime it (currentItem);
+        if (it.isMusical())
+        {
+            timebaseField->value.setText ("Musical " + juce::String (it.beatsPerBar) + "/" + juce::String (it.beatUnit)
+                                              + ", " + juce::String (it.lengthBeats, 2) + " beats", juce::dontSendNotification);
+            const double a = it.tempo.points.front().bpm, b = it.tempo.points.back().bpm;
+            tempoField->value.setText (juce::String (a, 1) + (it.tempo.points.size() > 1 && std::abs (a - b) > 0.01
+                                                                ? juce::String (juce::CharPointer_UTF8 (" \xe2\x86\x92 ")) + juce::String (b, 1) : juce::String()),
+                                       juce::dontSendNotification);
+        }
+        else
+        {
+            timebaseField->value.setText ("Linear (seconds)", juce::dontSendNotification);
+        }
     }
 
     if (hasPoint)
     {
         auto lane = currentItem.getParent();
         const float v = (float) (double) currentPoint[IDs::value];
-        timeField->value.setText (TimeFormat::format ((double) currentItem[IDs::start] + (double) currentPoint[IDs::time]),
+        const ItemTime it (currentItem);
+        const double local = currentPoint[IDs::time];
+        timeField->value.setText (it.isMusical() ? it.barBeat (local) + "  (" + TimeFormat::format (it.absolute (local)) + ")"
+                                                 : TimeFormat::format (it.absolute (local)),
                                   juce::dontSendNotification);
         juce::String text = juce::String (v, 4);
         if (auto* p = parameterFor (lane))
@@ -228,8 +273,10 @@ void Inspector::resized()
     }
 
     itemHeading.setBounds (r.removeFromTop (22));
-    for (auto* f : { laneField, startField, lengthField, countField })
+    for (auto* f : { laneField, startField, lengthField, countField, timebaseField })
         placeField (f);
+    if (tempoField->value.isVisible())
+        placeField (tempoField);
 
     if (currentPoint.isValid())
     {

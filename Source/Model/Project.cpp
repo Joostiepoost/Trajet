@@ -1,4 +1,5 @@
 #include "Project.h"
+#include "ItemTime.h"
 
 namespace
 {
@@ -131,7 +132,8 @@ void Project::setLengthSeconds (double seconds)
     // Items that spanned the whole project keep doing so (until step 4 brings real item editing).
     for (auto lane : getLanes())
         for (auto item : lane)
-            if (item.hasType (IDs::ITEM) && std::abs ((double) item[IDs::start]) < 1.0e-9
+            if (item.hasType (IDs::ITEM) && item[IDs::timebase].toString() != "musical"
+                && std::abs ((double) item[IDs::start]) < 1.0e-9
                 && std::abs ((double) item[IDs::length] - oldLength) < 1.0e-9)
                 item.setProperty (IDs::length, newLength, &undoManager);
 }
@@ -239,6 +241,78 @@ juce::ValueTree Project::addItem (juce::ValueTree lane, double start, double len
     item.setProperty (IDs::timebase, "linear", nullptr);
     lane.appendChild (item, &undoManager);
     return item;
+}
+
+void Project::setTimebase (juce::ValueTree item, bool musical, double bpm)
+{
+    ItemTime current (item);
+    if (current.isMusical() == musical)
+        return;
+
+    auto& um = undoManager;
+
+    if (musical)
+    {
+        bpm = juce::jlimit (10.0, 999.0, bpm);
+        for (auto p : item)
+            if (p.hasType (IDs::POINT))
+                p.setProperty (IDs::time, (double) p[IDs::time] * bpm / 60.0, &um);
+
+        item.setProperty (IDs::timebase, "musical", &um);
+        item.setProperty (IDs::beatsPerBar, 4, &um);
+        item.setProperty (IDs::beatUnit, 4, &um);
+        item.setProperty (IDs::gridBeats, 0.25, &um);
+        item.setProperty (IDs::lengthBeats, (double) item[IDs::length] * bpm / 60.0, &um);
+
+        juce::ValueTree tempo (IDs::TEMPO);
+        tempo.setProperty (IDs::beat, 0.0, nullptr);
+        tempo.setProperty (IDs::bpm, bpm, nullptr);
+        tempo.setProperty (IDs::ramp, false, nullptr);
+        item.appendChild (tempo, &um);
+    }
+    else
+    {
+        for (auto p : item)
+            if (p.hasType (IDs::POINT))
+                p.setProperty (IDs::time, current.toSeconds ((double) p[IDs::time]), &um);
+
+        for (int i = item.getNumChildren(); --i >= 0;)
+            if (item.getChild (i).hasType (IDs::TEMPO))
+                item.removeChild (i, &um);
+
+        item.setProperty (IDs::timebase, "linear", &um);
+        item.setProperty (IDs::length, current.toSeconds (current.lengthBeats), &um);
+    }
+}
+
+bool Project::refreshMusicalLength (juce::ValueTree item)
+{
+    ItemTime time (item);
+    if (! time.isMusical())
+        return true;
+
+    const double seconds = time.toSeconds (time.lengthBeats);
+    if (! isFree (item.getParent(), (double) item[IDs::start], seconds, item))
+        return false;
+
+    item.setProperty (IDs::length, seconds, &undoManager);
+    return true;
+}
+
+bool Project::setLengthBeats (juce::ValueTree item, double beats)
+{
+    ItemTime time (item);
+    if (! time.isMusical())
+        return false;
+
+    beats = juce::jmax (1.0 / 64.0, beats);
+    const double seconds = time.toSeconds (beats);
+    if (! isFree (item.getParent(), (double) item[IDs::start], seconds, item))
+        return false;
+
+    item.setProperty (IDs::lengthBeats, beats, &undoManager);
+    item.setProperty (IDs::length, seconds, &undoManager);
+    return true;
 }
 
 juce::Colour Project::paletteColour (int index)

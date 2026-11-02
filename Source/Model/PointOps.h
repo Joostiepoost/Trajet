@@ -9,8 +9,9 @@
 
 namespace PointOps
 {
-    /** Move points by dt seconds and dv (0..1), each kept inside its item. */
-    void nudge (const juce::Array<juce::ValueTree>& points, double dt, float dv, juce::UndoManager&);
+    /** Move points by a number of grid steps in time (gridSeconds in linear items, the item's
+        own beat grid in musical items) and by dv (0..1) in value; each stays inside its item. */
+    void nudge (const juce::Array<juce::ValueTree>& points, int steps, double gridSeconds, float dv, juce::UndoManager&);
 
     /** Average each inner point's value with its neighbours (per item, in time order). */
     void smooth (const juce::Array<juce::ValueTree>& points, juce::UndoManager&);

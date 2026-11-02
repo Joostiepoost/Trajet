@@ -17,6 +17,7 @@
 #include "../Engine/AutomationController.h"
 #include "EditorState.h"
 #include "LaneTrack.h"
+#include "../Model/ItemTime.h"
 
 class ItemEditor : public juce::Component,
                    private juce::ValueTree::Listener,
@@ -39,6 +40,9 @@ public:
 
 private:
     class ValueAxis;
+    class TempoStrip;
+    void refreshTimebaseControls();
+    bool isMusical() const      { return item[IDs::timebase].toString() == "musical"; }
 
     void setTool (LaneTrack::Tool);
     void fitToItem();
@@ -73,6 +77,10 @@ private:
     LaneTrack::Context context;
     std::unique_ptr<LaneTrack> track;
     std::unique_ptr<ValueAxis> axis;
+    std::unique_ptr<TempoStrip> tempoStrip;
+
+    juce::Label timebaseLabel, metreLabel, metreValue, gridLabel, lengthLabel, lengthValue, tempoHint;
+    juce::ComboBox timebaseBox, gridBox;
 
     juce::TextButton selectButton { "Select" }, pencilButton { "Pencil" }, lineButton { "Line" }, bendButton { "Bend" };
     juce::TextButton smoothButton { "Smooth" }, thinButton { "Thin" }, reverseButton { "Reverse" }, invertButton { "Invert" };

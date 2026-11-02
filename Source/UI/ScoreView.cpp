@@ -550,9 +550,9 @@ void ScoreView::nudge (int direction, bool vertical, bool large)
 
     auto& um = project.getUndoManager();
     um.beginNewTransaction ("Nudge points");
-    const double dt = vertical ? 0.0 : direction * snap.getGrid() * (large ? 10.0 : 1.0);
+    const int steps = vertical ? 0 : direction * (large ? 10 : 1);
     const float dv = vertical ? (float) direction * (large ? 0.1f : 0.01f) : 0.0f;
-    PointOps::nudge (points, dt, dv, um);
+    PointOps::nudge (points, steps, snap.getGrid(), dv, um);
 }
 
 void ScoreView::applyPointOp (const juce::String& name)

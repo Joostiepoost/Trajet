@@ -1,4 +1,5 @@
 #include "PointOps.h"
+#include "ItemTime.h"
 
 namespace PointOps
 {
@@ -57,14 +58,15 @@ namespace PointOps
         return groups;
     }
 
-    void nudge (const juce::Array<juce::ValueTree>& points, double dt, float dv, juce::UndoManager& um)
+    void nudge (const juce::Array<juce::ValueTree>& points, int steps, double gridSeconds, float dv, juce::UndoManager& um)
     {
         for (auto p : points)
         {
             auto item = p.getParent();
             if (! item.isValid()) continue;
-            const double length = item[IDs::length];
-            p.setProperty (IDs::time, juce::jlimit (0.0, length, timeOf (p) + dt), &um);
+            const ItemTime it (item);
+            const double dt = steps * (it.isMusical() ? it.gridBeats : gridSeconds);
+            p.setProperty (IDs::time, juce::jlimit (0.0, it.localLength(), timeOf (p) + dt), &um);
             p.setProperty (IDs::value, juce::jlimit (0.0f, 1.0f, valueOf (p) + dv), &um);
         }
     }
@@ -158,16 +160,18 @@ namespace PointOps
     void copy (const juce::Array<juce::ValueTree>& points)
     {
         clipboard.clearQuick();
+        // Stored in seconds relative to the earliest point, so points can move
+        // between linear and musical items.
         double earliest = 1.0e12;
         for (auto& p : points)
             if (p.getParent().isValid())
-                earliest = juce::jmin (earliest, (double) p.getParent()[IDs::start] + timeOf (p));
+                earliest = juce::jmin (earliest, ItemTime (p.getParent()).absolute (timeOf (p)));
 
         for (auto& p : points)
         {
             if (! p.getParent().isValid()) continue;
             auto c = p.createCopy();
-            c.setProperty (IDs::time, (double) p.getParent()[IDs::start] + timeOf (p) - earliest, nullptr);
+            c.setProperty (IDs::time, ItemTime (p.getParent()).absolute (timeOf (p)) - earliest, nullptr);
             clipboard.add (c);
         }
     }
@@ -179,11 +183,12 @@ namespace PointOps
         juce::Array<juce::ValueTree> added;
         if (! item.isValid()) return added;
 
-        const double start = item[IDs::start], length = item[IDs::length];
+        const ItemTime it (item);
+        const double length = it.localLength();
         for (auto& c : clipboard)
         {
-            const double t = at + timeOf (c) - start;
-            if (t < -1.0e-9 || t > length + 1.0e-9) continue;
+            const double t = it.localAt (at + timeOf (c));
+            if (t < -1.0e-6 || t > length + 1.0e-6) continue;
             auto p = c.createCopy();
             p.setProperty (IDs::time, juce::jlimit (0.0, length, t), nullptr);
             item.appendChild (p, &um);

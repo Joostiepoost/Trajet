@@ -4,7 +4,9 @@ namespace
 {
     const juce::Colour panelColour (0xff262a31);
     const juce::Colour accent      (0xffe8a33d);
-    constexpr int axisWidth = 90, tableWidth = 300, toolbarHeight = 44, rulerHeight = 22;
+    constexpr int axisWidth = 90, tableWidth = 300, toolbarHeight = 44, timebaseHeight = 34, rulerHeight = 22, tempoHeight = 72;
+    const double gridChoices[] = { 1.0, 0.5, 1.0 / 3.0, 0.25, 1.0 / 6.0, 0.125, 0.0625 };
+    const char* const gridNames[] = { "1 beat", "1/2 beat", "1/3 beat (triplets)", "1/4 beat", "1/6 beat", "1/8 beat", "1/16 beat" };
 
     juce::String paramText (juce::AudioProcessorParameter* p, float v)
     {
@@ -43,6 +45,250 @@ private:
 };
 
 //==============================================================================
+/** The tempo map of a musical item: click to add a tempo point, drag to move it,
+    double-click to type a tempo, right-click to ramp towards the next point or delete. */
+class ItemEditor::TempoStrip : public juce::Component
+{
+public:
+    explicit TempoStrip (ItemEditor& o) : owner (o) {}
+
+    void paint (juce::Graphics& g) override
+    {
+        g.fillAll (panelColour.brighter (0.03f));
+        const ItemTime it (owner.item);
+        if (! it.isMusical()) return;
+
+        if (! dragging) updateRange (it);
+
+        // Item extent and the tempo line.
+        const float x0 = xForBeat (it, 0.0), x1 = xForBeat (it, it.lengthBeats);
+        g.setColour (juce::Colours::white.withAlpha (0.04f));
+        g.fillRect (juce::Rectangle<float>::leftTopRightBottom (x0, 0.0f, x1, (float) getHeight()));
+
+        juce::Path line;
+        const int steps = juce::jmax (2, (int) (x1 - x0));
+        for (int i = 0; i <= steps; ++i)
+        {
+            const double beat = it.lengthBeats * i / steps;
+            const float x = xForBeat (it, beat), y = yForBpm (it.tempo.bpmAt (beat));
+            if (i == 0) line.startNewSubPath (x, y); else line.lineTo (x, y);
+        }
+        g.setColour (accent);
+        g.strokePath (line, juce::PathStrokeType (1.5f));
+
+        g.setFont (juce::FontOptions (10.5f));
+        for (auto& tp : it.tempo.points)
+        {
+            const float x = xForBeat (it, tp.beat), y = yForBpm (tp.bpm);
+            g.setColour (juce::Colours::white);
+            g.fillEllipse (x - 4.0f, y - 4.0f, 8.0f, 8.0f);
+            g.setColour (accent.darker (0.3f));
+            g.drawEllipse (x - 4.0f, y - 4.0f, 8.0f, 8.0f, 1.0f);
+            g.setColour (juce::Colours::white.withAlpha (0.75f));
+            g.drawText (juce::String (tp.bpm, 1) + (tp.ramp ? juce::String (juce::CharPointer_UTF8 (" \xe2\x86\x97")) : juce::String()),
+                        (int) x + 6, (int) y - 16, 70, 14, juce::Justification::centredLeft);
+        }
+
+        g.setColour (juce::Colours::white.withAlpha (0.35f));
+        g.drawText ("tempo", 4, 2, 60, 14, juce::Justification::centredLeft);
+    }
+
+    void mouseDown (const juce::MouseEvent& e) override
+    {
+        const ItemTime it (owner.item);
+        if (! it.isMusical()) return;
+
+        updateRange (it);
+        auto hit = pointAt (it, e.position);
+
+        if (e.mods.isPopupMenu())
+        {
+            if (hit.isValid()) showMenu (hit);
+            return;
+        }
+
+        auto& um = owner.project.getUndoManager();
+        if (! hit.isValid())
+        {
+            um.beginNewTransaction ("Add tempo point");
+            juce::ValueTree t (IDs::TEMPO);
+            t.setProperty (IDs::beat, beatAtX (it, e.position.x, e.mods.isCommandDown()), nullptr);
+            t.setProperty (IDs::bpm, bpmAtY (e.position.y), nullptr);
+            t.setProperty (IDs::ramp, false, nullptr);
+            owner.item.appendChild (t, &um);
+            if (! owner.project.refreshMusicalLength (owner.item))
+            {
+                owner.item.removeChild (t, &um);
+                owner.hintLabel.setText ("That tempo would make the item overlap the next one.", juce::dontSendNotification);
+                return;
+            }
+            hit = t;
+        }
+        else
+        {
+            um.beginNewTransaction ("Change tempo");
+        }
+
+        dragPoint = hit;
+        lastBeat = hit[IDs::beat];
+        lastBpm = hit[IDs::bpm];
+        dragging = true;
+    }
+
+    void mouseDrag (const juce::MouseEvent& e) override
+    {
+        if (! dragPoint.isValid()) return;
+        const ItemTime it (owner.item);
+        auto& um = owner.project.getUndoManager();
+
+        const bool isFirst = (double) dragPoint[IDs::beat] <= 1.0e-9 && lastBeat <= 1.0e-9;
+        double beat = isFirst ? 0.0 : beatAtX (it, e.position.x, e.mods.isCommandDown());
+        if (! isFirst)
+        {
+            // Stay between the neighbouring tempo points.
+            double lo = 0.0, hi = it.lengthBeats;
+            for (const auto& t : owner.item)
+                if (t.hasType (IDs::TEMPO) && t != dragPoint)
+                {
+                    const double b = t[IDs::beat];
+                    if (b < lastBeat) lo = juce::jmax (lo, b);
+                    else              hi = juce::jmin (hi, b);
+                }
+            beat = juce::jlimit (lo + 1.0e-3, juce::jmax (lo + 1.0e-3, hi - 1.0e-3), beat);
+        }
+        const double bpm = bpmAtY (e.position.y);
+
+        dragPoint.setProperty (IDs::beat, beat, &um);
+        dragPoint.setProperty (IDs::bpm, bpm, &um);
+
+        if (owner.project.refreshMusicalLength (owner.item)) { lastBeat = beat; lastBpm = bpm; }
+        else
+        {
+            dragPoint.setProperty (IDs::beat, lastBeat, &um);
+            dragPoint.setProperty (IDs::bpm, lastBpm, &um);
+            owner.hintLabel.setText ("That tempo would make the item overlap the next one.", juce::dontSendNotification);
+        }
+        repaint();
+    }
+
+    void mouseUp (const juce::MouseEvent&) override
+    {
+        dragPoint = {};
+        dragging = false;
+        repaint();
+    }
+
+    void mouseDoubleClick (const juce::MouseEvent& e) override
+    {
+        const ItemTime it (owner.item);
+        auto hit = pointAt (it, e.position);
+        if (! hit.isValid()) return;
+
+        auto* window = new juce::AlertWindow ("Tempo", "Beats per minute", juce::MessageBoxIconType::NoIcon);
+        window->addTextEditor ("bpm", juce::String ((double) hit[IDs::bpm], 2));
+        window->addButton ("OK", 1, juce::KeyPress (juce::KeyPress::returnKey));
+        window->addButton ("Cancel", 0, juce::KeyPress (juce::KeyPress::escapeKey));
+        juce::Component::SafePointer<TempoStrip> safeThis (this);
+        window->enterModalState (true, juce::ModalCallbackFunction::create ([safeThis, window, hit] (int result) mutable
+        {
+            std::unique_ptr<juce::AlertWindow> windowOwner (window);
+            if (safeThis == nullptr || result != 1 || ! hit.getParent().isValid()) return;
+            auto& project = safeThis->owner.project;
+            auto& um = project.getUndoManager();
+            um.beginNewTransaction ("Change tempo");
+            const double old = hit[IDs::bpm];
+            hit.setProperty (IDs::bpm, juce::jlimit (10.0, 999.0, window->getTextEditorContents ("bpm").getDoubleValue()), &um);
+            if (! project.refreshMusicalLength (safeThis->owner.item))
+            {
+                hit.setProperty (IDs::bpm, old, &um);
+                safeThis->owner.hintLabel.setText ("That tempo would make the item overlap the next one.", juce::dontSendNotification);
+            }
+            safeThis->repaint();
+        }), false);
+    }
+
+private:
+    void updateRange (const ItemTime& it)
+    {
+        double lo = 1.0e9, hi = 0.0;
+        for (auto& tp : it.tempo.points) { lo = juce::jmin (lo, tp.bpm); hi = juce::jmax (hi, tp.bpm); }
+        const double mid = 0.5 * (lo + hi), span = juce::jmax (40.0, (hi - lo) * 1.4);
+        minBpm = juce::jmax (10.0, mid - span / 2.0);
+        maxBpm = minBpm + span;
+    }
+
+    float xForBeat (const ItemTime& it, double beat) const   { return owner.timeView.toX (it.absolute (beat)); }
+    float yForBpm (double bpm) const
+    {
+        const float top = 16.0f, bottom = (float) getHeight() - 6.0f;
+        return bottom - (float) ((bpm - minBpm) / (maxBpm - minBpm)) * (bottom - top);
+    }
+    double bpmAtY (float y) const
+    {
+        const float top = 16.0f, bottom = (float) getHeight() - 6.0f;
+        const double bpm = minBpm + (double) ((bottom - y) / (bottom - top)) * (maxBpm - minBpm);
+        return juce::jlimit (10.0, 999.0, std::round (bpm * 10.0) / 10.0);
+    }
+    double beatAtX (const ItemTime& it, float x, bool bypass) const
+    {
+        double beat = it.localAt (owner.timeView.toTime (x));
+        if (owner.snap.isOn() && ! bypass) beat = std::round (beat / it.gridBeats) * it.gridBeats;
+        return juce::jlimit (0.0, it.lengthBeats, beat);
+    }
+    juce::ValueTree pointAt (const ItemTime& it, juce::Point<float> pos) const
+    {
+        for (const auto& t : owner.item)
+            if (t.hasType (IDs::TEMPO)
+                && pos.getDistanceFrom ({ xForBeat (it, t[IDs::beat]), yForBpm (t[IDs::bpm]) }) <= 7.0f)
+                return t;
+        return {};
+    }
+
+    void showMenu (juce::ValueTree point)
+    {
+        const bool isFirst = (double) point[IDs::beat] <= 1.0e-9;
+        juce::PopupMenu m;
+        m.addItem (1, "Ramp to the next tempo (accelerando / ritardando)", true, (bool) point[IDs::ramp]);
+        m.addItem (2, "Delete tempo point", ! isFirst);
+        juce::Component::SafePointer<TempoStrip> safeThis (this);
+        m.showMenuAsync (juce::PopupMenu::Options(), [safeThis, point] (int r) mutable
+        {
+            if (safeThis == nullptr || r == 0 || ! point.getParent().isValid()) return;
+            auto& project = safeThis->owner.project;
+            auto& um = project.getUndoManager();
+            if (r == 1)
+            {
+                um.beginNewTransaction ("Tempo ramp");
+                point.setProperty (IDs::ramp, ! (bool) point[IDs::ramp], &um);
+                if (! project.refreshMusicalLength (safeThis->owner.item))
+                {
+                    point.setProperty (IDs::ramp, ! (bool) point[IDs::ramp], &um);
+                    safeThis->owner.hintLabel.setText ("That tempo would make the item overlap the next one.", juce::dontSendNotification);
+                }
+            }
+            else
+            {
+                um.beginNewTransaction ("Delete tempo point");
+                auto item = point.getParent();
+                const int index = item.indexOf (point);
+                item.removeChild (point, &um);
+                if (! project.refreshMusicalLength (item))
+                {
+                    item.addChild (point, index, &um);
+                    safeThis->owner.hintLabel.setText ("Removing it would make the item overlap the next one.", juce::dontSendNotification);
+                }
+            }
+            safeThis->repaint();
+        });
+    }
+
+    ItemEditor& owner;
+    juce::ValueTree dragPoint;
+    double lastBeat = 0.0, lastBpm = 120.0, minBpm = 60.0, maxBpm = 180.0;
+    bool dragging = false;
+};
+
+//==============================================================================
 ItemEditor::ItemEditor (Project& p, PluginHost& h, AutomationController& c, SnapSettings& s, Selection& sel, juce::ValueTree itemTree)
     : project (p), host (h), controller (c), snap (s), selection (sel), item (itemTree), lane (itemTree.getParent()),
       context (p, h, c, timeView, s, sel)
@@ -63,6 +309,100 @@ ItemEditor::ItemEditor (Project& p, PluginHost& h, AutomationController& c, Snap
     addAndMakeVisible (*track);
     axis = std::make_unique<ValueAxis> (*this);
     addAndMakeVisible (*axis);
+    tempoStrip = std::make_unique<TempoStrip> (*this);
+    addAndMakeVisible (*tempoStrip);
+
+    // Time base controls
+    auto small = [this] (juce::Label& l, const juce::String& text)
+    {
+        l.setText (text, juce::dontSendNotification);
+        l.setFont (juce::FontOptions (12.0f));
+        l.setColour (juce::Label::textColourId, juce::Colours::white.withAlpha (0.6f));
+        l.setJustificationType (juce::Justification::centredRight);
+        addAndMakeVisible (l);
+    };
+    small (timebaseLabel, "Time base");
+    small (metreLabel, "Metre");
+    small (gridLabel, "Grid");
+    small (lengthLabel, "Length");
+
+    timebaseBox.addItem ("Linear (seconds)", 1);
+    timebaseBox.addItem ("Musical (bars and beats)", 2);
+    timebaseBox.onChange = [this]
+    {
+        const bool wantMusical = timebaseBox.getSelectedId() == 2;
+        if (wantMusical == isMusical()) return;
+        auto& um = project.getUndoManager();
+        um.beginNewTransaction ("Change time base");
+        project.setTimebase (item, wantMusical, 120.0);
+        refreshTimebaseControls();
+        resized();
+    };
+    addAndMakeVisible (timebaseBox);
+
+    for (auto* l : { &metreValue, &lengthValue })
+    {
+        l->setEditable (true, true, false);
+        l->setFont (juce::FontOptions (12.5f));
+        l->setColour (juce::Label::outlineColourId, juce::Colours::white.withAlpha (0.15f));
+        addAndMakeVisible (l);
+    }
+    metreValue.setTooltip ("Beats per bar / beat unit, e.g. 4/4, 3/4, 6/8");
+    metreValue.onTextChange = [this]
+    {
+        const auto text = metreValue.getText();
+        const int num = juce::jlimit (1, 32, text.upToFirstOccurrenceOf ("/", false, false).getIntValue());
+        const int den = juce::jlimit (1, 64, text.fromFirstOccurrenceOf ("/", false, false).getIntValue());
+        auto& um = project.getUndoManager();
+        um.beginNewTransaction ("Metre");
+        item.setProperty (IDs::beatsPerBar, num, &um);
+        item.setProperty (IDs::beatUnit, den > 0 ? den : 4, &um);
+        refreshTimebaseControls();
+    };
+    lengthValue.setTooltip ("Length: in beats for musical items (bar|beat also works), seconds for linear items");
+    lengthValue.onTextChange = [this]
+    {
+        auto& um = project.getUndoManager();
+        const auto text = lengthValue.getText();
+        if (isMusical())
+        {
+            const ItemTime it (item);
+            const double bb = it.parseBarBeat (text);
+            const double beats = bb >= 0.0 ? bb : text.getDoubleValue();
+            um.beginNewTransaction ("Item length");
+            if (! project.setLengthBeats (item, beats))
+                hintLabel.setText ("That length would overlap the next item.", juce::dontSendNotification);
+        }
+        else
+        {
+            const double length = juce::jmax (Project::minItemLength, text.getDoubleValue());
+            if (project.isFree (lane, (double) item[IDs::start], length, item))
+            {
+                um.beginNewTransaction ("Item length");
+                item.setProperty (IDs::length, length, &um);
+            }
+            else hintLabel.setText ("That length would overlap the next item.", juce::dontSendNotification);
+        }
+        refreshTimebaseControls();
+    };
+
+    for (int i = 0; i < 7; ++i)
+        gridBox.addItem (gridNames[i], i + 1);
+    gridBox.setTooltip ("Snap grid inside this musical item");
+    gridBox.onChange = [this]
+    {
+        auto& um = project.getUndoManager();
+        um.beginNewTransaction ("Item grid");
+        item.setProperty (IDs::gridBeats, gridChoices[juce::jlimit (0, 6, gridBox.getSelectedId() - 1)], &um);
+    };
+    addAndMakeVisible (gridBox);
+
+    tempoHint.setText ("Tempo strip: click to add a tempo point, drag it, double-click to type, right-click for a ramp.",
+                       juce::dontSendNotification);
+    tempoHint.setFont (juce::FontOptions (11.5f));
+    tempoHint.setColour (juce::Label::textColourId, juce::Colours::white.withAlpha (0.45f));
+    addAndMakeVisible (tempoHint);
+    refreshTimebaseControls();
 
     // Tools
     for (auto* b : { &selectButton, &pencilButton, &lineButton, &bendButton })
@@ -143,6 +483,30 @@ juce::AudioProcessorParameter* ItemEditor::parameter() const
     auto* plugin = host.getPlugin();
     const int index = controller.resolveParameterIndex (lane);
     return (plugin != nullptr && index >= 0) ? plugin->getParameters()[index] : nullptr;
+}
+
+void ItemEditor::refreshTimebaseControls()
+{
+    const bool musical = isMusical();
+    const ItemTime it (item);
+    timebaseBox.setSelectedId (musical ? 2 : 1, juce::dontSendNotification);
+
+    for (juce::Component* c : { (juce::Component*) &metreLabel, (juce::Component*) &metreValue, (juce::Component*) &gridLabel,
+                                (juce::Component*) &gridBox, (juce::Component*) &tempoHint, (juce::Component*) tempoStrip.get() })
+        c->setVisible (musical);
+
+    if (musical)
+    {
+        metreValue.setText (juce::String (it.beatsPerBar) + "/" + juce::String (it.beatUnit), juce::dontSendNotification);
+        lengthValue.setText (juce::String (it.lengthBeats, 3) + " beats", juce::dontSendNotification);
+        for (int i = 0; i < 7; ++i)
+            if (std::abs (gridChoices[i] - it.gridBeats) < 1.0e-6)
+                gridBox.setSelectedId (i + 1, juce::dontSendNotification);
+    }
+    else
+    {
+        lengthValue.setText (juce::String ((double) item[IDs::length], 3) + " s", juce::dontSendNotification);
+    }
 }
 
 void ItemEditor::setTool (LaneTrack::Tool t)
@@ -268,7 +632,7 @@ bool ItemEditor::keyPressed (const juce::KeyPress& key)
         if (pts.isEmpty()) return true;
         const int dir = (code == juce::KeyPress::rightKey || code == juce::KeyPress::upKey) ? 1 : -1;
         um.beginNewTransaction ("Nudge points");
-        PointOps::nudge (pts, horizontal ? dir * snap.getGrid() * (shift ? 10.0 : 1.0) : 0.0,
+        PointOps::nudge (pts, horizontal ? dir * (shift ? 10 : 1) : 0, snap.getGrid(),
                          vertical ? (float) dir * (shift ? 0.1f : 0.01f) : 0.0f, um);
         return true;
     }
@@ -306,13 +670,14 @@ void ItemEditor::paintCell (juce::Graphics& g, int row, int col, int w, int h, b
         return;
 
     const auto& p = rowPoints[(size_t) row];
-    const double start = item[IDs::start];
+    const ItemTime it (item);
     juce::String text;
 
     switch (col)
     {
         case 1: text = juce::String (row + 1); break;
-        case 2: text = TimeFormat::format (start + (double) p[IDs::time]); break;
+        case 2: text = it.isMusical() ? it.barBeat ((double) p[IDs::time]) + "  " + TimeFormat::format (it.absolute ((double) p[IDs::time]), 2)
+                                      : TimeFormat::format (it.absolute ((double) p[IDs::time])); break;
         case 3: text = paramText (parameter(), (float) (double) p[IDs::value]); break;
         case 4:
         {
@@ -369,12 +734,15 @@ void ItemEditor::editCell (int row, int col)
         return;
     }
 
-    const double start = item[IDs::start];
-    const auto current = col == 2 ? TimeFormat::format (start + (double) point[IDs::time])
+    const ItemTime it (item);
+    const auto current = col == 2 ? (it.isMusical() ? it.barBeat ((double) point[IDs::time])
+                                                    : TimeFormat::format (it.absolute ((double) point[IDs::time])))
                                   : paramText (parameter(), (float) (double) point[IDs::value]);
 
     auto* window = new juce::AlertWindow (col == 2 ? "Point time" : "Point value",
-                                          col == 2 ? "Absolute time (m:ss.mmm or seconds)" : "Value in the plugin's own units",
+                                          col == 2 ? (it.isMusical() ? "bar|beat (e.g. 3|2.5), or absolute time (m:ss.mmm or seconds)"
+                                                                     : "Absolute time (m:ss.mmm or seconds)")
+                                                   : "Value in the plugin's own units",
                                           juce::MessageBoxIconType::NoIcon);
     window->addTextEditor ("v", current);
     window->addButton ("OK", 1, juce::KeyPress (juce::KeyPress::returnKey));
@@ -394,8 +762,10 @@ void ItemEditor::editCell (int row, int col)
         if (col == 2)
         {
             um.beginNewTransaction ("Point time");
-            const double t = TimeFormat::parse (text) - (double) parentItem[IDs::start];
-            point.setProperty (IDs::time, juce::jlimit (0.0, (double) parentItem[IDs::length], t), &um);
+            const ItemTime pit (parentItem);
+            const double bb = pit.isMusical() ? pit.parseBarBeat (text) : -1.0;
+            const double t = bb >= 0.0 ? bb : pit.localAt (TimeFormat::parse (text));
+            point.setProperty (IDs::time, juce::jlimit (0.0, pit.localLength(), t), &um);
         }
         else
         {
@@ -417,25 +787,32 @@ void ItemEditor::valueTreePropertyChanged (juce::ValueTree& tree, const juce::Id
     {
         tableDirty = true;
         refreshTitle();
+        if (tree == item)
+        {
+            refreshTimebaseControls();
+            if (tempoStrip->isVisible() != isMusical()) resized();
+        }
+        tempoStrip->repaint();
     }
 }
 
 void ItemEditor::valueTreeChildAdded (juce::ValueTree& parent, juce::ValueTree&)
 {
-    if (parent == item) tableDirty = true;
+    if (parent == item) { tableDirty = true; tempoStrip->repaint(); }
 }
 
 void ItemEditor::valueTreeChildRemoved (juce::ValueTree& parent, juce::ValueTree&, int)
 {
-    if (parent == item) tableDirty = true;
+    if (parent == item) { tableDirty = true; tempoStrip->repaint(); }
 }
 
 void ItemEditor::changeListenerCallback (juce::ChangeBroadcaster*)
 {
     track->repaint();
+    tempoStrip->repaint();
     axis->repaint();
     table.repaint();
-    repaint (0, toolbarHeight, getWidth(), rulerHeight);
+    repaint (0, toolbarHeight + timebaseHeight, getWidth(), rulerHeight);
 }
 
 void ItemEditor::timerCallback()
@@ -476,7 +853,7 @@ void ItemEditor::timerCallback()
     {
         lastPosition = pos;
         track->repaint();
-        repaint (0, toolbarHeight, getWidth(), rulerHeight);
+        repaint (0, toolbarHeight + timebaseHeight, getWidth(), rulerHeight);
     }
 }
 
@@ -485,10 +862,12 @@ void ItemEditor::paint (juce::Graphics& g)
 {
     g.fillAll (juce::Colour (0xff1e2126));
     g.setColour (panelColour);
-    g.fillRect (0, 0, getWidth(), toolbarHeight);
+    g.fillRect (0, 0, getWidth(), toolbarHeight + timebaseHeight);
+    g.setColour (juce::Colours::black.withAlpha (0.3f));
+    g.drawHorizontalLine (toolbarHeight, 0.0f, (float) getWidth());
 
     // A small time ruler above the curve; click it to move the playhead.
-    auto ruler = juce::Rectangle<int> (axisWidth, toolbarHeight, track->getWidth(), rulerHeight);
+    auto ruler = juce::Rectangle<int> (axisWidth, toolbarHeight + timebaseHeight, track->getWidth(), rulerHeight);
     g.setColour (panelColour.brighter (0.05f));
     g.fillRect (ruler);
 
@@ -537,11 +916,28 @@ void ItemEditor::resized()
     toolbar.removeFromLeft (14);
     titleLabel.setBounds (toolbar);
 
+    // Second row: time base, metre, grid, length.
+    auto row = r.removeFromTop (timebaseHeight).reduced (8, 5);
+    timebaseLabel.setBounds (row.removeFromLeft (70));  row.removeFromLeft (4);
+    timebaseBox.setBounds (row.removeFromLeft (190));   row.removeFromLeft (12);
+    lengthLabel.setBounds (row.removeFromLeft (52));    row.removeFromLeft (4);
+    lengthValue.setBounds (row.removeFromLeft (110));   row.removeFromLeft (12);
+    metreLabel.setBounds (row.removeFromLeft (48));     row.removeFromLeft (4);
+    metreValue.setBounds (row.removeFromLeft (50));     row.removeFromLeft (12);
+    gridLabel.setBounds (row.removeFromLeft (36));      row.removeFromLeft (4);
+    gridBox.setBounds (row.removeFromLeft (150));       row.removeFromLeft (12);
+    tempoHint.setBounds (row);
+
     auto bottom = r.removeFromBottom (24);
     hintLabel.setBounds (bottom.reduced (8, 0));
 
     table.setBounds (r.removeFromRight (tableWidth));
     r.removeFromTop (rulerHeight);
+    if (isMusical())
+    {
+        auto strip = r.removeFromTop (tempoHeight);
+        tempoStrip->setBounds (strip.withTrimmedLeft (axisWidth));
+    }
     axis->setBounds (r.removeFromLeft (axisWidth));
     track->setBounds (r);
     timeView.setViewWidth (track->getWidth());
@@ -550,7 +946,8 @@ void ItemEditor::resized()
 // Clicking the ruler moves the playhead.
 void ItemEditor::mouseDown (const juce::MouseEvent& e)
 {
-    if (e.y >= toolbarHeight && e.y < toolbarHeight + rulerHeight && e.x >= axisWidth && e.x < axisWidth + track->getWidth())
+    const int rulerY = toolbarHeight + timebaseHeight;
+    if (e.y >= rulerY && e.y < rulerY + rulerHeight && e.x >= axisWidth && e.x < axisWidth + track->getWidth())
     {
         auto t = timeView.toTime ((float) (e.x - axisWidth));
         if (! e.mods.isCommandDown()) t = snap.snap (t);
