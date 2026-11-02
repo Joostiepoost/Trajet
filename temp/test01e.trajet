@@ -5,7 +5,9 @@
     "type": "PROJECT",
     "properties": {
       "formatVersion": 1,
-      "lengthSeconds": 150.0
+      "lengthSeconds": 150.0,
+      "limiter": true,
+      "outputGain": -0.999999999999999
     },
     "children": [
       {
@@ -295,6 +297,26 @@
                       "beat": 75.625,
                       "bpm": 98.099999999999994,
                       "ramp": false
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 115.875,
+                      "value": 0.646908938884735,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 123.25,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
                     },
                     "children": []
                   }
