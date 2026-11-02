@@ -2,7 +2,7 @@
 #include "../Model/ItemTime.h"
 
 Inspector::Inspector (Project& p, PluginHost& h, AutomationController& c, Selection& s)
-    : project (p), host (h), controller (c), selection (s)
+    : project (p), host (h), controller (c), selection (s), generatorPanel (p)
 {
     auto heading = [this] (juce::Label& l, const juce::String& text)
     {
@@ -14,6 +14,11 @@ Inspector::Inspector (Project& p, PluginHost& h, AutomationController& c, Select
     title.setFont (juce::FontOptions (14.0f, juce::Font::bold));
     heading (itemHeading, "Selected item");
     heading (pointHeading, "Selected point");
+    heading (generatorHeading, "Generator");
+
+    generatorPanel.parameterFor = [this] (const juce::ValueTree& lane) { return parameterFor (lane); };
+    generatorPanel.showStatus = [this] (const juce::String& m) { if (showStatus) showStatus (m); };
+    addChildComponent (generatorPanel);
 
     hint.setText ("Select an item or a point to see its details.", juce::dontSendNotification);
     hint.setColour (juce::Label::textColourId, juce::Colours::white.withAlpha (0.45f));
@@ -181,6 +186,9 @@ void Inspector::refresh()
         f->value.setVisible (hasPoint);
     }
     shapeBox.setVisible (hasPoint);
+    generatorPanel.setItem (hasPoint ? juce::ValueTree() : currentItem);
+    generatorPanel.setVisible (hasItem && ! hasPoint);
+    generatorHeading.setVisible (hasItem && ! hasPoint);
 
     if (! hasItem && selection.getItems().size() > 1)
     {
@@ -201,7 +209,8 @@ void Inspector::refresh()
         laneField->value.setText (lane[IDs::name].toString(), juce::dontSendNotification);
         startField->value.setText (TimeFormat::format (currentItem[IDs::start]), juce::dontSendNotification);
         lengthField->value.setText (juce::String ((double) currentItem[IDs::length], 3), juce::dontSendNotification);
-        countField->value.setText (juce::String (numPoints), juce::dontSendNotification);
+        countField->value.setText (ItemTime::isGenerator (currentItem) ? juce::String ("generated (") + juce::String (numPoints) + " kept)"
+                                                                     : juce::String (numPoints), juce::dontSendNotification);
 
         const ItemTime it (currentItem);
         if (it.isMusical())
@@ -285,5 +294,11 @@ void Inspector::resized()
         placeField (timeField);
         placeField (valueField);
         shapeBox.setBounds (r.removeFromTop (24));
+    }
+    else
+    {
+        r.removeFromTop (12);
+        generatorHeading.setBounds (r.removeFromTop (22));
+        generatorPanel.setBounds (r.removeFromTop (generatorPanel.getPreferredHeight()));
     }
 }

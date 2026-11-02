@@ -72,6 +72,12 @@ public:
     /** Set a musical item's length in beats (if it fits). */
     bool setLengthBeats (juce::ValueTree item, double beats);
 
+    // Generators
+    /** Make an item a generator ("lfo", "random", "formula") or back to points (""). */
+    void setGenerator (juce::ValueTree item, const juce::String& type);
+    /** Replace a generator by ordinary points that trace the same curve. Returns the number of points. */
+    int bakeGenerator (juce::ValueTree item);
+
     /** Lane colours: a palette of distinct hues. */
     static juce::Colour laneColour (const juce::ValueTree& lane);
     static juce::Colour paletteColour (int index);

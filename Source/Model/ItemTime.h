@@ -77,6 +77,38 @@ public:
         return juce::jmax (0.0, (bar - 1) * beatsPerBar + (beat - 1.0));
     }
 
+    /** The item's generator (type none for ordinary point items). Formula errors go to error. */
+    static Automation::Generator readGenerator (const juce::ValueTree& item, juce::String* error = nullptr)
+    {
+        Automation::Generator g;
+        const auto type = item[IDs::generator].toString();
+        if (type == "lfo")          g.type = Automation::GeneratorType::lfo;
+        else if (type == "random")  g.type = Automation::GeneratorType::random;
+        else if (type == "formula") g.type = Automation::GeneratorType::formula;
+        else                        return g;
+
+        g.shape    = juce::jlimit (0, 4, (int) item.getProperty (IDs::genShape, 0));
+        g.rate     = juce::jlimit (0.001, 1000.0, (double) item.getProperty (IDs::genRate, 1.0));
+        g.minValue = (float) juce::jlimit (0.0, 1.0, (double) item.getProperty (IDs::genMin, 0.0));
+        g.maxValue = (float) juce::jlimit (0.0, 1.0, (double) item.getProperty (IDs::genMax, 1.0));
+        g.phase    = (double) item.getProperty (IDs::genPhase, 0.0);
+        g.seed     = (int) item.getProperty (IDs::genSeed, 1);
+
+        if (g.type == Automation::GeneratorType::formula)
+        {
+            juce::String err;
+            g.formula = Formula::parseCached (item[IDs::formula].toString(), err);
+            if (error != nullptr) *error = err;
+        }
+        return g;
+    }
+
+    static bool isGenerator (const juce::ValueTree& item)
+    {
+        const auto type = item[IDs::generator].toString();
+        return type == "lfo" || type == "random" || type == "formula";
+    }
+
     int beatsPerBar = 4, beatUnit = 4;
     double gridBeats = 0.25, lengthBeats = 0.0;
     Automation::TempoMap tempo;

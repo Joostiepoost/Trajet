@@ -18,6 +18,7 @@
 #include "EditorState.h"
 #include "LaneTrack.h"
 #include "../Model/ItemTime.h"
+#include "GeneratorPanel.h"
 
 class ItemEditor : public juce::Component,
                    private juce::ValueTree::Listener,
@@ -87,6 +88,8 @@ private:
     juce::TextButton fitButton { "Fit" };
     juce::Label titleLabel, hintLabel;
     juce::TableListBox table { {}, this };
+    GeneratorPanel generatorPanel;
+    void refreshGeneratorMode();
     std::vector<juce::ValueTree> rowPoints;     // points in time order
     bool tableDirty = true;
     double lastPosition = -1.0;

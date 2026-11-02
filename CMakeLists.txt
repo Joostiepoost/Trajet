@@ -49,11 +49,13 @@ target_sources(Trajet PRIVATE
     Source/ParameterListComponent.cpp
     Source/Model/Project.cpp
     Source/Engine/AutomationEngine.cpp
+    Source/Engine/Formula.cpp
     Source/Engine/AutomationController.cpp
     Source/UI/ScoreView.cpp
     Source/UI/LaneTrack.cpp
     Source/UI/Inspector.cpp
     Source/UI/ItemEditor.cpp
+    Source/UI/GeneratorPanel.cpp
     Source/Model/PointOps.cpp
     Source/UI/TransportBar.cpp)
 

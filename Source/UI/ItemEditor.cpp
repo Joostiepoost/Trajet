@@ -291,7 +291,7 @@ private:
 //==============================================================================
 ItemEditor::ItemEditor (Project& p, PluginHost& h, AutomationController& c, SnapSettings& s, Selection& sel, juce::ValueTree itemTree)
     : project (p), host (h), controller (c), snap (s), selection (sel), item (itemTree), lane (itemTree.getParent()),
-      context (p, h, c, timeView, s, sel)
+      context (p, h, c, timeView, s, sel), generatorPanel (p)
 {
     context.tool = &tool;
     context.showStatus = [this] (const juce::String& text) { hintLabel.setText (text, juce::dontSendNotification); };
@@ -454,6 +454,12 @@ ItemEditor::ItemEditor (Project& p, PluginHost& h, AutomationController& c, Snap
     table.setMultipleSelectionEnabled (true);
     table.setColour (juce::ListBox::backgroundColourId, panelColour);
     addAndMakeVisible (table);
+
+    // Generator settings take the table's place for LFO / random / formula items.
+    generatorPanel.parameterFor = [this] (const juce::ValueTree&) { return parameter(); };
+    addChildComponent (generatorPanel);
+    generatorPanel.setItem (item);
+    refreshGeneratorMode();
 
     timeView.setLength (project.getLengthSeconds());
     project.getState().addListener (this);
@@ -790,6 +796,7 @@ void ItemEditor::valueTreePropertyChanged (juce::ValueTree& tree, const juce::Id
         if (tree == item)
         {
             refreshTimebaseControls();
+            refreshGeneratorMode();
             if (tempoStrip->isVisible() != isMusical()) resized();
         }
         tempoStrip->repaint();
@@ -931,7 +938,9 @@ void ItemEditor::resized()
     auto bottom = r.removeFromBottom (24);
     hintLabel.setBounds (bottom.reduced (8, 0));
 
-    table.setBounds (r.removeFromRight (tableWidth));
+    auto side = r.removeFromRight (tableWidth);
+    table.setBounds (side);
+    generatorPanel.setBounds (side.reduced (12, 10).withHeight (juce::jmax (0, generatorPanel.getPreferredHeight())));
     r.removeFromTop (rulerHeight);
     if (isMusical())
     {
@@ -941,6 +950,19 @@ void ItemEditor::resized()
     axis->setBounds (r.removeFromLeft (axisWidth));
     track->setBounds (r);
     timeView.setViewWidth (track->getWidth());
+}
+
+void ItemEditor::refreshGeneratorMode()
+{
+    const bool gen = ItemTime::isGenerator (item);
+    generatorPanel.setVisible (gen);
+    table.setVisible (! gen);
+    for (auto* b : { &pencilButton, &lineButton, &bendButton, &smoothButton, &thinButton, &reverseButton, &invertButton })
+        b->setEnabled (! gen);
+    hintLabel.setText (gen ? "This item is generated. Change its settings on the right, or Bake to points to edit it by hand."
+                           : "Drag the dashed box's handles to scale (Option: around the centre). Double-click a time or value in the table to type it.",
+                       juce::dontSendNotification);
+    resized();
 }
 
 // Clicking the ruler moves the playhead.

@@ -32,7 +32,8 @@ Other options:
 | 3 | Playback engine: transport, lanes with points, automation driving the plugin, chase / patch | done |
 | 4 | Main window: zoom/scroll, lane headers (reorder, resize, mute/solo, colour), items, point gestures, snap, inspector | done |
 | 5 | Item editor, rubber-band selection, scale box, nudge, point copy/paste, smooth/thin/reverse/invert | done |
-| 6 | Time bases: linear (seconds) and musical items (bars/beats, own metre, tempo map with ramps) | testing |
+| 6 | Time bases: linear (seconds) and musical items (bars/beats, own metre, tempo map with ramps) | done |
+| 7 | Generator items: LFO, random, formula; bake to points | testing |
 
 ## Using step 1
 
@@ -53,6 +54,19 @@ The last loaded plugin is reloaded automatically when Trajet starts.
 - **Edit menu**: Undo (⌘Z) and Redo (⇧⌘Z). For now only the held-note settings are undoable; lanes and points join from step 3 on.
 - **Audio menu**: audio processing on/off (⇧⌘A) and the plugin's panel (⌘E).
 - Trajet reopens the last project when it starts, and asks to save unsaved changes when you quit.
+
+## Generator items (step 7)
+
+An item can compute its curve instead of holding hand-drawn points.
+
+- **Right-click an item → Generator → LFO / Random / Formula.** Choose *Points (by hand)* to switch back; the item's hand-drawn points are kept underneath and come back.
+- Select the item: its settings appear in the **Inspector**. Double-click it to open the **item editor**, where the settings replace the point table.
+- **Min / Max** are in the plugin's own units. The generator sweeps between them (Min above Max turns the curve upside down).
+- **Rate** is in Hz for linear items and *cycles per beat* for musical items, so an LFO in a musical item speeds up with an accelerando.
+- **LFO** shapes: sine (starts at the bottom), triangle, square, saw up, saw down; **Phase** shifts the start.
+- **Random** modes: *stepped* (a new value each cycle), *smooth* (glides between them), *drift* (slow wandering). The **Seed** fixes the line, so it is the same each time you play or render; **New** picks another.
+- **Formula**: any expression whose result 0..1 is mapped onto Min..Max. Variables: `t` (0 to 1 over the item), `s` (seconds since the item start), `b` (beats, musical items), `pi`, `e`. Functions: `sin cos tan asin acos atan abs sqrt exp log log10 floor ceil round frac sign min max pow clamp mod step mix tri saw sq noise rand`. Operators `+ - * / % ^` and comparisons (`t > 0.5` gives 1 or 0). Errors show in orange under the field; while the formula is broken the item sits at Min. Example: `0.5 + 0.5*sin(2*pi*4*t)*(1-t)` – four cycles that die away.
+- **Bake to points** turns the generated curve into ordinary points (exact steps for stepped random and square LFOs, a thinned curve otherwise) so you can edit it by hand. Undo brings the generator back.
 
 ## Time bases (step 6)
 

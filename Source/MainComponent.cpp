@@ -94,6 +94,7 @@ MainComponent::MainComponent()
     transportBar.onAddLane   = [this] (juce::Component& b) { showParameterPicker (b); };
     transportBar.onZoomToFit = [this] { scoreView.zoomToFit(); };
     scoreView.onStatus       = [this] (const juce::String& text) { showStatus (text); };
+    inspector.showStatus     = [this] (const juce::String& text) { showStatus (text); };
     scoreView.onOpenItemEditor = [this] (juce::ValueTree item) { openItemEditor (item); };
 
     // Snap settings are remembered between sessions.

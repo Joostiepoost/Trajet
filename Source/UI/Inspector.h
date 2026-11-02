@@ -8,6 +8,7 @@
 #include "../PluginHost.h"
 #include "../Engine/AutomationController.h"
 #include "EditorState.h"
+#include "GeneratorPanel.h"
 
 class Inspector : public juce::Component,
                   private juce::ChangeListener,
@@ -15,6 +16,8 @@ class Inspector : public juce::Component,
 {
 public:
     Inspector (Project&, PluginHost&, AutomationController&, Selection&);
+
+    std::function<void (const juce::String&)> showStatus;
     ~Inspector() override;
 
     void paint (juce::Graphics&) override;
@@ -44,6 +47,8 @@ private:
     juce::OwnedArray<Field> fields;
     Field *laneField, *startField, *lengthField, *countField, *timeField, *valueField, *timebaseField, *tempoField;
     juce::ComboBox shapeBox;
+    juce::Label generatorHeading;
+    GeneratorPanel generatorPanel;
 
     juce::ValueTree currentItem, currentPoint;
 

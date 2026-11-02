@@ -1,5 +1,6 @@
 #include "Project.h"
 #include "ItemTime.h"
+#include "PointOps.h"
 
 namespace
 {
@@ -313,6 +314,88 @@ bool Project::setLengthBeats (juce::ValueTree item, double beats)
     item.setProperty (IDs::lengthBeats, beats, &undoManager);
     item.setProperty (IDs::length, seconds, &undoManager);
     return true;
+}
+
+void Project::setGenerator (juce::ValueTree item, const juce::String& type)
+{
+    auto& um = undoManager;
+    if (type.isEmpty())
+    {
+        item.removeProperty (IDs::generator, &um);
+        return;
+    }
+
+    // Sensible defaults the first time; existing settings are kept when switching type.
+    if (! item.hasProperty (IDs::genMin))   item.setProperty (IDs::genMin, 0.2, &um);
+    if (! item.hasProperty (IDs::genMax))   item.setProperty (IDs::genMax, 0.8, &um);
+    if (! item.hasProperty (IDs::genRate))  item.setProperty (IDs::genRate, ItemTime (item).isMusical() ? 0.5 : 1.0, &um);
+    if (! item.hasProperty (IDs::genShape)) item.setProperty (IDs::genShape, 0, &um);
+    if (! item.hasProperty (IDs::genPhase)) item.setProperty (IDs::genPhase, 0.0, &um);
+    if (! item.hasProperty (IDs::genSeed))  item.setProperty (IDs::genSeed, juce::Random::getSystemRandom().nextInt ({ 1, 99999 }), &um);
+    if (! item.hasProperty (IDs::formula))  item.setProperty (IDs::formula, "0.5 + 0.5*sin(2*pi*4*t)*(1-t)", &um);
+    item.setProperty (IDs::generator, type, &um);
+}
+
+int Project::bakeGenerator (juce::ValueTree item)
+{
+    const ItemTime it (item);
+    const auto g = ItemTime::readGenerator (item);
+    if (g.type == Automation::GeneratorType::none)
+        return 0;
+
+    auto& um = undoManager;
+    const double length = it.localLength();
+
+    // Remove the old points.
+    for (int i = item.getNumChildren(); --i >= 0;)
+        if (item.getChild (i).hasType (IDs::POINT))
+            item.removeChild (i, &um);
+
+    auto addPoint = [&] (double local, float value, Automation::Shape shape)
+    {
+        juce::ValueTree p (IDs::POINT);
+        p.setProperty (IDs::time, local, nullptr);
+        p.setProperty (IDs::value, value, nullptr);
+        p.setProperty (IDs::shape, (int) shape, nullptr);
+        p.setProperty (IDs::tension, 0.0, nullptr);
+        item.appendChild (p, &um);
+        return p;
+    };
+
+    const bool stepped = (g.type == Automation::GeneratorType::random && g.shape == (int) Automation::RandomMode::stepped)
+                      || (g.type == Automation::GeneratorType::lfo && g.shape == (int) Automation::LfoShape::square);
+    int count = 0;
+
+    if (stepped)
+    {
+        // Exact: one held point per step.
+        const double step = (g.type == Automation::GeneratorType::lfo ? 0.5 : 1.0) / g.rate;
+        double first = g.type == Automation::GeneratorType::lfo ? -std::fmod (g.phase, 0.5) / g.rate : 0.0;
+        for (double local = first; local < length && count < 20000; local += step, ++count)
+        {
+            const double t = juce::jmax (0.0, local);
+            addPoint (t, Automation::generatorValue (g, t + 1.0e-9, length, it.toSeconds (t)), Automation::Shape::hold);
+        }
+        addPoint (length, Automation::generatorValue (g, length, length, it.toSeconds (length)), Automation::Shape::hold);
+        item.removeProperty (IDs::generator, &um);
+        return count + 1;
+    }
+
+    // Smooth shapes: sample densely, then thin out points that don't change the curve.
+    double cycles = g.type == Automation::GeneratorType::formula ? 32.0 : juce::jmax (1.0, length * g.rate);
+    const int samples = juce::jlimit (32, 8000, (int) (cycles * 48.0));
+    juce::Array<juce::ValueTree> added;
+    for (int i = 0; i <= samples; ++i)
+    {
+        const double t = length * i / samples;
+        added.add (addPoint (t, Automation::generatorValue (g, t, length, it.toSeconds (t)), Automation::Shape::linear));
+    }
+    PointOps::thin (added, um, 0.0015f);
+
+    item.removeProperty (IDs::generator, &um);
+    int remaining = 0;
+    for (const auto& c : item) if (c.hasType (IDs::POINT)) ++remaining;
+    return remaining;
 }
 
 juce::Colour Project::paletteColour (int index)

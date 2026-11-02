@@ -130,7 +130,7 @@ LaneTrack::Zone LaneTrack::zoneFor (const juce::ValueTree& item, juce::Point<flo
 
 juce::ValueTree LaneTrack::pointAt (const juce::ValueTree& item, juce::Point<float> pos) const
 {
-    if (! item.isValid())
+    if (! item.isValid() || ItemTime::isGenerator (item))
         return {};
 
     const ItemTime it (item);
@@ -174,7 +174,7 @@ void LaneTrack::collectPointsIn (juce::Rectangle<float> area, juce::Array<juce::
 {
     for (const auto& item : lane)
     {
-        if (! item.hasType (IDs::ITEM)) continue;
+        if (! item.hasType (IDs::ITEM) || ItemTime::isGenerator (item)) continue;
         const ItemTime it (item);
         for (const auto& p : item)
             if (p.hasType (IDs::POINT)
@@ -308,8 +308,61 @@ void LaneTrack::paint (juce::Graphics& g)
         g.setColour (selected ? juce::Colours::white : colour.withAlpha (0.6f));
         g.drawRoundedRectangle (r, 4.0f, selected ? 2.0f : 1.0f);
 
+        // Generator items: their curve, and what they are, in the title strip.
+        const auto generator = ItemTime::readGenerator (item);
+        if (generator.type != Automation::GeneratorType::none)
+        {
+            juce::Graphics::ScopedSaveState save (g);
+            g.reduceClipRegion (r.toNearestInt());
+
+            const double length = it.localLength();
+            juce::Path curve;
+            const float xa = juce::jmax (r.getX(), 0.0f), xb = juce::jmin (r.getRight(), w);
+            bool first = true;
+            for (float x = xa; x <= xb; x += 1.0f)
+            {
+                const double local = juce::jlimit (0.0, length, it.localAt (tv.toTime (x)));
+                const float y = valueToY (Automation::generatorValue (generator, local, length, it.toSeconds (local)));
+                if (first) curve.startNewSubPath (x, y); else curve.lineTo (x, y);
+                first = false;
+            }
+            g.setColour (muted ? colour.withAlpha (0.4f) : colour);
+            g.strokePath (curve, juce::PathStrokeType (1.4f));
+
+            // Dashed lines at the generator's min and max.
+            for (float v : { generator.minValue, generator.maxValue })
+            {
+                juce::Path line;
+                line.startNewSubPath (xa, valueToY (v));
+                line.lineTo (xb, valueToY (v));
+                juce::Path dashed;
+                const float dashes[] = { 3.0f, 4.0f };
+                juce::PathStrokeType (1.0f).createDashedStroke (dashed, line, dashes, 2);
+                g.setColour (colour.withAlpha (0.35f));
+                g.fillPath (dashed);
+            }
+
+            static const char* lfoNames[] = { "sine", "triangle", "square", "saw up", "saw down" };
+            static const char* randomNames[] = { "stepped", "smooth", "drift" };
+            const juce::String unit = it.isMusical() ? "/beat" : " Hz";
+            juce::String label;
+            if (generator.type == Automation::GeneratorType::lfo)
+                label = "LFO " + juce::String (lfoNames[juce::jlimit (0, 4, generator.shape)]) + "  " + juce::String (generator.rate, 2) + unit;
+            else if (generator.type == Automation::GeneratorType::random)
+                label = "Random " + juce::String (randomNames[juce::jlimit (0, 2, generator.shape)]) + "  " + juce::String (generator.rate, 2) + unit;
+            else
+                label = generator.formula != nullptr ? "f = " + item[IDs::formula].toString() : "formula error";
+
+            g.setColour (juce::Colours::black.withAlpha (0.75f));
+            g.setFont (juce::FontOptions (10.5f, juce::Font::bold));
+            auto stripText = r.withHeight ((float) stripHeight).reduced (6.0f, 0.0f);
+            if (it.isMusical()) stripText = stripText.withTrimmedLeft (juce::jmin (stripText.getWidth() * 0.5f, 120.0f));
+            if (r.getWidth() > 60.0f)
+                g.drawText (label, stripText.toNearestInt(), juce::Justification::centredLeft, true);
+        }
+
         // Curve: evaluated at every pixel, the same maths the engine uses.
-        auto points = Project::getPoints (item);
+        auto points = generator.type == Automation::GeneratorType::none ? Project::getPoints (item) : std::vector<Automation::Point>();
         if (! points.empty())
         {
             juce::Graphics::ScopedSaveState save (g);
@@ -517,6 +570,16 @@ void LaneTrack::mouseDown (const juce::MouseEvent& e)
 
     // Curve area.
     auto hit = pointAt (item, e.position);
+
+    // Generator items have no points to edit: clicking selects the item.
+    if (ItemTime::isGenerator (item))
+    {
+        if (add) ctx.selection.selectItem (item, true); else ctx.selection.selectItem (item);
+        mode = Mode::rubberBand;
+        rubberRect = {};
+        repaint();
+        return;
+    }
 
     // Clicking right on a point always grabs it (unless Option is held to draw).
     const bool onPoint = hit.isValid() && ! e.mods.isAltDown();
@@ -1068,8 +1131,16 @@ void LaneTrack::showItemMenu (juce::ValueTree item)
 {
     juce::PopupMenu m;
     const bool musical = ItemTime (item).isMusical();
+    const auto genType = item[IDs::generator].toString();
+    juce::PopupMenu generators;
+    generators.addItem (10, "Points (draw by hand)", true, ! ItemTime::isGenerator (item));
+    generators.addItem (11, "LFO", true, genType == "lfo");
+    generators.addItem (12, "Random", true, genType == "random");
+    generators.addItem (13, "Formula", true, genType == "formula");
     m.addItem (1, "Duplicate after itself");
-    m.addItem (3, musical ? "Make linear (seconds)" : "Make musical (bars and beats)...");
+    m.addItem (3, musical ? "Make linear (seconds)" : "Make musical (bars and beats)");
+    m.addSubMenu ("Generator", generators);
+    m.addItem (14, "Bake generator to points", ItemTime::isGenerator (item));
     m.addItem (4, "Open in item editor");
     m.addSeparator();
     m.addItem (2, "Delete item");
@@ -1084,6 +1155,21 @@ void LaneTrack::showItemMenu (juce::ValueTree item)
         auto& um = project.getUndoManager();
         auto laneTree = item.getParent();
 
+        if (result >= 10 && result <= 13)
+        {
+            um.beginNewTransaction ("Generator");
+            const char* types[] = { "", "lfo", "random", "formula" };
+            project.setGenerator (item, types[result - 10]);
+            safeThis->ctx.selection.selectItem (item);
+            return;
+        }
+        if (result == 14)
+        {
+            um.beginNewTransaction ("Bake generator");
+            const int n = project.bakeGenerator (item);
+            safeThis->ctx.showStatus ("Baked to " + juce::String (n) + " points.");
+            return;
+        }
         if (result == 3)
         {
             um.beginNewTransaction ("Change time base");

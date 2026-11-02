@@ -13,6 +13,8 @@
 //       LANE   (laneId, paramIndex, paramName, name, colour, height, mute, solo)
 //         ITEM (start, length, timebase)          -- start/length always in seconds
 //              musical items also: beatsPerBar, beatUnit, gridBeats, lengthBeats
+//              generator items also: generator (lfo/random/formula), genShape, genRate,
+//              genMin, genMax, genPhase, genSeed, formula -- used instead of the points
 //           TEMPO (beat, bpm, ramp)               -- musical items: the tempo map
 //           POINT (time, value, shape, tension)   -- time from the item start, in seconds
 //                                                    (linear items) or beats (musical items)
@@ -71,6 +73,16 @@ namespace IDs
     TRAJET_ID (beat)
     TRAJET_ID (bpm)
     TRAJET_ID (ramp)
+
+    // Generator items
+    TRAJET_ID (generator)
+    TRAJET_ID (genShape)
+    TRAJET_ID (genRate)
+    TRAJET_ID (genMin)
+    TRAJET_ID (genMax)
+    TRAJET_ID (genPhase)
+    TRAJET_ID (genSeed)
+    TRAJET_ID (formula)
 
     // POINT properties
     TRAJET_ID (time)

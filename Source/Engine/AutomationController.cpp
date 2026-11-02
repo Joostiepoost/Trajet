@@ -132,6 +132,7 @@ void AutomationController::rebuild()
             item.tempo = time.tempo;
             item.localEnd = time.localLength();
             item.points = Project::getPoints (itemTree);   // already in the item's own units
+            item.generator = ItemTime::readGenerator (itemTree);
 
             lane.items.push_back (std::move (item));
         }

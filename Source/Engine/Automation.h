@@ -6,6 +6,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include "Formula.h"
 
 namespace Automation
 {
@@ -155,6 +156,95 @@ namespace Automation
     };
 
     //==============================================================================
+    // Generators: items that move a parameter by themselves.
+    //
+    // Rates are in cycles (or random steps) per second in linear items and per beat
+    // in musical items, so in a musical item with an accelerando an LFO speeds up too.
+
+    enum class GeneratorType { none = 0, lfo, random, formula };
+    enum class LfoShape { sine = 0, triangle, square, sawUp, sawDown };
+    enum class RandomMode { stepped = 0, smooth, drift };
+
+    struct Generator
+    {
+        GeneratorType type = GeneratorType::none;
+        int shape = 0;               // LfoShape or RandomMode
+        double rate = 1.0;           // per second (linear) or per beat (musical)
+        float minValue = 0.0f, maxValue = 1.0f;
+        double phase = 0.0;          // 0..1 (LFO)
+        int seed = 1;                // random
+        Formula::Expression formula;
+    };
+
+    /** 0..1 shape value of a generator at a position (local units), before mapping to min..max. */
+    inline double generatorShape (const Generator& g, double local, double localLength, double seconds) noexcept
+    {
+        switch (g.type)
+        {
+            case GeneratorType::lfo:
+            {
+                const double x = local * g.rate + g.phase;
+                const double p = x - std::floor (x);
+                switch ((LfoShape) g.shape)
+                {
+                    case LfoShape::sine:     return 0.5 - 0.5 * std::cos (juce::MathConstants<double>::twoPi * p);   // starts at the bottom
+                    case LfoShape::triangle: return p < 0.5 ? 2.0 * p : 2.0 - 2.0 * p;
+                    case LfoShape::square:   return p < 0.5 ? 1.0 : 0.0;
+                    case LfoShape::sawUp:    return p;
+                    case LfoShape::sawDown:  return 1.0 - p;
+                    default:                 return 0.0;
+                }
+            }
+
+            case GeneratorType::random:
+            {
+                const double x = local * g.rate;
+                switch ((RandomMode) g.shape)
+                {
+                    case RandomMode::stepped: return Formula::hash01 (g.seed, (juce::int64) std::floor (x));
+                    case RandomMode::smooth:
+                    {
+                        const double fl = std::floor (x);
+                        const double f = x - fl;
+                        const double u = 0.5 - 0.5 * std::cos (juce::MathConstants<double>::pi * f);
+                        const auto i = (juce::int64) fl;
+                        return Formula::hash01 (g.seed, i) * (1.0 - u) + Formula::hash01 (g.seed, i + 1) * u;
+                    }
+                    case RandomMode::drift:
+                    {
+                        // Slow wandering: three layers of smooth noise at different speeds.
+                        const double v = 0.57 * Formula::valueNoise (g.seed, x)
+                                       + 0.29 * Formula::valueNoise (g.seed + 101, x * 2.31)
+                                       + 0.14 * Formula::valueNoise (g.seed + 211, x * 5.17);
+                        return juce::jlimit (0.0, 1.0, (v - 0.5) * 1.35 + 0.5);
+                    }
+                    default: return 0.0;
+                }
+            }
+
+            case GeneratorType::formula:
+            {
+                if (g.formula == nullptr) return 0.0;
+                Formula::Variables vars;
+                vars.t = localLength > 0.0 ? local / localLength : 0.0;
+                vars.s = seconds;
+                vars.b = local;
+                const double v = g.formula->eval (vars);
+                return std::isfinite (v) ? juce::jlimit (0.0, 1.0, v) : 0.0;
+            }
+
+            case GeneratorType::none:
+            default: return 0.0;
+        }
+    }
+
+    inline float generatorValue (const Generator& g, double local, double localLength, double seconds) noexcept
+    {
+        const double shape = generatorShape (g, local, localLength, seconds);
+        return (float) (g.minValue + (g.maxValue - g.minValue) * shape);
+    }
+
+    //==============================================================================
     // What the audio thread works from: a read-only copy of all lanes.
 
     struct Item
@@ -164,6 +254,14 @@ namespace Automation
         TempoMap tempo;                      // musical items only
         double localEnd = 0.0;               // length in the item's own units
         std::vector<Point> points;           // times in the item's own units (seconds or beats), sorted
+        Generator generator;                 // if set, used instead of the points
+
+        float valueAtLocal (double local) const noexcept
+        {
+            if (generator.type != GeneratorType::none)
+                return generatorValue (generator, local, localEnd, musical ? tempo.secondsAt (local) : local);
+            return valueAt (points, local);
+        }
 
         double toLocal (double absoluteSeconds) const noexcept
         {
@@ -194,13 +292,13 @@ namespace Automation
             if (t < item.start)
                 break;
 
-            if (item.points.empty())
+            if (item.points.empty() && item.generator.type == GeneratorType::none)
                 continue;
 
             if (t <= item.end)
-                return valueAt (item.points, item.toLocal (t));
+                return item.valueAtLocal (item.toLocal (t));
 
-            v = valueAt (item.points, item.localEnd);
+            v = item.valueAtLocal (item.localEnd);
         }
 
         return v;
