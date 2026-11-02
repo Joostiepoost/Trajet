@@ -36,8 +36,20 @@ MainComponent::MainComponent()
 {
     host.onPluginChanged = [this] { pluginChanged(); };
 
-    for (auto* b : { &scanButton, &loadButton, &editButton, &audioButton })
+    for (auto* b : { &scanButton, &loadButton, &editButton, &audioButton, &audioOnButton })
         addAndMakeVisible (b);
+
+    // Audio processing on/off, to save CPU and battery while you think and draw.
+    audioOnButton.setClickingTogglesState (true);
+    audioOnButton.setToggleState (true, juce::dontSendNotification);
+    audioOnButton.setTooltip ("Pause audio processing to save CPU (the plugin stays loaded)");
+    audioOnButton.setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff2e7d4f));
+    audioOnButton.onClick = [this]
+    {
+        host.setAudioEnabled (audioOnButton.getToggleState());
+        updateAudioOnButton();
+    };
+    updateAudioOnButton();
 
     scanButton.setTooltip ("Scan for AU and VST3 plugins");
     scanButton.onClick  = [this] { showPluginScanner(); };
@@ -247,6 +259,13 @@ void MainComponent::updateHeldNote()
                       (int) velocitySlider.getValue());
 }
 
+void MainComponent::updateAudioOnButton()
+{
+    audioOnButton.setButtonText (host.isAudioEnabled() ? "Audio on" : "Audio off");
+    audioButton.setEnabled (host.isAudioEnabled());   // device settings only while audio runs
+    repaint();
+}
+
 void MainComponent::timerCallback()
 {
     repaint (getLocalBounds().removeFromBottom (26));
@@ -267,7 +286,11 @@ void MainComponent::paint (juce::Graphics& g)
     g.fillRect (status);
 
     juce::String text;
-    if (auto* device = host.deviceManager.getCurrentAudioDevice())
+    if (! host.isAudioEnabled())
+    {
+        text = "Audio processing off: the plugin uses no CPU. Click \"Audio off\" to resume.";
+    }
+    else if (auto* device = host.deviceManager.getCurrentAudioDevice())
     {
         text << device->getName() << "   " << dot << "   "
              << juce::String (device->getCurrentSampleRate() / 1000.0, 1) << " kHz   " << dot << "   "
@@ -297,7 +320,8 @@ void MainComponent::resized()
     loadButton.setBounds (toolbar.removeFromLeft (110));   toolbar.removeFromLeft (8);
     editButton.setBounds (toolbar.removeFromLeft (100));   toolbar.removeFromLeft (16);
 
-    audioButton.setBounds (toolbar.removeFromRight (90));  toolbar.removeFromRight (16);
+    audioButton.setBounds (toolbar.removeFromRight (80));  toolbar.removeFromRight (6);
+    audioOnButton.setBounds (toolbar.removeFromRight (84)); toolbar.removeFromRight (16);
     velocitySlider.setBounds (toolbar.removeFromRight (120)); toolbar.removeFromRight (6);
     noteSlider.setBounds (toolbar.removeFromRight (120));  toolbar.removeFromRight (6);
     heldNoteToggle.setBounds (toolbar.removeFromRight (96)); toolbar.removeFromRight (12);

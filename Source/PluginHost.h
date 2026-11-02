@@ -42,6 +42,12 @@ public:
     void setHeldNote (bool shouldBeOn, int noteNumber, int velocity);
     bool isHeldNoteOn() const noexcept      { return heldNoteOn; }
 
+    //==============================================================================
+    /** Audio processing on/off: off closes the audio device, so neither the device
+        nor the plugin uses any CPU. The plugin and its settings stay loaded. */
+    void setAudioEnabled (bool shouldBeEnabled);
+    bool isAudioEnabled() const noexcept    { return audioEnabled; }
+
     /** Called (on the message thread) whenever a plugin has been loaded or unloaded. */
     std::function<void()> onPluginChanged;
 
@@ -54,6 +60,7 @@ private:
     juce::AudioProcessorPlayer player;
     std::unique_ptr<juce::AudioPluginInstance> plugin;
 
+    bool audioEnabled = true;
     bool heldNoteOn = false;
     int heldNote = 48, heldVelocity = 100, soundingNote = -1;
 

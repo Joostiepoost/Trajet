@@ -28,6 +28,7 @@ private:
     void loadPlugin (const juce::PluginDescription&);
     void pluginChanged();
     void updateHeldNote();
+    void updateAudioOnButton();
     void timerCallback() override;   // refreshes the status bar
 
     PluginHost host;
@@ -35,7 +36,8 @@ private:
     juce::TextButton scanButton    { "Plugins..." },
                      loadButton    { "Load plugin" },
                      editButton    { "Edit patch" },
-                     audioButton   { "Audio..." };
+                     audioButton   { "Audio..." },
+                     audioOnButton { "Audio on" };
     juce::Label      pluginLabel;
     juce::ToggleButton heldNoteToggle { "Held note" };
     juce::Slider     noteSlider, velocitySlider;

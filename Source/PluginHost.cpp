@@ -140,6 +140,27 @@ void PluginHost::setHeldNote (bool shouldBeOn, int noteNumber, int velocity)
     heldNoteOn = shouldBeOn;
 }
 
+void PluginHost::setAudioEnabled (bool shouldBeEnabled)
+{
+    if (shouldBeEnabled == audioEnabled)
+        return;
+
+    if (! shouldBeEnabled)
+    {
+        sendNoteOff();
+        audioEnabled = false;
+        deviceManager.closeAudioDevice();
+    }
+    else
+    {
+        audioEnabled = true;
+        deviceManager.restartLastAudioDevice();
+
+        if (heldNoteOn)
+            sendNoteOn();
+    }
+}
+
 bool PluginHost::deviceIsRunning() const
 {
     auto* device = deviceManager.getCurrentAudioDevice();
@@ -181,7 +202,7 @@ void PluginHost::changeListenerCallback (juce::ChangeBroadcaster* source)
         if (auto xml = knownPlugins.createXml())
             settings->setValue (keyPluginList, xml.get());
     }
-    else if (source == &deviceManager)
+    else if (source == &deviceManager && audioEnabled)
     {
         if (auto xml = deviceManager.createStateXml())
             settings->setValue (keyDeviceState, xml.get());
