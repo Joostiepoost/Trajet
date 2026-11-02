@@ -193,12 +193,12 @@ public:
         {
             std::unique_ptr<juce::AlertWindow> windowOwner (window);
             if (safeThis == nullptr || result != 1 || ! hit.getParent().isValid()) return;
-            auto& project = safeThis->owner.project;
-            auto& um = project.getUndoManager();
+            auto& proj = safeThis->owner.project;
+            auto& um = proj.getUndoManager();
             um.beginNewTransaction ("Change tempo");
             const double old = hit[IDs::bpm];
             hit.setProperty (IDs::bpm, juce::jlimit (10.0, 999.0, window->getTextEditorContents ("bpm").getDoubleValue()), &um);
-            if (! project.refreshMusicalLength (safeThis->owner.item))
+            if (! proj.refreshMusicalLength (safeThis->owner.item))
             {
                 hit.setProperty (IDs::bpm, old, &um);
                 safeThis->owner.hintLabel.setText ("That tempo would make the item overlap the next one.", juce::dontSendNotification);
@@ -254,13 +254,13 @@ private:
         m.showMenuAsync (juce::PopupMenu::Options(), [safeThis, point] (int r) mutable
         {
             if (safeThis == nullptr || r == 0 || ! point.getParent().isValid()) return;
-            auto& project = safeThis->owner.project;
-            auto& um = project.getUndoManager();
+            auto& proj = safeThis->owner.project;
+            auto& um = proj.getUndoManager();
             if (r == 1)
             {
                 um.beginNewTransaction ("Tempo ramp");
                 point.setProperty (IDs::ramp, ! (bool) point[IDs::ramp], &um);
-                if (! project.refreshMusicalLength (safeThis->owner.item))
+                if (! proj.refreshMusicalLength (safeThis->owner.item))
                 {
                     point.setProperty (IDs::ramp, ! (bool) point[IDs::ramp], &um);
                     safeThis->owner.hintLabel.setText ("That tempo would make the item overlap the next one.", juce::dontSendNotification);
@@ -269,12 +269,12 @@ private:
             else
             {
                 um.beginNewTransaction ("Delete tempo point");
-                auto item = point.getParent();
-                const int index = item.indexOf (point);
-                item.removeChild (point, &um);
-                if (! project.refreshMusicalLength (item))
+                auto parentItem = point.getParent();
+                const int index = parentItem.indexOf (point);
+                parentItem.removeChild (point, &um);
+                if (! proj.refreshMusicalLength (parentItem))
                 {
-                    item.addChild (point, index, &um);
+                    parentItem.addChild (point, index, &um);
                     safeThis->owner.hintLabel.setText ("Removing it would make the item overlap the next one.", juce::dontSendNotification);
                 }
             }
