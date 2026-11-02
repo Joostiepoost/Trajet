@@ -11,8 +11,11 @@
 //     HELDNOTE (on, note, velocity)
 //     LANES
 //       LANE   (laneId, paramIndex, paramName, name, colour, height, mute, solo)
-//         ITEM (start, length, timebase)          -- seconds; musical items in step 6
-//           POINT (time, value, shape, tension)   -- time relative to the item start
+//         ITEM (start, length, timebase)          -- start/length always in seconds
+//              musical items also: beatsPerBar, beatUnit, gridBeats, lengthBeats
+//           TEMPO (beat, bpm, ramp)               -- musical items: the tempo map
+//           POINT (time, value, shape, tension)   -- time from the item start, in seconds
+//                                                    (linear items) or beats (musical items)
 
 #pragma once
 
@@ -30,6 +33,7 @@ namespace IDs
     TRAJET_ID (LANE)
     TRAJET_ID (ITEM)
     TRAJET_ID (POINT)
+    TRAJET_ID (TEMPO)
 
     // PROJECT properties
     TRAJET_ID (formatVersion)
@@ -58,6 +62,15 @@ namespace IDs
     TRAJET_ID (start)
     TRAJET_ID (length)
     TRAJET_ID (timebase)
+
+    // Musical items and their tempo points
+    TRAJET_ID (beatsPerBar)
+    TRAJET_ID (beatUnit)
+    TRAJET_ID (gridBeats)
+    TRAJET_ID (lengthBeats)
+    TRAJET_ID (beat)
+    TRAJET_ID (bpm)
+    TRAJET_ID (ramp)
 
     // POINT properties
     TRAJET_ID (time)

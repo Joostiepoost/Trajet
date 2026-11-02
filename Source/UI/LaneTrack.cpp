@@ -1,4 +1,5 @@
 #include "LaneTrack.h"
+#include "../Model/ItemTime.h"
 
 namespace
 {
@@ -80,10 +81,24 @@ float LaneTrack::yToValue (float y) const
 
 double LaneTrack::relativeTime (const juce::ValueTree& item, float x, bool bypassSnap) const
 {
-    const double start = item[IDs::start];
-    const double length = item[IDs::length];
-    const double t = ctx.snap.snap (ctx.timeView.toTime (x), bypassSnap) - start;
-    return juce::jlimit (0.0, length, t);
+    return snapLocal (ItemTime (item), ctx.timeView.toTime (x), bypassSnap);
+}
+
+double LaneTrack::snapLocal (const ItemTime& it, double absSeconds, bool bypassSnap) const
+{
+    // Position in the item's own units (seconds or beats), on its grid.
+    double local;
+    if (it.isMusical())
+    {
+        local = it.localAt (absSeconds);
+        if (ctx.snap.isOn() && ! bypassSnap) local = std::round (local / it.gridBeats) * it.gridBeats;
+        else                                 local = std::round (local * 1000.0) / 1000.0;
+    }
+    else
+    {
+        local = ctx.snap.snap (absSeconds, bypassSnap) - it.getStart();
+    }
+    return juce::jlimit (0.0, it.localLength(), local);
 }
 
 juce::ValueTree LaneTrack::itemAt (float x) const
@@ -118,7 +133,7 @@ juce::ValueTree LaneTrack::pointAt (const juce::ValueTree& item, juce::Point<flo
     if (! item.isValid())
         return {};
 
-    const double start = item[IDs::start];
+    const ItemTime it (item);
     juce::ValueTree best;
     float bestDistance = pointHitRadius;
 
@@ -127,7 +142,7 @@ juce::ValueTree LaneTrack::pointAt (const juce::ValueTree& item, juce::Point<flo
         if (! p.hasType (IDs::POINT))
             continue;
 
-        const juce::Point<float> pp (ctx.timeView.toX (start + (double) p[IDs::time]),
+        const juce::Point<float> pp (ctx.timeView.toX (it.absolute ((double) p[IDs::time])),
                                      valueToY ((float) (double) p[IDs::value]));
         const float d = pos.getDistanceFrom (pp);
         if (d <= bestDistance) { bestDistance = d; best = p; }
@@ -160,10 +175,10 @@ void LaneTrack::collectPointsIn (juce::Rectangle<float> area, juce::Array<juce::
     for (const auto& item : lane)
     {
         if (! item.hasType (IDs::ITEM)) continue;
-        const double start = item[IDs::start];
+        const ItemTime it (item);
         for (const auto& p : item)
             if (p.hasType (IDs::POINT)
-                && area.contains (ctx.timeView.toX (start + (double) p[IDs::time]), valueToY ((float) (double) p[IDs::value])))
+                && area.contains (ctx.timeView.toX (it.absolute ((double) p[IDs::time])), valueToY ((float) (double) p[IDs::value])))
                 result.addIfNotAlreadyThere (p);
     }
 }
@@ -186,7 +201,7 @@ juce::Rectangle<float> LaneTrack::selectionBox() const
     float x0 = 1.0e9f, x1 = -1.0e9f, y0 = 1.0e9f, y1 = -1.0e9f;
     for (auto& p : pts)
     {
-        const float x = ctx.timeView.toX ((double) p.getParent()[IDs::start] + (double) p[IDs::time]);
+        const float x = ctx.timeView.toX (ItemTime (p.getParent()).absolute ((double) p[IDs::time]));
         const float y = valueToY ((float) (double) p[IDs::value]);
         x0 = juce::jmin (x0, x); x1 = juce::jmax (x1, x);
         y0 = juce::jmin (y0, y); y1 = juce::jmax (y1, y);
@@ -248,7 +263,7 @@ void LaneTrack::paint (juce::Graphics& g)
             continue;
 
         const bool selected = ctx.selection.getItems().contains (item);
-        const double start = item[IDs::start];
+        const ItemTime it (item);
 
         g.setColour (colour.withAlpha (muted ? 0.04f : 0.10f));
         g.fillRoundedRectangle (r, 4.0f);
@@ -258,6 +273,37 @@ void LaneTrack::paint (juce::Graphics& g)
         g.setColour (colour.withAlpha (muted ? 0.25f : 0.55f));
         g.fillRoundedRectangle (strip, 4.0f);
         g.fillRect (strip.withTrimmedTop (6.0f));
+
+        // Musical items: bar and beat lines, and the tempo in the title strip.
+        if (it.isMusical())
+        {
+            juce::Graphics::ScopedSaveState save (g);
+            g.reduceClipRegion (r.toNearestInt());
+            const double pxPerBeat = tv.getPixelsPerSecond() * 60.0 / juce::jmax (10.0, it.tempo.firstBpm());
+            const bool showBeats = pxPerBeat >= 8.0;
+            const bool showBars = pxPerBeat * it.beatsPerBar >= 6.0;
+            const int lastBeat = (int) std::ceil (it.lengthBeats);
+            for (int b = 0; b <= lastBeat && showBars; ++b)
+            {
+                const bool isBar = b % it.beatsPerBar == 0;
+                if (! isBar && ! showBeats) continue;
+                const float x = tv.toX (it.absolute ((double) b));
+                if (x < -2.0f) continue;
+                if (x > w) break;
+                g.setColour (juce::Colours::white.withAlpha (isBar ? 0.16f : 0.06f));
+                g.drawVerticalLine ((int) x, r.getY() + (float) stripHeight, r.getBottom());
+            }
+
+            const auto first = it.tempo.points.front().bpm, last = it.tempo.points.back().bpm;
+            juce::String label = juce::String (it.beatsPerBar) + "/" + juce::String (it.beatUnit) + "  "
+                                 + juce::String (juce::CharPointer_UTF8 ("\xe2\x99\xa9")) + "=" + juce::String (first, 0);
+            if (it.tempo.points.size() > 1 && std::abs (last - first) > 0.01)
+                label << juce::String (juce::CharPointer_UTF8 (" \xe2\x86\x92 ")) << juce::String (last, 0);
+            g.setColour (juce::Colours::black.withAlpha (0.7f));
+            g.setFont (juce::FontOptions (10.5f, juce::Font::bold));
+            if (r.getWidth() > 90.0f)
+                g.drawText (label, r.withHeight ((float) stripHeight).reduced (6.0f, 0.0f).toNearestInt(), juce::Justification::centredLeft);
+        }
 
         g.setColour (selected ? juce::Colours::white : colour.withAlpha (0.6f));
         g.drawRoundedRectangle (r, 4.0f, selected ? 2.0f : 1.0f);
@@ -274,7 +320,7 @@ void LaneTrack::paint (juce::Graphics& g)
             bool first = true;
             for (float x = xa; x <= xb; x += 1.0f)
             {
-                const float y = valueToY (Automation::valueAt (points, tv.toTime (x) - start));
+                const float y = valueToY (Automation::valueAt (points, it.localAt (tv.toTime (x))));
                 if (first) curve.startNewSubPath (x, y); else curve.lineTo (x, y);
                 first = false;
             }
@@ -285,7 +331,7 @@ void LaneTrack::paint (juce::Graphics& g)
             {
                 if (! p.hasType (IDs::POINT))
                     continue;
-                const float px = tv.toX (start + (double) p[IDs::time]);
+                const float px = tv.toX (it.absolute ((double) p[IDs::time]));
                 const float py = valueToY ((float) (double) p[IDs::value]);
                 const bool pointSelected = ctx.selection.getPoints().contains (p);
                 g.setColour (pointSelected ? accent : juce::Colours::white);
@@ -299,11 +345,13 @@ void LaneTrack::paint (juce::Graphics& g)
     // Value readout while dragging points.
     if ((mode == Mode::movePoints || mode == Mode::ramp) && dragAnchor.isValid() && dragAnchor.getParent().isValid())
     {
-        const double start = dragAnchor.getParent()[IDs::start];
+        const ItemTime it (dragAnchor.getParent());
         const float v = (float) (double) dragAnchor[IDs::value];
-        const double t = start + (double) dragAnchor[IDs::time];
+        const double local = dragAnchor[IDs::time];
+        const double t = it.absolute (local);
         const float px = tv.toX (t), py = valueToY (v);
-        const auto text = valueText (v) + "   " + TimeFormat::format (t);
+        const auto text = valueText (v) + "   " + (it.isMusical() ? it.barBeat (local) + "  " : juce::String())
+                          + TimeFormat::format (t);
         g.setFont (juce::FontOptions (11.5f));
         const float tw = (float) juce::GlyphArrangement::getStringWidthInt (g.getCurrentFont(), text) + 10.0f;
         auto box = juce::Rectangle<float> (px + 10.0f, py - 24.0f, tw, 18.0f);
@@ -389,7 +437,7 @@ void LaneTrack::mouseDown (const juce::MouseEvent& e)
             boxT0 = 1.0e12; boxT1 = -1.0e12; boxV0 = 1.0f; boxV1 = 0.0f;
             for (auto& p : selectedPointsHere())
             {
-                const double t = (double) p.getParent()[IDs::start] + (double) p[IDs::time];
+                const double t = ItemTime (p.getParent()).absolute ((double) p[IDs::time]);
                 const float v = (float) (double) p[IDs::value];
                 origPoints.push_back ({ p, t, v });   // absolute time here
                 boxT0 = juce::jmin (boxT0, t); boxT1 = juce::jmax (boxT1, t);
@@ -444,6 +492,11 @@ void LaneTrack::mouseDown (const juce::MouseEvent& e)
         um.beginNewTransaction ("Trim item");
         ctx.selection.selectItem (item);
         freeRange = ctx.project.getFreeRange (lane, item, origStart);
+        {
+            ItemTime it (item);
+            origTempo = it.tempo.points;
+            origLengthBeats = it.lengthBeats;
+        }
         origPoints.clear();
         for (auto p : item)
             if (p.hasType (IDs::POINT))
@@ -522,7 +575,7 @@ void LaneTrack::mouseDown (const juce::MouseEvent& e)
 
 bool LaneTrack::startBend (const juce::ValueTree& item, float x)
 {
-    const double t = ctx.timeView.toTime (x) - (double) item[IDs::start];
+    const double t = ItemTime (item).localAt (ctx.timeView.toTime (x));
     juce::ValueTree a;
     float aValue = 0.0f, bValue = 0.0f;
     double aTime = -1.0, bTime = 1.0e12;
@@ -577,12 +630,12 @@ void LaneTrack::dragScale (const juce::MouseEvent& e)
     {
         auto item = o.tree.getParent();
         if (! item.isValid()) continue;
-        const double start = item[IDs::start], length = item[IDs::length];
+        const ItemTime it (item);
 
         const double t = tSpan > 1.0e-9 ? t0 + (o.time - boxT0) / tSpan * (t1 - t0) : o.time;
         const float v = vSpan > 1.0e-6f ? v0 + (o.value - boxV0) / vSpan * (v1 - v0) : o.value;
 
-        o.tree.setProperty (IDs::time, juce::jlimit (0.0, length, t - start), &um);
+        o.tree.setProperty (IDs::time, juce::jlimit (0.0, it.localLength(), it.localAt (t)), &um);
         o.tree.setProperty (IDs::value, juce::jlimit (0.0f, 1.0f, v), &um);
     }
 }
@@ -665,7 +718,8 @@ void LaneTrack::dragPoints (const juce::MouseEvent& e)
         return;
 
     auto item = dragAnchor.getParent();
-    const double start = item[IDs::start], length = item[IDs::length];
+    const ItemTime it (item);
+    const double length = it.localLength();
     const bool fine = e.mods.isCommandDown();
     const float scale = fine ? 0.1f : 1.0f;
 
@@ -690,9 +744,10 @@ void LaneTrack::dragPoints (const juce::MouseEvent& e)
     if (anchorOrig == origPoints.end())
         return;
 
-    const double rawAnchor = start + anchorOrig->time + (double) delta.x / ctx.timeView.getPixelsPerSecond();
-    const double snappedAnchor = std::abs (delta.x) < 1.0e-6f ? start + anchorOrig->time : ctx.snap.snap (rawAnchor, fine);
-    const double dt = snappedAnchor - (start + anchorOrig->time);
+    // Work in the item's own units (seconds or beats), snapped to its grid.
+    const double rawAnchor = it.absolute (anchorOrig->time) + (double) delta.x / ctx.timeView.getPixelsPerSecond();
+    const double snappedAnchor = std::abs (delta.x) < 1.0e-6f ? anchorOrig->time : snapLocal (it, rawAnchor, fine);
+    const double dt = snappedAnchor - anchorOrig->time;
     const float dv = -delta.y / juce::jmax (1.0f, curveArea().getHeight());
 
     auto& um = ctx.project.getUndoManager();
@@ -709,24 +764,74 @@ void LaneTrack::dragItem (const juce::MouseEvent& e)
     const bool bypass = e.mods.isCommandDown();
     const double dt = (double) (e.position.x - e.mouseDownPosition.x) / ctx.timeView.getPixelsPerSecond();
 
-    if (mode == Mode::trimLeft)
+    if (mode == Mode::trimLeft || mode == Mode::trimRight)
     {
+        // The item as it was when the drag started (musical items convert through it).
+        ItemTime orig (dragItemTree);
+        orig.tempo.points = origTempo;
+        orig.lengthBeats = origLengthBeats;
         const double end = origStart + origLength;
-        const double newStart = juce::jlimit (freeRange.getStart(), end - Project::minItemLength,
-                                              ctx.snap.snap (origStart + dt, bypass));
+
+        auto snapEdge = [&] (double t)
+        {
+            if (! orig.isMusical()) return ctx.snap.snap (t, bypass);
+            if (! ctx.snap.isOn() || bypass) return t;
+            const double beats = std::round (orig.toLocal (t - origStart) / orig.gridBeats) * orig.gridBeats;
+            return origStart + orig.toSeconds (beats);
+        };
+
+        if (mode == Mode::trimRight)
+        {
+            const double newEnd = juce::jlimit (origStart + Project::minItemLength, freeRange.getEnd(),
+                                                snapEdge (origStart + origLength + dt));
+            dragItemTree.setProperty (IDs::length, newEnd - origStart, &um);
+            if (orig.isMusical())
+                dragItemTree.setProperty (IDs::lengthBeats, orig.toLocal (newEnd - origStart), &um);
+            return;
+        }
+
+        const double newStart = juce::jlimit (freeRange.getStart(), end - Project::minItemLength, snapEdge (origStart + dt));
         dragItemTree.setProperty (IDs::start, newStart, &um);
         dragItemTree.setProperty (IDs::length, end - newStart, &um);
-        // Points keep their place in time.
-        for (auto& o : origPoints)
-            o.tree.setProperty (IDs::time, o.time + (origStart - newStart), &um);
-        return;
-    }
 
-    if (mode == Mode::trimRight)
-    {
-        const double newEnd = juce::jlimit (origStart + Project::minItemLength, freeRange.getEnd(),
-                                            ctx.snap.snap (origStart + origLength + dt, bypass));
-        dragItemTree.setProperty (IDs::length, newEnd - origStart, &um);
+        // Points keep their place in time.
+        const double shift = orig.toLocal (newStart - origStart);   // seconds or beats (negative when extending)
+        for (auto& o : origPoints)
+            o.tree.setProperty (IDs::time, o.time - shift, &um);
+
+        if (orig.isMusical())
+        {
+            // Rebuild the tempo map so it starts at the new item start.
+            std::vector<Automation::TempoPoint> tempo;
+            if (shift >= 0.0)
+            {
+                bool rampHere = false;
+                for (auto& tp : origTempo) if (tp.beat <= shift) rampHere = tp.ramp;
+                tempo.push_back ({ 0.0, orig.tempo.bpmAt (shift), rampHere });
+                for (auto& tp : origTempo)
+                    if (tp.beat > shift)
+                        tempo.push_back ({ tp.beat - shift, tp.bpm, tp.ramp });
+            }
+            else
+            {
+                tempo.push_back ({ 0.0, origTempo.front().bpm, false });
+                for (auto& tp : origTempo)
+                    tempo.push_back ({ tp.beat - shift, tp.bpm, tp.ramp });
+            }
+
+            for (int i = dragItemTree.getNumChildren(); --i >= 0;)
+                if (dragItemTree.getChild (i).hasType (IDs::TEMPO))
+                    dragItemTree.removeChild (i, &um);
+            for (auto& tp : tempo)
+            {
+                juce::ValueTree t (IDs::TEMPO);
+                t.setProperty (IDs::beat, tp.beat, nullptr);
+                t.setProperty (IDs::bpm, tp.bpm, nullptr);
+                t.setProperty (IDs::ramp, tp.ramp, nullptr);
+                dragItemTree.appendChild (t, &um);
+            }
+            dragItemTree.setProperty (IDs::lengthBeats, origLengthBeats - shift, &um);
+        }
         return;
     }
 
@@ -809,14 +914,14 @@ void LaneTrack::finishFreehand()
         return;
 
     auto item = drawnPoints.front().getParent();
-    const double start = item[IDs::start];
+    const ItemTime it (item);
 
     std::sort (drawnPoints.begin(), drawnPoints.end(),
                [] (const auto& a, const auto& b) { return (double) a[IDs::time] < (double) b[IDs::time]; });
 
     std::vector<juce::Point<float>> screen;
     for (auto& p : drawnPoints)
-        screen.push_back ({ ctx.timeView.toX (start + (double) p[IDs::time]), valueToY ((float) (double) p[IDs::value]) });
+        screen.push_back ({ ctx.timeView.toX (it.absolute ((double) p[IDs::time])), valueToY ((float) (double) p[IDs::value]) });
 
     std::vector<bool> keep (screen.size(), false);
     keep.front() = keep.back() = true;
@@ -962,7 +1067,11 @@ void LaneTrack::showPointMenu (juce::ValueTree point)
 void LaneTrack::showItemMenu (juce::ValueTree item)
 {
     juce::PopupMenu m;
+    const bool musical = ItemTime (item).isMusical();
     m.addItem (1, "Duplicate after itself");
+    m.addItem (3, musical ? "Make linear (seconds)" : "Make musical (bars and beats)...");
+    m.addItem (4, "Open in item editor");
+    m.addSeparator();
     m.addItem (2, "Delete item");
 
     juce::Component::SafePointer<LaneTrack> safeThis (this);
@@ -974,6 +1083,18 @@ void LaneTrack::showItemMenu (juce::ValueTree item)
         auto& project = safeThis->ctx.project;
         auto& um = project.getUndoManager();
         auto laneTree = item.getParent();
+
+        if (result == 3)
+        {
+            um.beginNewTransaction ("Change time base");
+            project.setTimebase (item, ! ItemTime (item).isMusical(), 120.0);
+            return;
+        }
+        if (result == 4)
+        {
+            if (safeThis->ctx.openItemEditor) safeThis->ctx.openItemEditor (item);
+            return;
+        }
 
         if (result == 1)
         {
@@ -1002,14 +1123,16 @@ void LaneTrack::showItemMenu (juce::ValueTree item)
 void LaneTrack::editPointNumerically (juce::ValueTree point)
 {
     auto item = point.getParent();
-    const double start = item[IDs::start];
-    const double absTime = start + (double) point[IDs::time];
+    const ItemTime it (item);
+    const double absTime = it.absolute ((double) point[IDs::time]);
     const float value = (float) (double) point[IDs::value];
 
-    auto* window = new juce::AlertWindow ("Point", "Time is absolute (m:ss.mmm or seconds). "
-                                                   "Value in the plugin's own units.",
+    auto* window = new juce::AlertWindow ("Point", it.isMusical() ? "Time: absolute (m:ss.mmm or seconds) or bar|beat, e.g. 3|2.5. "
+                                                                    "Value in the plugin's own units."
+                                                                  : "Time is absolute (m:ss.mmm or seconds). "
+                                                                    "Value in the plugin's own units.",
                                           juce::MessageBoxIconType::NoIcon);
-    window->addTextEditor ("time", TimeFormat::format (absTime), "Time");
+    window->addTextEditor ("time", it.isMusical() ? it.barBeat ((double) point[IDs::time]) : TimeFormat::format (absTime), "Time");
     window->addTextEditor ("value", getParameter() != nullptr ? getParameter()->getText (value, 32)
                                                               : juce::String (value, 4), "Value");
     window->addButton ("OK", 1, juce::KeyPress (juce::KeyPress::returnKey));
@@ -1022,9 +1145,11 @@ void LaneTrack::editPointNumerically (juce::ValueTree point)
         if (safeThis == nullptr || result != 1 || ! point.getParent().isValid())
             return;
 
-        auto parentItem = point.getParent();
-        const double itemStart = parentItem[IDs::start], length = parentItem[IDs::length];
-        const double t = juce::jlimit (0.0, length, TimeFormat::parse (window->getTextEditorContents ("time")) - itemStart);
+        const ItemTime pt (point.getParent());
+        const auto timeText = window->getTextEditorContents ("time");
+        const double barBeat = pt.isMusical() ? pt.parseBarBeat (timeText) : -1.0;
+        const double local = barBeat >= 0.0 ? barBeat : pt.localAt (TimeFormat::parse (timeText));
+        const double t = juce::jlimit (0.0, pt.localLength(), local);
 
         const auto text = window->getTextEditorContents ("value");
         float v = (float) (double) point[IDs::value];

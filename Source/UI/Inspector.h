@@ -42,7 +42,7 @@ private:
 
     juce::Label title, itemHeading, pointHeading, hint;
     juce::OwnedArray<Field> fields;
-    Field *laneField, *startField, *lengthField, *countField, *timeField, *valueField;
+    Field *laneField, *startField, *lengthField, *countField, *timeField, *valueField, *timebaseField, *tempoField;
     juce::ComboBox shapeBox;
 
     juce::ValueTree currentItem, currentPoint;

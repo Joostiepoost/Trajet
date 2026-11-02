@@ -1,4 +1,5 @@
 #include "AutomationController.h"
+#include "../Model/ItemTime.h"
 
 namespace
 {
@@ -123,13 +124,14 @@ void AutomationController::rebuild()
             if (silent || ! itemTree.hasType (IDs::ITEM))
                 continue;
 
+            ItemTime time (itemTree);
             Automation::Item item;
             item.start = itemTree[IDs::start];
             item.end = item.start + (double) itemTree[IDs::length];
-            item.points = Project::getPoints (itemTree);
-
-            for (auto& pt : item.points)
-                pt.time += item.start;
+            item.musical = time.isMusical();
+            item.tempo = time.tempo;
+            item.localEnd = time.localLength();
+            item.points = Project::getPoints (itemTree);   // already in the item's own units
 
             lane.items.push_back (std::move (item));
         }

@@ -31,7 +31,8 @@ Other options:
 | 2 | Projects: new, open, save (with the plugin's patch), undo/redo, menu bar | done |
 | 3 | Playback engine: transport, lanes with points, automation driving the plugin, chase / patch | done |
 | 4 | Main window: zoom/scroll, lane headers (reorder, resize, mute/solo, colour), items, point gestures, snap, inspector | done |
-| 5 | Item editor, rubber-band selection, scale box, nudge, point copy/paste, smooth/thin/reverse/invert | testing |
+| 5 | Item editor, rubber-band selection, scale box, nudge, point copy/paste, smooth/thin/reverse/invert | done |
+| 6 | Time bases: linear (seconds) and musical items (bars/beats, own metre, tempo map with ramps) | testing |
 
 ## Using step 1
 
@@ -52,6 +53,22 @@ The last loaded plugin is reloaded automatically when Trajet starts.
 - **Edit menu**: Undo (⌘Z) and Redo (⇧⌘Z). For now only the held-note settings are undoable; lanes and points join from step 3 on.
 - **Audio menu**: audio processing on/off (⇧⌘A) and the plugin's panel (⌘E).
 - Trajet reopens the last project when it starts, and asks to save unsaved changes when you quit.
+
+## Time bases (step 6)
+
+Every item has its own time base:
+
+- **Linear**: points are placed in seconds (and milliseconds). This is the default.
+- **Musical**: points are placed in beats, with the item's own **metre** (e.g. 4/4, 5/8) and **tempo map**. Bar and beat lines show inside the item, and its title strip shows the metre and tempo (e.g. `4/4 ♩=90 → 120`).
+
+How to use it:
+
+- Right-click an item → **Make musical (bars and beats)** (or back to linear). Points keep their place in time; the item starts at 120 bpm.
+- In the **item editor**: *Time base*, *Length* (in beats, or `bar|beat`), *Metre* and *Grid* (1 beat … 1/16 beat, triplets included) are in the second toolbar row.
+- The **tempo strip** (musical items, in the item editor): click to add a tempo point, drag it (time and tempo), double-click to type a tempo, right-click → **Ramp to the next tempo** for an accelerando or ritardando, or delete.
+- Changing the tempo stretches or squeezes the item; its start stays put. A change that would make it overlap the next item is refused.
+- Inside musical items, snapping uses the item's beat grid; arrow keys nudge by one grid step; times can be typed as `bar|beat` (e.g. `3|2.5`).
+- The maths is exact: a 64-beat accelerando from 90 to 120 bpm lasts 60 / (30/64) · ln (120/90) = 36.823 s, and its last beat lands there.
 
 ## Item editor and point tools (step 5)
 

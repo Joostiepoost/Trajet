@@ -19,6 +19,7 @@
 #include "../PluginHost.h"
 #include "../Engine/AutomationController.h"
 #include "EditorState.h"
+#include "../Model/ItemTime.h"
 
 class LaneTrack : public juce::Component
 {
@@ -80,6 +81,7 @@ private:
 
     juce::Rectangle<float> curveArea() const;
     double relativeTime (const juce::ValueTree& item, float x, bool bypassSnap) const;
+    double snapLocal (const ItemTime&, double absSeconds, bool bypassSnap) const;
     juce::AudioProcessorParameter* getParameter() const;
     juce::String valueText (float v) const;
 
@@ -117,6 +119,8 @@ private:
     double boxT0 = 0.0, boxT1 = 0.0;          // absolute times of the selection box
     float boxV0 = 0.0f, boxV1 = 0.0f;         // its value range
     juce::Rectangle<float> rubberRect;
+    std::vector<Automation::TempoPoint> origTempo;
+    double origLengthBeats = 0.0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (LaneTrack)
 };

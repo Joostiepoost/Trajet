@@ -62,6 +62,16 @@ public:
     /** True if [start, start + length) fits in the project and overlaps no item except `exclude`. */
     bool isFree (const juce::ValueTree& lane, double start, double length, const juce::ValueTree& exclude = {}) const;
 
+    // Time bases
+    /** Convert an item between linear (seconds) and musical (beats with a tempo map).
+        Points keep their place in time. */
+    void setTimebase (juce::ValueTree item, bool musical, double bpm = 120.0);
+    /** After a tempo change: recompute the item's length in seconds. Returns false
+        (and changes nothing) if the item would then overlap the next one. */
+    bool refreshMusicalLength (juce::ValueTree item);
+    /** Set a musical item's length in beats (if it fits). */
+    bool setLengthBeats (juce::ValueTree item, double beats);
+
     /** Lane colours: a palette of distinct hues. */
     static juce::Colour laneColour (const juce::ValueTree& lane);
     static juce::Colour paletteColour (int index);
