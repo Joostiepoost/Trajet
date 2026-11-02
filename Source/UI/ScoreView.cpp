@@ -124,6 +124,8 @@ public:
 
     void refresh()
     {
+        indent = owner.project.groupOf (lane).isValid() ? 8 : 0;
+        resized();
         nameLabel.setText (lane[IDs::name].toString(), juce::dontSendNotification);
         muteButton.setToggleState ((bool) lane[IDs::mute], juce::dontSendNotification);
         soloButton.setToggleState ((bool) lane[IDs::solo], juce::dontSendNotification);
@@ -134,8 +136,13 @@ public:
     {
         const bool active = owner.selection.getActiveLane() == lane;
         g.fillAll (active ? headerColour.brighter (0.12f) : headerColour);
+        if (auto group = owner.project.groupOf (lane); group.isValid())
+        {
+            g.setColour (Project::groupColour (group).withAlpha (0.45f));
+            g.fillRect (0, 0, indent - 2, getHeight());
+        }
         g.setColour (Project::laneColour (lane));
-        g.fillRect (0, 0, active ? 7 : 4, getHeight());
+        g.fillRect (indent, 0, active ? 7 : 4, getHeight());
 
         if (getHeight() >= 40)
         {
@@ -154,7 +161,7 @@ public:
                 g.setColour (juce::Colours::orange.withAlpha (0.8f));
                 text = "parameter not found";
             }
-            g.drawText (text, 12, 26, getWidth() - 70, 16, juce::Justification::centredLeft);
+            g.drawText (text, 12 + indent, 26, getWidth() - 70 - indent, 16, juce::Justification::centredLeft);
         }
 
         g.setColour (juce::Colours::black.withAlpha (0.5f));
@@ -164,7 +171,7 @@ public:
 
     void resized() override
     {
-        nameLabel.setBounds (8, 4, getWidth() - 66, 22);
+        nameLabel.setBounds (8 + indent, 4, getWidth() - 66 - indent, 22);
         soloButton.setBounds (getWidth() - 28, 6, 22, 18);
         muteButton.setBounds (getWidth() - 52, 6, 22, 18);
     }
@@ -206,7 +213,7 @@ public:
         }
 
         if (dragMode == reordering)
-            owner.laneDragged (row, e.getEventRelativeTo (&owner.rowHolder).y);
+            owner.laneDragged (e.getEventRelativeTo (&owner.rowHolder).y);
     }
 
     void mouseUp (const juce::MouseEvent&) override
@@ -242,9 +249,25 @@ private:
             colours.addColouredItem (100 + i, "Colour " + juce::String (i + 1), Project::paletteColour (i),
                                      true, (int) lane[IDs::colour] == i);
 
+        auto currentGroup = owner.project.groupOf (lane);
+        juce::PopupMenu groups;
+        groups.addItem (3, "New group with this lane");
+        int n = 0;
+        for (auto g : owner.project.getGroups())
+        {
+            groups.addItem (200 + n, "Move to \"" + g[IDs::name].toString() + "\"", g != currentGroup, g == currentGroup);
+            ++n;
+        }
+        if (currentGroup.isValid())
+        {
+            groups.addSeparator();
+            groups.addItem (4, "Take out of \"" + currentGroup[IDs::name].toString() + "\"");
+        }
+
         juce::PopupMenu m;
         m.addItem (1, "Rename...");
         m.addSubMenu ("Colour", colours);
+        m.addSubMenu ("Group", groups);
         m.addSeparator();
         m.addItem (2, "Remove lane");
 
@@ -263,6 +286,21 @@ private:
                 um.beginNewTransaction ("Remove lane");
                 safeThis->owner.project.removeLane (safeThis->lane);
             }
+            else if (result == 3)
+            {
+                safeThis->owner.selection.setActiveLane (safeThis->lane);
+                safeThis->owner.groupActiveLane();
+            }
+            else if (result == 4)
+            {
+                um.beginNewTransaction ("Take lane out of group");
+                safeThis->owner.project.setLaneGroup (safeThis->lane, {});
+            }
+            else if (result >= 200)
+            {
+                um.beginNewTransaction ("Move lane to group");
+                safeThis->owner.project.setLaneGroup (safeThis->lane, safeThis->owner.project.getGroups().getChild (result - 200));
+            }
             else if (result >= 100)
             {
                 um.beginNewTransaction ("Lane colour");
@@ -279,7 +317,7 @@ private:
     juce::Label nameLabel;
     juce::TextButton muteButton { "M" }, soloButton { "S" };
     DragMode dragMode = none;
-    int startHeight = 0;
+    int startHeight = 0, indent = 0;
 };
 
 //==============================================================================
@@ -305,6 +343,240 @@ public:
     juce::ValueTree lane;
     LaneHeader header;
     LaneTrack track;
+};
+
+//==============================================================================
+// A group's bar: name, fold triangle, group mute/solo; folded, it shows all its
+// lanes' curves on top of each other.
+class ScoreView::GroupBar : public juce::Component
+{
+public:
+    GroupBar (ScoreView& o, juce::ValueTree groupTree) : group (groupTree), owner (o)
+    {
+        nameLabel.setFont (juce::FontOptions (13.0f, juce::Font::bold));
+        nameLabel.setEditable (false, true, false);
+        nameLabel.setInterceptsMouseClicks (false, false);
+        nameLabel.onTextChange = [this]
+        {
+            auto& um = owner.project.getUndoManager();
+            um.beginNewTransaction ("Rename group");
+            const auto text = nameLabel.getText().trim();
+            group.setProperty (IDs::name, text.isEmpty() ? juce::String ("Group") : text, &um);
+        };
+        addAndMakeVisible (nameLabel);
+
+        for (auto* b : { &muteButton, &soloButton })
+            addAndMakeVisible (b);
+        muteButton.setTooltip ("Mute all lanes of this group");
+        soloButton.setTooltip ("Solo all lanes of this group");
+        muteButton.setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff8f3b3b));
+        soloButton.setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xffb08a2e));
+        muteButton.onClick = [this] { setAll (IDs::mute, "Mute group"); };
+        soloButton.onClick = [this] { setAll (IDs::solo, "Solo group"); };
+        refresh();
+    }
+
+    bool isFolded() const           { return (bool) group[IDs::folded]; }
+    int preferredHeight() const     { return isFolded() ? 56 : 26; }
+
+    void refresh()
+    {
+        nameLabel.setText (group[IDs::name].toString(), juce::dontSendNotification);
+        auto lanes = owner.project.lanesInGroup (group);
+        auto all = [&lanes] (const juce::Identifier& id)
+        {
+            for (auto& l : lanes) if (! (bool) l[id]) return false;
+            return ! lanes.isEmpty();
+        };
+        muteButton.setToggleState (all (IDs::mute), juce::dontSendNotification);
+        soloButton.setToggleState (all (IDs::solo), juce::dontSendNotification);
+        repaint();
+    }
+
+    void paint (juce::Graphics& g) override
+    {
+        const auto colour = Project::groupColour (group);
+        auto header = getLocalBounds().removeFromLeft (headerWidth);
+        auto overview = getLocalBounds().withTrimmedLeft (headerWidth);
+
+        g.setColour (headerColour.interpolatedWith (colour, 0.22f));
+        g.fillRect (header);
+        g.setColour (colour);
+        g.fillRect (header.removeFromLeft (6));
+
+        // Fold triangle.
+        juce::Path tri;
+        const float cx = 16.0f, cy = 13.0f;
+        if (isFolded()) tri.addTriangle (cx - 3.5f, cy - 5.0f, cx - 3.5f, cy + 5.0f, cx + 4.5f, cy);
+        else            tri.addTriangle (cx - 5.0f, cy - 3.5f, cx + 5.0f, cy - 3.5f, cx, cy + 4.5f);
+        g.setColour (juce::Colours::white.withAlpha (0.8f));
+        g.fillPath (tri);
+
+        const auto lanes = owner.project.lanesInGroup (group);
+        g.setColour (juce::Colours::white.withAlpha (0.5f));
+        g.setFont (juce::FontOptions (11.0f));
+        if (isFolded())
+            g.drawText (juce::String (lanes.size()) + (lanes.size() == 1 ? " lane" : " lanes") + " (folded)",
+                        28, 28, headerWidth - 36, 16, juce::Justification::centredLeft);
+
+        // Right side: a band in the group colour; folded, the lanes' curves.
+        g.setColour (colour.withAlpha (isFolded() ? 0.10f : 0.16f));
+        g.fillRect (overview);
+        g.setColour (colour.withAlpha (0.6f));
+        g.drawHorizontalLine (0, (float) overview.getX(), (float) overview.getRight());
+
+        if (isFolded())
+            paintOverview (g, overview.reduced (0, 5), lanes);
+
+        // Playhead.
+        const float px = (float) overview.getX() + owner.timeView.toX (owner.host.getEngine().getPositionSeconds());
+        if (px >= (float) overview.getX())
+        {
+            g.setColour (accent.withAlpha (0.8f));
+            g.drawVerticalLine ((int) px, 0.0f, (float) getHeight());
+        }
+
+        g.setColour (juce::Colours::black.withAlpha (0.5f));
+        g.drawHorizontalLine (getHeight() - 1, 0.0f, (float) getWidth());
+        g.drawVerticalLine (headerWidth - 1, 0.0f, (float) getHeight());
+    }
+
+    void resized() override
+    {
+        nameLabel.setBounds (26, 2, headerWidth - 26 - 58, 22);
+        soloButton.setBounds (headerWidth - 28, 4, 22, 18);
+        muteButton.setBounds (headerWidth - 52, 4, 22, 18);
+    }
+
+    void mouseDown (const juce::MouseEvent& e) override
+    {
+        dragging = false;
+        if (e.mods.isPopupMenu()) { showMenu(); return; }
+        if (e.x < 28 && e.y < 26) { toggleFold(); return; }
+    }
+
+    void mouseDrag (const juce::MouseEvent& e) override
+    {
+        if (e.mods.isPopupMenu() || e.mouseDownPosition.x >= headerWidth || (e.mouseDownPosition.x < 28 && e.mouseDownPosition.y < 26))
+            return;
+        if (! dragging && std::abs (e.getDistanceFromDragStartY()) > 5)
+            dragging = true;
+        if (dragging)
+            owner.laneDragged (e.getEventRelativeTo (&owner.rowHolder).y);
+    }
+
+    void mouseUp (const juce::MouseEvent&) override
+    {
+        if (dragging)
+            owner.groupDragEnded (*this);
+        dragging = false;
+    }
+
+    void mouseDoubleClick (const juce::MouseEvent& e) override
+    {
+        if (e.x >= 28 && e.x < headerWidth - 58 && e.y < 26)
+            nameLabel.showEditor();
+        else if (e.x >= headerWidth)
+            toggleFold();
+    }
+
+    void mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& w) override
+    {
+        owner.handleWheel (e, w, *this);
+    }
+
+    juce::ValueTree group;
+
+private:
+    void toggleFold()
+    {
+        // Folding is a view setting: saved with the project, but not an undo step.
+        group.setProperty (IDs::folded, ! isFolded(), nullptr);
+    }
+
+    void setAll (const juce::Identifier& id, const juce::String& action)
+    {
+        auto lanes = owner.project.lanesInGroup (group);
+        bool allOn = ! lanes.isEmpty();
+        for (auto& l : lanes) allOn = allOn && (bool) l[id];
+        auto& um = owner.project.getUndoManager();
+        um.beginNewTransaction (action);
+        for (auto& l : lanes) l.setProperty (id, ! allOn, &um);
+    }
+
+    void paintOverview (juce::Graphics& g, juce::Rectangle<int> area, const juce::Array<juce::ValueTree>& lanes)
+    {
+        auto& tv = owner.timeView;
+        const int x0 = area.getX(), w = area.getWidth();
+        const float top = (float) area.getY(), h = (float) area.getHeight();
+
+        for (auto& laneTree : lanes)
+        {
+            Automation::Lane lane;
+            AutomationController::buildItems (laneTree, lane);
+            if (lane.items.empty()) continue;
+            const int index = owner.controller.resolveParameterIndex (laneTree);
+            lane.baseValue = index >= 0 ? owner.controller.getBaseValue (index) : lane.items.front().valueAtLocal (0.0);
+
+            juce::Path path;
+            for (int px = 0; px <= w; px += 2)
+            {
+                const double t = tv.toTime ((float) px);
+                const float v = juce::jlimit (0.0f, 1.0f, Automation::laneValueAt (lane, t));
+                const float y = top + (1.0f - v) * h;
+                if (px == 0) path.startNewSubPath ((float) (x0 + px), y);
+                else         path.lineTo ((float) (x0 + px), y);
+            }
+            const bool muted = (bool) laneTree[IDs::mute];
+            g.setColour (Project::laneColour (laneTree).withAlpha (muted ? 0.3f : 0.9f));
+            g.strokePath (path, juce::PathStrokeType (1.4f));
+        }
+    }
+
+    void showMenu()
+    {
+        juce::PopupMenu colours;
+        for (int i = 0; i < Project::paletteSize; ++i)
+            colours.addColouredItem (100 + i, "Colour " + juce::String (i + 1), Project::paletteColour (i),
+                                     true, (int) group[IDs::colour] == i);
+        juce::PopupMenu m;
+        m.addItem (1, "Rename...");
+        m.addSubMenu ("Colour", colours);
+        m.addItem (2, isFolded() ? "Open" : "Fold");
+        m.addItem (5, "Give the lanes the group colour");
+        m.addSeparator();
+        m.addItem (3, "Ungroup (keep the lanes)");
+        m.addItem (4, "Remove group and its lanes");
+
+        juce::Component::SafePointer<GroupBar> safeThis (this);
+        m.showMenuAsync (juce::PopupMenu::Options(), [safeThis] (int result)
+        {
+            if (safeThis == nullptr || result == 0) return;
+            auto& proj = safeThis->owner.project;
+            auto& um = proj.getUndoManager();
+            auto grp = safeThis->group;
+            if (result == 1)       safeThis->nameLabel.showEditor();
+            else if (result == 2)  safeThis->toggleFold();
+            else if (result == 3)  { um.beginNewTransaction ("Ungroup"); proj.ungroup (grp); }
+            else if (result == 4)  { um.beginNewTransaction ("Remove group"); proj.removeGroupWithLanes (grp); }
+            else if (result == 5)
+            {
+                um.beginNewTransaction ("Lane colours");
+                for (auto& l : proj.lanesInGroup (grp))
+                    l.setProperty (IDs::colour, grp[IDs::colour], &um);
+            }
+            else if (result >= 100)
+            {
+                um.beginNewTransaction ("Group colour");
+                grp.setProperty (IDs::colour, result - 100, &um);
+            }
+        });
+    }
+
+    ScoreView& owner;
+    juce::Label nameLabel;
+    juce::TextButton muteButton { "M" }, soloButton { "S" };
+    bool dragging = false;
 };
 
 //==============================================================================
@@ -368,13 +640,50 @@ void ScoreView::rebuildRows()
     rebuildPending = false;
     const auto scroll = viewport.getViewPosition();
     rows.clear();
+    groupBars.clear();
+    displayOrder.clear();
 
+    int currentGroup = 0;
+    bool folded = false;
     for (auto lane : project.getLanes())
-        if (lane.hasType (IDs::LANE))
-            rowHolder.addAndMakeVisible (rows.add (new LaneRow (*this, lane)));
+    {
+        if (! lane.hasType (IDs::LANE))
+            continue;
 
-    emptyHint.setVisible (rows.isEmpty());
+        const int g = lane[IDs::group];
+        if (g != 0 && g != currentGroup)
+        {
+            auto groupTree = project.findGroup (g);
+            if (groupTree.isValid())
+            {
+                auto* bar = groupBars.add (new GroupBar (*this, groupTree));
+                rowHolder.addAndMakeVisible (bar);
+                displayOrder.push_back (bar);
+                folded = bar->isFolded();
+            }
+            else
+            {
+                folded = false;
+            }
+        }
+        if (g == 0) folded = false;
+        currentGroup = g;
+
+        if (folded)
+            continue;
+
+        auto* row = rows.add (new LaneRow (*this, lane));
+        rowHolder.addAndMakeVisible (row);
+        displayOrder.push_back (row);
+    }
+
+    emptyHint.setVisible (displayOrder.empty());
     selection.prune();
+    selection.keepOnlyLanes ([this] (const juce::ValueTree& lane)
+    {
+        for (auto* row : rows) if (row->lane == lane) return true;
+        return false;
+    });
     layoutRows();
     viewport.setViewPosition (scroll);
     repaint();
@@ -384,10 +693,12 @@ void ScoreView::layoutRows()
 {
     const int width = viewport.getMaximumVisibleWidth();
     int y = 0;
-    for (auto* row : rows)
+    for (auto* c : displayOrder)
     {
-        row->setBounds (0, y, width, row->preferredHeight());
-        y += row->getHeight();
+        const int h = (dynamic_cast<GroupBar*> (c) != nullptr) ? static_cast<GroupBar*> (c)->preferredHeight()
+                                                                : static_cast<LaneRow*> (c)->preferredHeight();
+        c->setBounds (0, y, width, h);
+        y += h;
     }
     rowHolder.setSize (width, juce::jmax (1, y));
 }
@@ -483,16 +794,29 @@ void ScoreView::mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWhee
 //==============================================================================
 int ScoreView::dropIndexFor (int yInHolder) const
 {
-    for (int i = 0; i < rows.size(); ++i)
-        if (yInHolder < rows[i]->getY() + rows[i]->getHeight() / 2)
-            return i;
-    return rows.size();
+    for (size_t i = 0; i < displayOrder.size(); ++i)
+        if (yInHolder < displayOrder[i]->getY() + displayOrder[i]->getHeight() / 2)
+            return (int) i;
+    return (int) displayOrder.size();
 }
 
-void ScoreView::laneDragged (LaneRow&, int yInHolder)
+juce::ValueTree ScoreView::laneBefore (int displayIndex) const
+{
+    if (displayIndex < 0 || displayIndex >= (int) displayOrder.size())
+        return {};
+    auto* c = displayOrder[(size_t) displayIndex];
+    if (auto* bar = dynamic_cast<GroupBar*> (c))
+    {
+        auto lanes = project.lanesInGroup (bar->group);
+        return lanes.isEmpty() ? juce::ValueTree() : lanes.getFirst();
+    }
+    return static_cast<LaneRow*> (c)->lane;
+}
+
+void ScoreView::laneDragged (int yInHolder)
 {
     const int index = dropIndexFor (yInHolder);
-    dropIndicatorY = index < rows.size() ? rows[index]->getY() : rowHolder.getHeight();
+    dropIndicatorY = index < (int) displayOrder.size() ? displayOrder[(size_t) index]->getY() : rowHolder.getHeight();
     repaint();
 }
 
@@ -502,17 +826,107 @@ void ScoreView::laneDragEnded (LaneRow& row)
     dropIndicatorY = -1;
     repaint();
 
-    auto lanes = project.getLanes();
-    const int from = lanes.indexOf (row.lane);
-    int to = target > from ? target - 1 : target;
-    to = juce::jlimit (0, lanes.getNumChildren() - 1, to);
-
-    if (from >= 0 && from != to)
+    // Which group does the drop line belong to? Right below a group's bar, or
+    // between two lanes of the same group: that group. Anywhere else: none.
+    auto groupAt = [this] (int i) -> int
     {
-        auto& um = project.getUndoManager();
-        um.beginNewTransaction ("Move lane");
+        if (i < 0 || i >= (int) displayOrder.size()) return -1;
+        if (auto* bar = dynamic_cast<GroupBar*> (displayOrder[(size_t) i])) return (int) bar->group[IDs::groupId];
+        return (int) static_cast<LaneRow*> (displayOrder[(size_t) i])->lane[IDs::group];
+    };
+    const bool aboveIsBar = target > 0 && dynamic_cast<GroupBar*> (displayOrder[(size_t) target - 1]) != nullptr;
+    const auto* aboveRow = target > 0 ? dynamic_cast<LaneRow*> (displayOrder[(size_t) target - 1]) : nullptr;
+    const auto* belowRow = target < (int) displayOrder.size() ? dynamic_cast<LaneRow*> (displayOrder[(size_t) target]) : nullptr;
+
+    int newGroup = 0;
+    if (aboveIsBar)
+        newGroup = groupAt (target - 1);
+    else if (aboveRow != nullptr && belowRow != nullptr && (int) aboveRow->lane[IDs::group] != 0
+             && (int) aboveRow->lane[IDs::group] == (int) belowRow->lane[IDs::group])
+        newGroup = aboveRow->lane[IDs::group];
+
+    // Moving a lane onto its own place in the same group changes nothing.
+    auto lanes = project.getLanes();
+    auto beforeLane = laneBefore (target);
+    if (beforeLane == row.lane || (target > 0 && displayOrder[(size_t) target - 1] == &row))
+        if ((int) row.lane[IDs::group] == newGroup)
+            return;
+
+    auto& um = project.getUndoManager();
+    um.beginNewTransaction ("Move lane");
+    auto lane = row.lane;
+
+    if (newGroup == 0) lane.removeProperty (IDs::group, &um);
+    else               lane.setProperty (IDs::group, newGroup, &um);
+
+    const int from = lanes.indexOf (lane);
+    int to = beforeLane.isValid() ? lanes.indexOf (beforeLane) : lanes.getNumChildren();
+    if (to > from) --to;
+    to = juce::jlimit (0, lanes.getNumChildren() - 1, to);
+    if (from >= 0 && from != to)
         lanes.moveChild (from, to, &um);
+
+    project.normaliseGroups();
+}
+
+void ScoreView::groupDragEnded (GroupBar& bar)
+{
+    int target = dropIndexFor (dropIndicatorY >= 0 ? dropIndicatorY : bar.getY());
+    dropIndicatorY = -1;
+    repaint();
+
+    // A group cannot land inside another group: move the drop line up to that group's bar.
+    while (target > 0 && target < (int) displayOrder.size())
+    {
+        auto* row = dynamic_cast<LaneRow*> (displayOrder[(size_t) target]);
+        if (row == nullptr || (int) row->lane[IDs::group] == 0 || (int) row->lane[IDs::group] == (int) bar.group[IDs::groupId])
+            break;
+        --target;
     }
+
+    auto members = project.lanesInGroup (bar.group);
+    auto beforeLane = laneBefore (target);
+    while (beforeLane.isValid() && members.contains (beforeLane))
+        beforeLane = laneBefore (++target);
+
+    int toIndex = 0;
+    for (auto lane : project.getLanes())
+    {
+        if (lane == beforeLane) break;
+        if (! members.contains (lane)) ++toIndex;
+    }
+
+    auto& um = project.getUndoManager();
+    um.beginNewTransaction ("Move group");
+    project.moveGroup (bar.group, toIndex);
+}
+
+void ScoreView::repaintRows()
+{
+    for (auto* row : rows) row->track.repaint();
+    for (auto* bar : groupBars) bar->repaint();
+}
+
+void ScoreView::setAllGroupsFolded (bool folded)
+{
+    for (auto group : project.getGroups())
+        group.setProperty (IDs::folded, folded, nullptr);
+}
+
+void ScoreView::groupActiveLane()
+{
+    auto lane = selection.getActiveLane();
+    if (! lane.isValid())
+    {
+        showStatus ("Click a lane first, then make a group of it.");
+        return;
+    }
+    auto& um = project.getUndoManager();
+    um.beginNewTransaction ("New group");
+    project.setLaneGroup (lane, {});
+    auto group = project.createGroup ("Group " + juce::String (project.getGroups().getNumChildren() + 1), { lane });
+    juce::ignoreUnused (group);
+    showStatus ("New group. Drag lanes just below its bar to add them; right-click a lane > Group to move it in.");
 }
 
 //==============================================================================
@@ -694,11 +1108,13 @@ void ScoreView::paste()
     if (clipboard.isEmpty())
         return;
 
-    auto lanes = project.getLanes();
+    // Lanes as shown (folded groups left out), so a paste never lands in a hidden lane.
+    juce::Array<juce::ValueTree> lanes;
+    for (auto* row : rows) lanes.add (row->lane);
     auto laneIndexOf = [&lanes] (const juce::var& id)
     {
-        for (int i = 0; i < lanes.getNumChildren(); ++i)
-            if (lanes.getChild (i)[IDs::laneId] == id)
+        for (int i = 0; i < lanes.size(); ++i)
+            if (lanes.getReference (i)[IDs::laneId] == id)
                 return i;
         return -1;
     };
@@ -727,7 +1143,7 @@ void ScoreView::paste()
     {
         const int source = laneIndexOf (c["sourceLane"]);
         const int target = source >= 0 ? source + laneShift : lanes.indexOf (active);
-        auto lane = lanes.getChild (target);
+        auto lane = juce::isPositiveAndBelow (target, lanes.size()) ? lanes.getReference (target) : juce::ValueTree();
         if (! lane.isValid()) { ++skipped; continue; }
 
         const double start = at + ((double) c[IDs::start] - earliest);
@@ -789,7 +1205,7 @@ void ScoreView::changeListenerCallback (juce::ChangeBroadcaster* source)
         hScroll.setCurrentRange (timeView.getOffset(), timeView.visibleSeconds(), juce::dontSendNotification);
     }
     repaint();
-    for (auto* row : rows) row->track.repaint();
+    repaintRows();
 }
 
 void ScoreView::scrollBarMoved (juce::ScrollBar*, double newRangeStart)
@@ -810,27 +1226,40 @@ void ScoreView::valueTreePropertyChanged (juce::ValueTree& tree, const juce::Ide
 
         if (property == IDs::height)
             layoutRows();
+        if (property == IDs::group)
+            rebuildPending = true;
+        if (property == IDs::mute || property == IDs::solo)
+            for (auto* bar : groupBars) bar->refresh();
     }
 
-    for (auto* row : rows) row->track.repaint();
+    if (tree.hasType (IDs::GROUP))
+    {
+        if (property == IDs::folded)
+            rebuildPending = true;
+        for (auto* bar : groupBars)
+            if (bar->group == tree) bar->refresh();
+        for (auto* row : rows) row->header.repaint();
+    }
+
+    repaintRows();
 }
 
 void ScoreView::valueTreeChildAdded (juce::ValueTree& parent, juce::ValueTree&)
 {
-    if (parent.hasType (IDs::LANES) || parent.hasType (IDs::PROJECT))
+    if (parent.hasType (IDs::LANES) || parent.hasType (IDs::PROJECT) || parent.hasType (IDs::GROUPS))
         rebuildPending = true;
     else
-        for (auto* row : rows) row->track.repaint();
+        repaintRows();
 }
 
 void ScoreView::valueTreeChildRemoved (juce::ValueTree& parent, juce::ValueTree&, int)
 {
-    if (parent.hasType (IDs::LANES) || parent.hasType (IDs::PROJECT))
+    if (parent.hasType (IDs::LANES) || parent.hasType (IDs::PROJECT) || parent.hasType (IDs::GROUPS))
         rebuildPending = true;   // rebuilt on the timer, after the current mouse event
     else
     {
         selection.prune();
-        for (auto* row : rows) row->track.repaint();
+        repaintRows();
     }
 }
 
@@ -859,5 +1288,7 @@ void ScoreView::timerCallback()
             row->track.repaint();
             row->header.repaint();
         }
+        for (auto* bar : groupBars)
+            bar->repaint();
     }
 }

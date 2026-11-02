@@ -1,4 +1,5 @@
 #include "Project.h"
+#include <set>
 #include "ItemTime.h"
 #include "PointOps.h"
 
@@ -34,6 +35,7 @@ juce::ValueTree Project::createDefaultState()
     heldNote.setProperty (IDs::velocity, 100, nullptr);
     project.appendChild (heldNote, nullptr);
 
+    project.appendChild (juce::ValueTree (IDs::GROUPS), nullptr);
     project.appendChild (juce::ValueTree (IDs::LANES), nullptr);
     return project;
 }
@@ -162,6 +164,175 @@ juce::ValueTree Project::addLane (int paramIndex, const juce::String& paramName)
 void Project::removeLane (juce::ValueTree lane)
 {
     getLanes().removeChild (lane, &undoManager);
+    normaliseGroups();
+}
+
+//==============================================================================
+juce::ValueTree Project::findGroup (const juce::var& groupId)
+{
+    if (groupId.isVoid() || (int) groupId == 0)
+        return {};
+    return getGroups().getChildWithProperty (IDs::groupId, groupId);
+}
+
+juce::ValueTree Project::groupOf (const juce::ValueTree& lane)
+{
+    return findGroup (lane[IDs::group]);
+}
+
+juce::Array<juce::ValueTree> Project::lanesInGroup (const juce::ValueTree& group)
+{
+    juce::Array<juce::ValueTree> result;
+    if (group.isValid())
+        for (auto lane : getLanes())
+            if ((int) lane[IDs::group] == (int) group[IDs::groupId])
+                result.add (lane);
+    return result;
+}
+
+juce::Colour Project::groupColour (const juce::ValueTree& group)
+{
+    return paletteColour ((int) group.getProperty (IDs::colour, 0));
+}
+
+juce::ValueTree Project::createGroup (const juce::String& name, const juce::Array<juce::ValueTree>& lanes)
+{
+    int maxId = 0;
+    for (auto g : getGroups())
+        maxId = juce::jmax (maxId, (int) g[IDs::groupId]);
+
+    juce::ValueTree group (IDs::GROUP);
+    group.setProperty (IDs::groupId, maxId + 1, nullptr);
+    group.setProperty (IDs::name, name, nullptr);
+    group.setProperty (IDs::colour, lanes.isEmpty() ? 0 : (int) lanes.getFirst().getProperty (IDs::colour, 0), nullptr);
+    group.setProperty (IDs::folded, false, nullptr);
+    getGroups().appendChild (group, &undoManager);
+
+    // The lanes gather at the place of the topmost one.
+    auto all = getLanes();
+    juce::Array<juce::ValueTree> sorted (lanes);
+    std::sort (sorted.begin(), sorted.end(), [&all] (const auto& a, const auto& b) { return all.indexOf (a) < all.indexOf (b); });
+    if (! sorted.isEmpty())
+    {
+        int insertAt = all.indexOf (sorted.getFirst());
+        for (auto& lane : sorted)
+        {
+            lane.setProperty (IDs::group, maxId + 1, &undoManager);
+            const int from = all.indexOf (lane);
+            const int to = from < insertAt ? insertAt - 1 : insertAt;
+            if (from != to) all.moveChild (from, to, &undoManager);
+            insertAt = all.indexOf (lane) + 1;
+        }
+    }
+    normaliseGroups();
+    return group;
+}
+
+void Project::setLaneGroup (juce::ValueTree lane, const juce::ValueTree& group)
+{
+    auto all = getLanes();
+    if (! group.isValid())
+    {
+        lane.removeProperty (IDs::group, &undoManager);
+    }
+    else
+    {
+        // Put it right after the group's last lane.
+        auto members = lanesInGroup (group);
+        members.removeFirstMatchingValue (lane);
+        lane.setProperty (IDs::group, group[IDs::groupId], &undoManager);
+        if (! members.isEmpty())
+        {
+            const int from = all.indexOf (lane);
+            const int last = all.indexOf (members.getLast());
+            const int to = from <= last ? last : last + 1;
+            if (from != to) all.moveChild (from, to, &undoManager);
+        }
+    }
+    normaliseGroups();
+}
+
+void Project::ungroup (juce::ValueTree group)
+{
+    for (auto& lane : lanesInGroup (group))
+        lane.removeProperty (IDs::group, &undoManager);
+    getGroups().removeChild (group, &undoManager);
+}
+
+void Project::removeGroupWithLanes (juce::ValueTree group)
+{
+    for (auto& lane : lanesInGroup (group))
+        getLanes().removeChild (lane, &undoManager);
+    getGroups().removeChild (group, &undoManager);
+}
+
+void Project::moveGroup (const juce::ValueTree& group, int toIndex)
+{
+    auto all = getLanes();
+    auto members = lanesInGroup (group);
+    if (members.isEmpty()) return;
+
+    // Order of the other lanes, then the group's lanes inserted as a block.
+    juce::Array<juce::ValueTree> others;
+    for (auto lane : all)
+        if (! members.contains (lane))
+            others.add (lane);
+    toIndex = juce::jlimit (0, others.size(), toIndex);
+
+    juce::Array<juce::ValueTree> order;
+    for (int i = 0; i < others.size(); ++i)
+    {
+        if (i == toIndex) order.addArray (members);
+        order.add (others[i]);
+    }
+    if (toIndex >= others.size()) order.addArray (members);
+
+    for (int i = 0; i < order.size(); ++i)
+    {
+        const int from = all.indexOf (order[i]);
+        if (from != i) all.moveChild (from, i, &undoManager);
+    }
+    normaliseGroups();
+}
+
+void Project::normaliseGroups()
+{
+    auto all = getLanes();
+
+    // Lanes from older files take their colour from their position: pin it before moving them.
+    for (auto lane : all)
+        if (! lane.hasProperty (IDs::colour))
+            lane.setProperty (IDs::colour, all.indexOf (lane) % paletteSize, nullptr);
+
+    // Lanes pointing at a group that no longer exists become ungrouped.
+    for (auto lane : all)
+        if ((int) lane[IDs::group] != 0 && ! findGroup (lane[IDs::group]).isValid())
+            lane.removeProperty (IDs::group, &undoManager);
+
+    // Each group's lanes gather at the place of its first lane.
+    juce::Array<juce::ValueTree> order;
+    std::set<int> done;
+    for (auto lane : all)
+    {
+        const int g = lane[IDs::group];
+        if (g == 0) { order.add (lane); continue; }
+        if (done.count (g) > 0) continue;
+        done.insert (g);
+        for (auto other : all)
+            if ((int) other[IDs::group] == g)
+                order.add (other);
+    }
+    for (int i = 0; i < order.size(); ++i)
+    {
+        const int from = all.indexOf (order[i]);
+        if (from != i) all.moveChild (from, i, &undoManager);
+    }
+
+    // Groups without lanes go.
+    auto groups = getGroups();
+    for (int i = groups.getNumChildren(); --i >= 0;)
+        if (done.count ((int) groups.getChild (i)[IDs::groupId]) == 0)
+            groups.removeChild (i, &undoManager);
 }
 
 juce::ValueTree Project::findLaneForParameter (int paramIndex)
@@ -520,6 +691,7 @@ juce::Result Project::loadDocument (const juce::File& file)
 
     state.removeListener (this);
     state.copyPropertiesAndChildrenFrom (loaded, nullptr);
+    normaliseGroups();      // a hand-edited file may have scattered a group's lanes
     state.addListener (this);
 
     undoManager.clearUndoHistory();
@@ -556,5 +728,15 @@ void Project::setLastDocumentOpened (const juce::File& file)
 {
     auto* settings = host.appProperties.getUserSettings();
     settings->setValue (keyLastProject, file.getFullPathName());
+
+    // Also keep the list for File > Open Recent.
+    juce::RecentlyOpenedFilesList recent;
+    recent.setMaxNumberOfItems (12);
+    recent.restoreFromString (settings->getValue ("recentFiles"));
+    recent.addFile (file);
+    settings->setValue ("recentFiles", recent.toString());
     settings->saveIfNeeded();
+   #if JUCE_MAC
+    juce::RecentlyOpenedFilesList::registerRecentFileNatively (file);
+   #endif
 }

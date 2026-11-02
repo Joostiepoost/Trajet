@@ -57,6 +57,7 @@ private:
     class Ruler;
     class LaneHeader;
     class LaneRow;
+    class GroupBar;
 
     int trackWidth() const      { return juce::jmax (50, getWidth() - headerWidth - viewport.getScrollBarThickness()); }
 
@@ -65,10 +66,20 @@ private:
     void handleWheel (const juce::MouseEvent&, const juce::MouseWheelDetails&, juce::Component& source);
     void showStatus (const juce::String& text)   { if (onStatus) onStatus (text); }
 
-    // Lane drag-to-reorder (driven by the headers)
-    void laneDragged (LaneRow& row, int yInHolder);
+    // Lane and group drag-to-reorder (driven by the headers and group bars)
+    void laneDragged (int yInHolder);
     void laneDragEnded (LaneRow& row);
-    int dropIndexFor (int yInHolder) const;
+    void groupDragEnded (GroupBar& bar);
+    int dropIndexFor (int yInHolder) const;         // index in the display order
+    juce::ValueTree laneBefore (int displayIndex) const;   // first lane at or after it (in lane order)
+    void repaintRows();
+
+public:
+    /** Fold or open every group. */
+    void setAllGroupsFolded (bool folded);
+    /** Makes a group of the active lane (asks for nothing: named "Group n"). */
+    void groupActiveLane();
+private:
 
     void changeListenerCallback (juce::ChangeBroadcaster*) override;
     void scrollBarMoved (juce::ScrollBar*, double newRangeStart) override;
@@ -91,6 +102,8 @@ private:
     juce::Viewport viewport;
     juce::Component rowHolder;
     juce::OwnedArray<LaneRow> rows;
+    juce::OwnedArray<GroupBar> groupBars;
+    std::vector<juce::Component*> displayOrder;     // group bars and lane rows, top to bottom
     juce::ScrollBar hScroll { false };
     juce::Label emptyHint;
 

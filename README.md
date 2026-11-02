@@ -34,7 +34,8 @@ Other options:
 | 5 | Item editor, rubber-band selection, scale box, nudge, point copy/paste, smooth/thin/reverse/invert | done |
 | 6 | Time bases: linear (seconds) and musical items (bars/beats, own metre, tempo map with ramps) | done |
 | 7 | Generator items: LFO, random, formula; bake to points | done |
-| 8 | Render to WAV (offline, 44.1–96 kHz, 16/24/32-float) and automation CSV | testing |
+| 8 | Render to WAV (offline, 44.1–96 kHz, 16/24/32-float), automation CSV, output limiter | done |
+| 9 | Lane groups (fold, colour, move, group mute/solo), recent files | testing |
 
 ## Using step 1
 
@@ -55,6 +56,21 @@ The last loaded plugin is reloaded automatically when Trajet starts.
 - **Edit menu**: Undo (⌘Z) and Redo (⇧⌘Z). For now only the held-note settings are undoable; lanes and points join from step 3 on.
 - **Audio menu**: audio processing on/off (⇧⌘A) and the plugin's panel (⌘E).
 - Trajet reopens the last project when it starts, and asks to save unsaved changes when you quit.
+
+## Groups (step 9)
+
+Groups gather lanes that belong together (for Aalto: oscillator, waveguide, filter...). A group's lanes always sit together under its bar.
+
+- **Make a group**: right-click a lane header → *Group → New group with this lane*, or click a lane and press **⌘G**.
+- **Put lanes in a group**: drag a lane header to just below the group's bar, or between two of its lanes. Or right-click the lane → *Group → Move to "…"*. To take a lane out: *Group → Take out of "…"*, or drag it outside the group.
+- **Fold / open**: click the triangle, or double-click the bar's right side. A folded group is one compact row showing all its lanes' curves on top of each other. **⌘[** folds all groups, **⌘]** opens them all (View menu).
+- **Move a group**: drag its bar; all its lanes move along.
+- **M / S** on the bar mute or solo all lanes of the group.
+- **Right-click the bar**: rename (or double-click the name), colour, *Give the lanes the group colour*, *Ungroup* (keeps the lanes), *Remove group and its lanes*.
+- A new lane (+ Lane) goes right below the lane you clicked last, in the same group.
+- Paste works in the lanes as shown, so it never lands in a folded (hidden) lane.
+
+**File → Open recent** lists the last twelve projects.
 
 ## Rendering and CSV (step 8)
 

@@ -45,7 +45,8 @@ public:
         cmdNudgeLeft, cmdNudgeRight, cmdNudgeUp, cmdNudgeDown,
         cmdNudgeLeftBig, cmdNudgeRightBig, cmdNudgeUpBig, cmdNudgeDownBig,
         cmdSelectAll, cmdSmooth, cmdThin, cmdReverse, cmdInvert, cmdOpenItemEditor,
-        cmdRender, cmdExportCsv
+        cmdRender, cmdExportCsv,
+        cmdNewGroup, cmdFoldAll, cmdOpenAll
     };
 
     juce::ApplicationCommandTarget* getNextCommandTarget() override   { return nullptr; }
@@ -56,11 +57,13 @@ public:
     // MenuBarModel
     juce::StringArray getMenuBarNames() override;
     juce::PopupMenu getMenuForIndex (int menuIndex, const juce::String& menuName) override;
-    void menuItemSelected (int, int) override {}
+    void menuItemSelected (int menuItemID, int topLevelMenuIndex) override;
 
 private:
     void newProject();
     void openProject();
+    void openRecentProject (const juce::File&);
+    juce::RecentlyOpenedFilesList getRecentFiles();
     void saveProject (bool saveAs);
 
     void showPluginScanner();
@@ -109,7 +112,7 @@ private:
     std::unique_ptr<juce::DocumentWindow> scannerWindow;
     std::unique_ptr<ItemEditorWindow> itemEditorWindow;
     std::unique_ptr<juce::FileChooser> exportChooser;
-    juce::File lastExportFolder;
+    juce::File lastExportFolder, lastTitleFile;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };
