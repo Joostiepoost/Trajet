@@ -5044,6 +5044,49 @@
                 ]
               }
             ]
+          },
+          {
+            "type": "LANE",
+            "properties": {
+              "laneId": "d286046ae7b14ffc8c49eb320957549b",
+              "kind": "notes",
+              "paramIndex": -1,
+              "name": "Notes",
+              "colour": 11,
+              "height": 96
+            },
+            "children": [
+              {
+                "type": "ITEM",
+                "properties": {
+                  "start": 0.0,
+                  "length": 57.600000000000001,
+                  "timebase": "linear"
+                },
+                "children": [
+                  {
+                    "type": "NOTE",
+                    "properties": {
+                      "time": 2.3,
+                      "length": 13.1,
+                      "pitch": 57,
+                      "velocity": 100
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "NOTE",
+                    "properties": {
+                      "time": 14.200000000000001,
+                      "length": 7.800000000000001,
+                      "pitch": 54,
+                      "velocity": 60
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
