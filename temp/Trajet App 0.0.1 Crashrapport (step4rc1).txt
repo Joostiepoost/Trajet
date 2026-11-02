@@ -1,0 +1,513 @@
+ranslated Report (Full Report Below)
+-------------------------------------
+Process:             Trajet [37001]
+Path:                /Users/USER/Documents/*/Trajet.app/Contents/MacOS/Trajet
+Identifier:          com.trajet.app
+Version:             0.0.1 (0.0.1)
+Code Type:           ARM-64 (Native)
+Role:                Foreground
+Parent Process:      launchd [1]
+Coalition:           com.trajet.app [24960]
+User ID:             501
+
+Date/Time:           2026-11-02 12:25:33.8971 +0100
+Launch Time:         2026-11-02 12:24:46.7387 +0100
+Hardware Model:      Mac16,12
+OS Version:          macOS 27.0.1 (26A434)
+Release Type:        User
+
+Crash Reporter Key:  6136E474-5595-008D-C792-A20048AA9879
+Incident Identifier: 07D4FAF8-327B-4BFF-9362-4AB12EF44FD5
+
+Sleep/Wake UUID:       F4B9C9DD-94C4-44E8-A7C9-54EC06310E13
+
+Time Awake Since Boot: 140000 seconds
+Time Since Wake:       13679 seconds
+
+System Integrity Protection: enabled
+
+Triggered by Thread: 0  JUCE v9.0.4: Message Thread, Dispatch Queue: com.apple.main-thread
+
+Exception Type:    EXC_BAD_ACCESS (SIGSEGV)
+Exception Subtype: KERN_PROTECTION_FAILURE at 0x000000016a9cfff0
+Exception Message: Could not determine thread index for stack guard region
+Exception Codes:   0x0000000000000002, 0x000000016a9cfff0
+
+Termination Reason:  Namespace SIGNAL, Code 11, Segmentation fault: 11
+Terminating Process: exc handler [37001]
+
+
+VM Region Info: 0x16a9cfff0 is in 0x1671cc000-0x16a9d0000;  bytes after start: 58736624  bytes before end: 15
+      REGION TYPE                    START - END         [ VSIZE] PRT/MAX SHRMOD  REGION DETAIL
+      Malloc Metadata             151600000-151604000    [   16K] rw-/rwx SM=PRV  
+      GAP OF 0x15bc8000 BYTES
+--->  Stack Guard                 1671cc000-16a9d0000    [ 56.0M] ---/rwx SM=PRV  
+      Stack                       16a9d0000-16b1cc000    [ 8176K] rw-/rwx SM=COW  
+
+Thread 0 Crashed:: JUCE v9.0.4: Message Thread Dispatch queue: com.apple.main-thread
+0     Trajet                        	       0x104d495b8 juce::Point<float> juce::detail::ComponentHelpers::convertFromParentSpace<juce::Point<float>>(juce::Component const&, juce::Point<float>) + 4
+1     Trajet                        	       0x104d48588 juce::Point<float> juce::detail::ComponentHelpers::convertCoordinate<juce::Point<float>>(juce::Component const*, juce::Component const*, juce::Point<float>) + 260
+2     Trajet                        	       0x104d28008 juce::MouseEvent::getEventRelativeTo(juce::Component*) const + 64
+3     Trajet                        	       0x104c6cfb8 ScoreView::handleWheel(juce::MouseEvent const&, juce::MouseWheelDetails const&, juce::Component&) + 848
+4     Trajet                        	       0x104d17acc juce::Viewport::mouseWheelMove(juce::MouseEvent const&, juce::MouseWheelDetails const&) + 152
+5     Trajet                        	       0x104c6cfc8 ScoreView::handleWheel(juce::MouseEvent const&, juce::MouseWheelDetails const&, juce::Component&) + 864
+-------- RECURSION LEVEL 24903
+6     Trajet                        	       0x104d17acc juce::Viewport::mouseWheelMove(juce::MouseEvent const&, juce::MouseWheelDetails const&) + 152
+7     Trajet                        	       0x104c6cfc8 ScoreView::handleWheel(juce::MouseEvent const&, juce::MouseWheelDetails const&, juce::Component&) + 864
+-------- RECURSION LEVEL 24902
+8     Trajet                        	       0x104d17acc juce::Viewport::mouseWheelMove(juce::MouseEvent const&, juce::MouseWheelDetails const&) + 152
+9     Trajet                        	       0x104c6cfc8 ScoreView::handleWheel(juce::MouseEvent const&, juce::MouseWheelDetails const&, juce::Component&) + 864
+-------- RECURSION LEVEL 24901
+--------
+-------- ELIDED 24897 LEVELS OF RECURSION THROUGH 0x104c6cfc8 ScoreView::handleWheel(juce::MouseEvent const&, juce::MouseWheelDetails const&, juce::Component&) + 864
+--------
+49804 Trajet                        	       0x104d17acc juce::Viewport::mouseWheelMove(juce::MouseEvent const&, juce::MouseWheelDetails const&) + 152
+49805 Trajet                        	       0x104c6cfc8 ScoreView::handleWheel(juce::MouseEvent const&, juce::MouseWheelDetails const&, juce::Component&) + 864
+-------- RECURSION LEVEL 3
+49806 Trajet                        	       0x104d17acc juce::Viewport::mouseWheelMove(juce::MouseEvent const&, juce::MouseWheelDetails const&) + 152
+49807 Trajet                        	       0x104c6cfc8 ScoreView::handleWheel(juce::MouseEvent const&, juce::MouseWheelDetails const&, juce::Component&) + 864
+-------- RECURSION LEVEL 2
+49808 Trajet                        	       0x104d17acc juce::Viewport::mouseWheelMove(juce::MouseEvent const&, juce::MouseWheelDetails const&) + 152
+49809 Trajet                        	       0x104c6cfc8 ScoreView::handleWheel(juce::MouseEvent const&, juce::MouseWheelDetails const&, juce::Component&) + 864
+-------- RECURSION LEVEL 1
+49810 Trajet                        	       0x104d6334c juce::JuceNSViewClass::JuceNSViewClass()::'lambda3'(objc_object*, objc_selector*, NSEvent*)::__invoke(objc_object*, objc_selector*, NSEvent*) + 1548
+49811 AppKit                        	       0x199adf028 -[NSWindow(NSEventRouting) _reallySendEvent:isDelayedEvent:] + 800
+49812 AppKit                        	       0x199adeb70 -[NSWindow(NSEventRouting) sendEvent:] + 304
+49813 AppKit                        	       0x19a22edac -[NSApplication(NSEventRouting) sendEvent:] + 1296
+49814 AppKit                        	       0x199d54d48 -[NSApplication _handleEvent:] + 60
+49815 AppKit                        	       0x1999ab95c -[NSApplication run] + 476
+49816 Trajet                        	       0x104c3bdf4 main + 236
+49817 dyld                          	       0x194f6be80 start + 6688
+
+Thread 1:: com.apple.NSEventThread
+0   libsystem_kernel.dylib        	       0x1952fcc20 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x19530f8e0 mach_msg2_internal + 76
+2   libsystem_kernel.dylib        	       0x195305a28 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x1952fcfac mach_msg + 24
+4   CoreFoundation                	       0x195402aec __CFRunLoopServiceMachPort + 160
+5   CoreFoundation                	       0x195401334 __CFRunLoopRun + 1172
+6   CoreFoundation                	       0x1954db82c _CFRunLoopRunSpecificWithOptions + 536
+7   AppKit                        	       0x199adc844 _NSEventThread + 184
+8   libsystem_pthread.dylib       	       0x195341d00 _pthread_start + 136
+9   libsystem_pthread.dylib       	       0x19533ccec thread_start + 8
+
+Thread 2:: JUCE v9.0.4: Timer
+0   libsystem_kernel.dylib        	       0x19530050c __psynch_cvwait + 8
+1   libsystem_pthread.dylib       	       0x1953421d0 _pthread_cond_wait + 980
+2   libc++.1.dylib                	       0x195252854 std::__1::condition_variable::__do_timed_wait(std::__1::unique_lock<std::__1::mutex>&, std::__1::chrono::time_point<std::__1::chrono::system_clock, std::__1::chrono::duration<long long, std::__1::ratio<1l, 1000000000l>>>) + 104
+3   Trajet                        	       0x104fc61f0 juce::WaitableEvent::wait(std::__1::chrono::duration<double, std::__1::ratio<1l, 1l>>) const + 192
+4   Trajet                        	       0x104fa04b0 juce::Timer::TimerThread::run() + 224
+5   Trajet                        	       0x104fe2ca4 juce::Thread::createNativeThread(juce::Thread::Priority)::$_0::__invoke(void*) + 676
+6   libsystem_pthread.dylib       	       0x195341d00 _pthread_start + 136
+7   libsystem_pthread.dylib       	       0x19533ccec thread_start + 8
+
+Thread 3:
+0   libsystem_kernel.dylib        	       0x1952fcc20 mach_msg2_trap + 8
+1   libsystem_kernel.dylib        	       0x19530f8e0 mach_msg2_internal + 76
+2   libsystem_kernel.dylib        	       0x195305a28 mach_msg_overwrite + 480
+3   libsystem_kernel.dylib        	       0x1952fcfac mach_msg + 24
+4   CoreMIDI                      	       0x1b6d1d128 XServerMachPort::ReceiveMessage(int&, void*, int&) + 104
+5   CoreMIDI                      	       0x1b6d3edf4 MIDIProcess::MIDIInPortThread::Run() + 148
+6   CoreMIDI                      	       0x1b6d324d4 CADeprecated::XThread::RunHelper(void*) + 40
+7   CoreMIDI                      	       0x1b6d3de14 CADeprecated::CAPThread::Entry(void*) + 96
+8   libsystem_pthread.dylib       	       0x195341d00 _pthread_start + 136
+9   libsystem_pthread.dylib       	       0x19533ccec thread_start + 8
+
+Thread 4:: com.apple.audio.IOThread.client
+0   libsystem_kernel.dylib        	       0x1952fcba8 semaphore_wait_signal_trap + 8
+1   caulk                         	       0x1a229bfc0 caulk::mach::semaphore::wait_signal_or_error(caulk::mach::semaphore&) + 36
+2   CoreAudio                     	       0x198c292d8 HALC_ProxyIOContext::IOWorkLoop() + 4932
+3   CoreAudio                     	       0x1987fdb6c invocation function for block in HALC_ProxyIOContext::HALC_ProxyIOContext(unsigned int, unsigned int) + 172
+4   CoreAudio                     	       0x1989cac74 HALC_IOThread::Entry(void*) + 92
+5   libsystem_pthread.dylib       	       0x195341d00 _pthread_start + 136
+6   libsystem_pthread.dylib       	       0x19533ccec thread_start + 8
+
+Thread 5:
+0   libsystem_kernel.dylib        	       0x195307ef0 __select + 8
+1   Aalto                         	       0x11b8c80c4 ZeroConf::NetServiceThread::poll(_DNSServiceRef_t*, double, int&) + 220
+2   Aalto                         	       0x11b8c8180 ZeroConf::NetServiceThread::run() + 76
+3   Aalto                         	       0x11b8699fc threadEntryPoint(void*) + 28
+4   libsystem_pthread.dylib       	       0x195341d00 _pthread_start + 136
+5   libsystem_pthread.dylib       	       0x19533ccec thread_start + 8
+
+Thread 6:: Juce Timer
+0   libsystem_kernel.dylib        	       0x19530050c __psynch_cvwait + 8
+1   libsystem_pthread.dylib       	       0x1953421d0 _pthread_cond_wait + 980
+2   Aalto                         	       0x11b826ba0 juce::WaitableEvent::wait(int) const + 208
+3   Aalto                         	       0x11b84a1ac juce::Timer::TimerThread::run() + 224
+4   Aalto                         	       0x11b8275b0 juce::Thread::threadEntryPoint() + 184
+5   Aalto                         	       0x11b83a17c threadEntryProc + 32
+6   libsystem_pthread.dylib       	       0x195341d00 _pthread_start + 136
+7   libsystem_pthread.dylib       	       0x19533ccec thread_start + 8
+
+Thread 7:
+
+Thread 8:
+
+Thread 9:: CVDisplayLink
+0   libsystem_kernel.dylib        	       0x19530050c __psynch_cvwait + 8
+1   libsystem_pthread.dylib       	       0x1953421fc _pthread_cond_wait + 1024
+2   CoreVideo                     	       0x1a038eba4 CVDisplayLink::waitUntil(unsigned long long) + 332
+3   CoreVideo                     	       0x1a038dc88 CVDisplayLink::runIOThread() + 452
+4   libsystem_pthread.dylib       	       0x195341d00 _pthread_start + 136
+5   libsystem_pthread.dylib       	       0x19533ccec thread_start + 8
+
+Thread 10:
+
+Thread 11:
+
+Thread 12:
+
+
+Thread 0 crashed with ARM Thread State (64-bit):
+    x0: 0x0000007baa9d3660   x1: 0x0000007baa9d33f8   x2: 0x0000007baa9d3660   x3: 0x0000007baa9d33f8
+    x4: 0x0000000104c7173c   x5: 0x0000000000000000   x6: 0x0000000000000001   x7: 0xffffffffb00007ff
+    x8: 0x0000007baa9d33f8   x9: 0x0000000000000000  x10: 0x0000000000000000  x11: 0x4338000000000000
+   x12: 0x74aa1a2be4b61cf6  x13: 0x0000007baa038bc0  x14: 0x74aa1a2be56d6a76  x15: 0x74aa1a2be56d6a76
+   x16: 0x000000000000a9d9  x17: 0x0000000195164440  x18: 0x0000000000000000  x19: 0x0000007baa9d3660
+   x20: 0x0000007baa9d33f8  x21: 0x000000016a9d01c0  x22: 0x0000000105b62820  x23: 0x00000000085ace0a
+   x24: 0x000000016b1cafb0  x25: 0x0000000105152000  x26: 0x0000000105152000  x27: 0x0000000000000001
+   x28: 0x0000000000000fff   fp: 0x000000016a9d0060   lr: 0x0000000104d48588
+    sp: 0x000000016a9cffc0   pc: 0x0000000104d495b8 cpsr: 0x60000000
+   far: 0x000000016a9cfff0  esr: 0x92000047 (Data Abort) byte write Translation fault
+
+Binary Images:
+       0x104c34000 -        0x105127fff com.trajet.app (0.0.1) <994e5941-04a2-32b9-9b20-c61806f06d42> /Users/USER/Documents/*/Trajet.app/Contents/MacOS/Trajet
+       0x1055bc000 -        0x1055c7fff libobjc-trampolines.dylib (*) <9ef9e491-f3d3-322c-918a-559d3b858d9a> /usr/lib/libobjc-trampolines.dylib
+       0x11b66c000 -        0x11b963fff com.madronalabs.aalto (1.9.5) <068c7812-a641-344a-a369-4a31689abf08> /Library/Audio/Plug-Ins/Components/Aalto.component/Contents/MacOS/Aalto
+       0x19997f000 -        0x19afc150b com.apple.AppKit (6.9) <2688afbc-5c39-3132-bcf5-8d00d32d7615> /System/Library/Frameworks/AppKit.framework/Versions/C/AppKit
+       0x194f3a000 -        0x194ff96e3 dyld (*) <d341ddcb-7969-3a9c-8e03-0cf4751398a9> /usr/lib/dyld
+               0x0 - 0xffffffffffffffff ??? (*) <00000000-0000-0000-0000-000000000000> ???
+       0x195129000 -        0x19517ec5f libsystem_malloc.dylib (*) <2339cb57-fe5a-3154-a206-a76059c749eb> /usr/lib/system/libsystem_malloc.dylib
+       0x1952fc000 -        0x19533a9ab libsystem_kernel.dylib (*) <f63bf418-8f75-34a4-aaf1-8caf2b9b6a05> /usr/lib/system/libsystem_kernel.dylib
+       0x195381000 -        0x195811e9f com.apple.CoreFoundation (6.9) <727e905e-f344-3823-8e13-e7a096388321> /System/Library/Frameworks/CoreFoundation.framework/Versions/A/CoreFoundation
+       0x19533b000 -        0x19534791b libsystem_pthread.dylib (*) <5a1828c3-cbc2-3b85-bd07-c8ed10021a41> /usr/lib/system/libsystem_pthread.dylib
+       0x19524c000 -        0x1952e1033 libc++.1.dylib (*) <1e9ba4aa-b5da-3cf3-80ac-4b880049573f> /usr/lib/libc++.1.dylib
+       0x1b6cd6000 -        0x1b6d9c353 com.apple.audio.midi.CoreMIDI (2.0) <da3e2cf1-d70c-3055-bf59-0f604da694a9> /System/Library/Frameworks/CoreMIDI.framework/Versions/A/CoreMIDI
+       0x1a227c000 -        0x1a22a6053 com.apple.audio.caulk (1.0) <c7ba2b3e-b175-30e9-abf6-4d568d9daa51> /System/Library/PrivateFrameworks/caulk.framework/Versions/A/caulk
+       0x198619000 -        0x198db6633 com.apple.audio.CoreAudio (5.0) <3ab8f076-7437-38aa-9f5b-b083cf020ada> /System/Library/Frameworks/CoreAudio.framework/Versions/A/CoreAudio
+       0x1a038b000 -        0x1a042fbc3 com.apple.CoreVideo (1.8) <2dd9bdac-2339-34e3-b1d4-3c6680f85485> /System/Library/Frameworks/CoreVideo.framework/Versions/A/CoreVideo
+
+External Modification Summary:
+  Calls made by other processes targeting this process:
+    task_for_pid: 0
+    thread_create: 0
+    thread_set_state: 0
+  Calls made by this process:
+    task_for_pid: 0
+    thread_create: 0
+    thread_set_state: 0
+  Calls made by all processes on this machine:
+    task_for_pid: 0
+    thread_create: 0
+    thread_set_state: 0
+
+VM Region Summary:
+ReadOnly portion of Libraries: Total=2.9G resident=0K(0%) swapped_out_or_unallocated=2.9G(100%)
+Writable regions: Total=158.2M written=689K(0%) resident=689K(0%) swapped_out=0K(0%) unallocated=157.5M(100%)
+
+                                VIRTUAL   REGION 
+REGION TYPE                        SIZE    COUNT (non-coalesced) 
+===========                     =======  ======= 
+Accelerate Framework               256K        2 
+Activity Tracing                   256K        1 
+AttributeGraph Data               1024K        1 
+CG Image                           144K        3 
+ColorSync                           48K        3 
+CoreAnimation                      704K       35 
+CoreGraphics                        32K        2 
+CoreUI Image Data                  448K        3 
+Deferred Reclaim                  64.0M        1 
+Foundation                          16K        1 
+Guard                            385.0G        1 
+Malloc                            76.3M       28 
+Malloc Guard Page                 3904K        4 
+OS Alloc Once                       32K        1 
+Stack                             14.4M       13 
+Stack Guard                       56.2M       13 
+Untagged                           432K       15 
+Untagged (reserved)                 32K        1         reserved VM address space (unallocated)
+__AUTH                            6669K      705 
+__AUTH_CONST                      99.7M     1057 
+__CTF                               824        1 
+__DATA                            40.5M     1065 
+__DATA_CONST                      37.3M     1064 
+__DATA_DIRTY                      14.6M      943 
+__FONT_DATA                        2352        1 
+__LINKEDIT                         1.6G        4 
+__OBJC_RO                        118.0M        1 
+__OBJC_RW                         2735K        1 
+__TEXT                             1.4G     1151 
+__TPRO_CONST                       132K        4 
+mapped file                      429.8M       32 
+page table in kernel               689K        1 
+shared memory                     1392K       15 
+===========                     =======  ======= 
+TOTAL                            388.9G     6173 
+TOTAL, minus reserved VM space   388.9G     6173 
+
+
+-----------
+Full Report
+-----------
+
+{"app_name":"Trajet","timestamp":"2026-11-02 12:25:34.00 +0100","app_version":"0.0.1","slice_uuid":"994e5941-04a2-32b9-9b20-c61806f06d42","build_version":"0.0.1","platform":1,"bundleID":"com.trajet.app","share_with_app_devs":1,"is_first_party":0,"bug_type":"309","os_version":"macOS 27.0.1 (26A434)","roots_installed":0,"name":"Trajet","incident_id":"07D4FAF8-327B-4BFF-9362-4AB12EF44FD5"}
+{
+  "uptime" : 140000,
+  "procRole" : "Foreground",
+  "version" : 2,
+  "userID" : 501,
+  "deployVersion" : 210,
+  "modelCode" : "Mac16,12",
+  "coalitionID" : 24960,
+  "osVersion" : {
+    "train" : "macOS 27.0.1",
+    "build" : "26A434",
+    "releaseType" : "User"
+  },
+  "captureTime" : "2026-11-02 12:25:33.8971 +0100",
+  "codeSigningMonitor" : 2,
+  "incident" : "07D4FAF8-327B-4BFF-9362-4AB12EF44FD5",
+  "pid" : 37001,
+  "translated" : false,
+  "cpuType" : "ARM-64",
+  "procLaunch" : "2026-11-02 12:24:46.7387 +0100",
+  "procStartAbsTime" : 3362919200574,
+  "procExitAbsTime" : 3364049478325,
+  "procName" : "Trajet",
+  "procPath" : "\/Users\/USER\/Documents\/*\/Trajet.app\/Contents\/MacOS\/Trajet",
+  "bundleInfo" : {"CFBundleShortVersionString":"0.0.1","CFBundleVersion":"0.0.1","CFBundleIdentifier":"com.trajet.app"},
+  "storeInfo" : {"deviceIdentifierForVendor":"C3C3B9B9-10ED-55E1-99C3-45E68125CA6D","thirdParty":true},
+  "parentProc" : "launchd",
+  "parentPid" : 1,
+  "coalitionName" : "com.trajet.app",
+  "crashReporterKey" : "6136E474-5595-008D-C792-A20048AA9879",
+  "developerMode" : 1,
+  "codeSigningID" : "Trajet",
+  "codeSigningTeamID" : "",
+  "codeSigningFlags" : 570556929,
+  "codeSigningValidationCategory" : 10,
+  "codeSigningTrustLevel" : 4294967295,
+  "codeSigningAuxiliaryInfo" : 0,
+  "instructionByteStream" : {"beforePC":"IACAUgIAABQAAIBS\/XtEqfRPQ6n2V0Kp6SNBbesrxWzAA1\/W\/8MB0Q==","atPC":"6SMDbfZXBKn0TwWp\/XsGqf2DAZEoHKFOCRygTvMDAKoUUED5lAIAtA=="},
+  "bootSessionUUID" : "47D84568-2864-4BEF-A1BB-AC3820F4ACD9",
+  "wakeTime" : 13679,
+  "sleepWakeUUID" : "F4B9C9DD-94C4-44E8-A7C9-54EC06310E13",
+  "sip" : "enabled",
+  "vmRegionInfo" : "0x16a9cfff0 is in 0x1671cc000-0x16a9d0000;  bytes after start: 58736624  bytes before end: 15\n      REGION TYPE                    START - END         [ VSIZE] PRT\/MAX SHRMOD  REGION DETAIL\n      Malloc Metadata             151600000-151604000    [   16K] rw-\/rwx SM=PRV  \n      GAP OF 0x15bc8000 BYTES\n--->  Stack Guard                 1671cc000-16a9d0000    [ 56.0M] ---\/rwx SM=PRV  \n      Stack                       16a9d0000-16b1cc000    [ 8176K] rw-\/rwx SM=COW  ",
+  "exception" : {"codes":"0x0000000000000002, 0x000000016a9cfff0","message":"Could not determine thread index for stack guard region","rawCodes":[2,6083641328],"type":"EXC_BAD_ACCESS","signal":"SIGSEGV","subtype":"KERN_PROTECTION_FAILURE at 0x000000016a9cfff0"},
+  "termination" : {"flags":0,"code":11,"namespace":"SIGNAL","indicator":"Segmentation fault: 11","byProc":"exc handler","byPid":37001},
+  "vmregioninfo" : "0x16a9cfff0 is in 0x1671cc000-0x16a9d0000;  bytes after start: 58736624  bytes before end: 15\n      REGION TYPE                    START - END         [ VSIZE] PRT\/MAX SHRMOD  REGION DETAIL\n      Malloc Metadata             151600000-151604000    [   16K] rw-\/rwx SM=PRV  \n      GAP OF 0x15bc8000 BYTES\n--->  Stack Guard                 1671cc000-16a9d0000    [ 56.0M] ---\/rwx SM=PRV  \n      Stack                       16a9d0000-16b1cc000    [ 8176K] rw-\/rwx SM=COW  ",
+  "extMods" : {"caller":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"system":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"targeted":{"thread_create":0,"thread_set_state":0,"task_for_pid":0},"warnings":0},
+  "faultingThread" : 0,
+  "threads" : [{"queue":"com.apple.main-thread","frames":[{"imageOffset":1136056,"symbol":"juce::Point<float> juce::detail::ComponentHelpers::convertFromParentSpace<juce::Point<float>>(juce::Component const&, juce::Point<float>)","symbolLocation":4,"imageIndex":0},{"imageOffset":1131912,"symbol":"juce::Point<float> juce::detail::ComponentHelpers::convertCoordinate<juce::Point<float>>(juce::Component const*, juce::Component const*, juce::Point<float>)","symbolLocation":260,"imageIndex":0},{"imageOffset":999432,"symbol":"juce::MouseEvent::getEventRelativeTo(juce::Component*) const","symbolLocation":64,"imageIndex":0},{"imageOffset":233400,"symbol":"ScoreView::handleWheel(juce::MouseEvent const&, juce::MouseWheelDetails const&, juce::Component&)","symbolLocation":848,"imageIndex":0},{"imageOffset":932556,"symbol":"juce::Viewport::mouseWheelMove(juce::MouseEvent const&, juce::MouseWheelDetails const&)","symbolLocation":152,"imageIndex":0},{"imageOffset":233416,"symbol":"ScoreView::handleWheel(juce::MouseEvent const&, juce::MouseWheelDetails const&, juce::Component&)","symbolLocation":864,"imageIndex":0},{"imageOffset":932556,"symbol":"juce::Viewport::mouseWheelMove(juce::MouseEvent const&, juce::MouseWheelDetails const&)","symbolLocation":152,"imageIndex":0},{"imageOffset":233416,"symbol":"ScoreView::handleWheel(juce::MouseEvent const&, juce::MouseWheelDetails const&, juce::Component&)","symbolLocation":864,"imageIndex":0},{"imageOffset":932556,"symbol":"juce::Viewport::mouseWheelMove(juce::MouseEvent const&, juce::MouseWheelDetails const&)","symbolLocation":152,"imageIndex":0},{"imageOffset":233416,"symbol":"ScoreView::handleWheel(juce::MouseEvent const&, juce::MouseWheelDetails const&, juce::Component&)","symbolLocation":864,"imageIndex":0},{"imageOffset":932556,"symbol":"juce::Viewport::mouseWheelMove(juce::MouseEvent const&, juce::MouseWheelDetails const&)","symbolLocation":152,"imageIndex":0},{"imageOffset":233416,"symbol":"ScoreView::handleWheel(juce::MouseEvent const&, juce::MouseWheelDetails const&, juce::Component&)","symbolLocation":864,"imageIndex":0},{"imageOffset":932556,"symbol":"juce::Viewport::mouseWheelMove(juce::MouseEvent const&, juce::MouseWheelDetails const&)","symbolLocation":152,"imageIndex":0},{"imageOffset":233416,"symbol":"ScoreView::handleWheel(juce::MouseEvent const&, juce::MouseWheelDetails const&, juce::Component&)","symbolLocation":864,"imageIndex":0},{"imageOffset":932556,"symbol":"juce::Viewport::mouseWheelMove(juce::MouseEvent const&, juce::MouseWheelDetails const&)","symbolLocation":152,"imageIndex":0},{"imageOffset":233416,"symbol":"ScoreView::handleWheel(juce::MouseEvent const&, juce::MouseWheelDetails const&, juce::Component&)","symbolLocation":864,"imageIndex":0},{"imageOffset":1241932,"symbol":"juce::JuceNSViewClass::JuceNSViewClass()::'lambda3'(objc_object*, objc_selector*, NSEvent*)::__invoke(objc_object*, objc_selector*, NSEvent*)","symbolLocation":1548,"imageIndex":0},{"imageOffset":1441832,"symbol":"-[NSWindow(NSEventRouting) _reallySendEvent:isDelayedEvent:]","symbolLocation":800,"imageIndex":3},{"imageOffset":1440624,"symbol":"-[NSWindow(NSEventRouting) sendEvent:]","symbolLocation":304,"imageIndex":3},{"imageOffset":9108908,"symbol":"-[NSApplication(NSEventRouting) sendEvent:]","symbolLocation":1296,"imageIndex":3},{"imageOffset":4021576,"symbol":"-[NSApplication _handleEvent:]","symbolLocation":60,"imageIndex":3},{"imageOffset":182620,"symbol":"-[NSApplication run]","symbolLocation":476,"imageIndex":3},{"imageOffset":32244,"symbol":"main","symbolLocation":236,"imageIndex":0},{"imageOffset":204416,"symbol":"start","symbolLocation":6688,"imageIndex":4}],"id":2430893,"recursionInfoArray":[{"hottestElided":10,"coldestElided":49803,"depth":24903,"keyFrame":{"imageOffset":233416,"symbol":"ScoreView::handleWheel(juce::MouseEvent const&, juce::MouseWheelDetails const&, juce::Component&)","symbolLocation":864,"imageIndex":0}}],"originalLength":49819,"triggered":true,"threadState":{"x":[{"value":531143407200},{"value":531143406584},{"value":531143407200},{"value":531143406584},{"value":4375123772,"symbolLocation":0,"symbol":"std::__1::__function::__func<ScoreView::ScoreView(Project&, PluginHost&, AutomationController&, SnapSettings&)::$_1, void (juce::MouseEvent const&, juce::MouseWheelDetails const&, juce::Component&)>::operator()(juce::MouseEvent const&, juce::MouseWheelDetails const&, juce::Component&)"},{"value":0},{"value":1},{"value":18446744072367376383},{"value":531143406584},{"value":0},{"value":0},{"value":4843621399236968448},{"value":8406560430263508214},{"value":531133336512},{"value":8406560430275521142},{"value":8406560430275521142},{"value":43481},{"value":6796231744,"symbolLocation":0,"symbol":"xzm_malloc_zone_try_free_default_tc"},{"value":0},{"value":531143407200},{"value":531143406584},{"value":6083641792},{"value":4390791200},{"value":140168714},{"value":6092009392},{"value":4380237824,"symbolLocation":0,"symbol":"_hb_Null_hb_face_t"},{"value":4380237824,"symbolLocation":0,"symbol":"_hb_Null_hb_face_t"},{"value":1},{"value":4095}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4376003976},"cpsr":{"value":1610612736},"fp":{"value":6083641440},"sp":{"value":6083641280},"esr":{"value":2449473607,"description":"(Data Abort) byte write Translation fault"},"pc":{"value":4376008120,"matchesCrashFrame":1},"far":{"value":6083641328}},"name":"JUCE v9.0.4: Message Thread"},{"id":2430923,"name":"com.apple.NSEventThread","threadState":{"x":[{"value":268451845},{"value":21592279046},{"value":8589934592,"symbolLocation":144,"symbol":"vtable for WebCore::MessagePort"},{"value":98968931401728},{"value":0},{"value":98968931401728},{"value":2},{"value":4294967295},{"value":0},{"value":17179869184},{"value":0},{"value":2},{"value":0},{"value":0},{"value":23043},{"value":0},{"value":18446744073709551569},{"value":8533998616},{"value":0},{"value":4294967295},{"value":2},{"value":98968931401728},{"value":0},{"value":98968931401728},{"value":21592279046},{"value":6094282904},{"value":8589934592,"symbolLocation":144,"symbol":"vtable for WebCore::MessagePort"},{"value":18446744073709550527},{"value":4412409862}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6797981920},"cpsr":{"value":0},"fp":{"value":6094282752},"sp":{"value":6094282672},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6797904928},"far":{"value":0}},"frames":[{"imageOffset":3104,"symbol":"mach_msg2_trap","symbolLocation":8,"imageIndex":7},{"imageOffset":80096,"symbol":"mach_msg2_internal","symbolLocation":76,"imageIndex":7},{"imageOffset":39464,"symbol":"mach_msg_overwrite","symbolLocation":480,"imageIndex":7},{"imageOffset":4012,"symbol":"mach_msg","symbolLocation":24,"imageIndex":7},{"imageOffset":531180,"symbol":"__CFRunLoopServiceMachPort","symbolLocation":160,"imageIndex":8},{"imageOffset":525108,"symbol":"__CFRunLoopRun","symbolLocation":1172,"imageIndex":8},{"imageOffset":1419308,"symbol":"_CFRunLoopRunSpecificWithOptions","symbolLocation":536,"imageIndex":8},{"imageOffset":1431620,"symbol":"_NSEventThread","symbolLocation":184,"imageIndex":3},{"imageOffset":27904,"symbol":"_pthread_start","symbolLocation":136,"imageIndex":9},{"imageOffset":7404,"symbol":"thread_start","symbolLocation":8,"imageIndex":9}]},{"id":2430933,"name":"JUCE v9.0.4: Timer","threadState":{"x":[{"value":260},{"value":0},{"value":338688},{"value":0},{"value":0},{"value":160},{"value":0},{"value":32999875},{"value":6094859768},{"value":0},{"value":0},{"value":2},{"value":2},{"value":0},{"value":0},{"value":0},{"value":305},{"value":8533996752},{"value":0},{"value":531141981992},{"value":531141982056},{"value":6094860512},{"value":32999875},{"value":0},{"value":338688},{"value":601600},{"value":601345},{"value":100},{"value":4}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6798189008},"cpsr":{"value":1610612736},"fp":{"value":6094859888},"sp":{"value":6094859744},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6797919500},"far":{"value":0}},"frames":[{"imageOffset":17676,"symbol":"__psynch_cvwait","symbolLocation":8,"imageIndex":7},{"imageOffset":29136,"symbol":"_pthread_cond_wait","symbolLocation":980,"imageIndex":9},{"imageOffset":26708,"symbol":"std::__1::condition_variable::__do_timed_wait(std::__1::unique_lock<std::__1::mutex>&, std::__1::chrono::time_point<std::__1::chrono::system_clock, std::__1::chrono::duration<long long, std::__1::ratio<1l, 1000000000l>>>)","symbolLocation":104,"imageIndex":10},{"imageOffset":3744240,"symbol":"juce::WaitableEvent::wait(std::__1::chrono::duration<double, std::__1::ratio<1l, 1l>>) const","symbolLocation":192,"imageIndex":0},{"imageOffset":3589296,"symbol":"juce::Timer::TimerThread::run()","symbolLocation":224,"imageIndex":0},{"imageOffset":3861668,"symbol":"juce::Thread::createNativeThread(juce::Thread::Priority)::$_0::__invoke(void*)","symbolLocation":676,"imageIndex":0},{"imageOffset":27904,"symbol":"_pthread_start","symbolLocation":136,"imageIndex":9},{"imageOffset":7404,"symbol":"thread_start","symbolLocation":8,"imageIndex":9}]},{"id":2430943,"frames":[{"imageOffset":3104,"symbol":"mach_msg2_trap","symbolLocation":8,"imageIndex":7},{"imageOffset":80096,"symbol":"mach_msg2_internal","symbolLocation":76,"imageIndex":7},{"imageOffset":39464,"symbol":"mach_msg_overwrite","symbolLocation":480,"imageIndex":7},{"imageOffset":4012,"symbol":"mach_msg","symbolLocation":24,"imageIndex":7},{"imageOffset":291112,"symbol":"XServerMachPort::ReceiveMessage(int&, void*, int&)","symbolLocation":104,"imageIndex":11},{"imageOffset":429556,"symbol":"MIDIProcess::MIDIInPortThread::Run()","symbolLocation":148,"imageIndex":11},{"imageOffset":378068,"symbol":"CADeprecated::XThread::RunHelper(void*)","symbolLocation":40,"imageIndex":11},{"imageOffset":425492,"symbol":"CADeprecated::CAPThread::Entry(void*)","symbolLocation":96,"imageIndex":11},{"imageOffset":27904,"symbol":"_pthread_start","symbolLocation":136,"imageIndex":9},{"imageOffset":7404,"symbol":"thread_start","symbolLocation":8,"imageIndex":9}],"threadState":{"x":[{"value":268451845},{"value":17179869186},{"value":0},{"value":168238163951616},{"value":0},{"value":168238163951616},{"value":100},{"value":0},{"value":0},{"value":17179869184},{"value":100},{"value":0},{"value":0},{"value":0},{"value":39171},{"value":0},{"value":18446744073709551569},{"value":8533998616},{"value":0},{"value":0},{"value":100},{"value":168238163951616},{"value":0},{"value":168238163951616},{"value":17179869186},{"value":6096005588},{"value":0},{"value":18446744073709550527},{"value":2}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6797981920},"cpsr":{"value":0},"fp":{"value":6096005248},"sp":{"value":6096005168},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6797904928},"far":{"value":0}}},{"id":2430987,"name":"com.apple.audio.IOThread.client","threadState":{"x":[{"value":14},{"value":89347},{"value":0},{"value":0},{"value":0},{"value":4384981000},{"value":531150579488},{"value":0},{"value":1},{"value":1099511628034},{"value":1099511628032},{"value":1099511628034},{"value":531143231616},{"value":2},{"value":2},{"value":2},{"value":18446744073709551579},{"value":8534001096},{"value":0},{"value":531155442488},{"value":531155442480},{"value":1},{"value":128},{"value":531156846984},{"value":1},{"value":0},{"value":531155442608},{"value":1},{"value":6097153600}],"flavor":"ARM_THREAD_STATE64","lr":{"value":7015612352},"cpsr":{"value":1610612736},"fp":{"value":6097153296},"sp":{"value":6097153280},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6797904808},"far":{"value":0}},"frames":[{"imageOffset":2984,"symbol":"semaphore_wait_signal_trap","symbolLocation":8,"imageIndex":7},{"imageOffset":131008,"symbol":"caulk::mach::semaphore::wait_signal_or_error(caulk::mach::semaphore&)","symbolLocation":36,"imageIndex":12},{"imageOffset":6357720,"symbol":"HALC_ProxyIOContext::IOWorkLoop()","symbolLocation":4932,"imageIndex":13},{"imageOffset":1985388,"symbol":"invocation function for block in HALC_ProxyIOContext::HALC_ProxyIOContext(unsigned int, unsigned int)","symbolLocation":172,"imageIndex":13},{"imageOffset":3873908,"symbol":"HALC_IOThread::Entry(void*)","symbolLocation":92,"imageIndex":13},{"imageOffset":27904,"symbol":"_pthread_start","symbolLocation":136,"imageIndex":9},{"imageOffset":7404,"symbol":"thread_start","symbolLocation":8,"imageIndex":9}]},{"id":2431018,"frames":[{"imageOffset":48880,"symbol":"__select","symbolLocation":8,"imageIndex":7},{"imageOffset":2474180,"symbol":"ZeroConf::NetServiceThread::poll(_DNSServiceRef_t*, double, int&)","symbolLocation":220,"imageIndex":2},{"imageOffset":2474368,"symbol":"ZeroConf::NetServiceThread::run()","symbolLocation":76,"imageIndex":2},{"imageOffset":2087420,"symbol":"threadEntryPoint(void*)","symbolLocation":28,"imageIndex":2},{"imageOffset":27904,"symbol":"_pthread_start","symbolLocation":136,"imageIndex":9},{"imageOffset":7404,"symbol":"thread_start","symbolLocation":8,"imageIndex":9}],"threadState":{"x":[{"value":4},{"value":0},{"value":0},{"value":0},{"value":6101167776},{"value":419432703},{"value":0},{"value":0},{"value":0},{"value":16},{"value":6101167792},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":93},{"value":8533996968},{"value":0},{"value":6101168012},{"value":531164877344},{"value":4},{"value":5},{"value":6798001056,"symbolLocation":0,"symbol":"__darwin_check_fd_set_overflow"},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":4757160132},"cpsr":{"value":2684354560},"fp":{"value":6101167984},"sp":{"value":6101167776},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6797950704},"far":{"value":0}}},{"id":2431021,"name":"Juce Timer","threadState":{"x":[{"value":260},{"value":0},{"value":0},{"value":0},{"value":0},{"value":161},{"value":0},{"value":15999000},{"value":6101741112},{"value":0},{"value":0},{"value":2},{"value":2},{"value":0},{"value":0},{"value":0},{"value":305},{"value":8533996752},{"value":0},{"value":531156053256},{"value":531156053208},{"value":6101741792},{"value":15999000},{"value":0},{"value":0},{"value":709632},{"value":709377},{"value":4294967295},{"value":100}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6798189008},"cpsr":{"value":1610612736},"fp":{"value":6101741232},"sp":{"value":6101741088},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6797919500},"far":{"value":0}},"frames":[{"imageOffset":17676,"symbol":"__psynch_cvwait","symbolLocation":8,"imageIndex":7},{"imageOffset":29136,"symbol":"_pthread_cond_wait","symbolLocation":980,"imageIndex":9},{"imageOffset":1813408,"symbol":"juce::WaitableEvent::wait(int) const","symbolLocation":208,"imageIndex":2},{"imageOffset":1958316,"symbol":"juce::Timer::TimerThread::run()","symbolLocation":224,"imageIndex":2},{"imageOffset":1815984,"symbol":"juce::Thread::threadEntryPoint()","symbolLocation":184,"imageIndex":2},{"imageOffset":1892732,"symbol":"threadEntryProc","symbolLocation":32,"imageIndex":2},{"imageOffset":27904,"symbol":"_pthread_start","symbolLocation":136,"imageIndex":9},{"imageOffset":7404,"symbol":"thread_start","symbolLocation":8,"imageIndex":9}]},{"id":2431186,"frames":[],"threadState":{"x":[{"value":6093713408},{"value":132387},{"value":6093176832},{"value":0},{"value":409604},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":0},"fp":{"value":0},"sp":{"value":6093713408},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6798167256},"far":{"value":0}}},{"id":2431188,"frames":[],"threadState":{"x":[{"value":6097727488},{"value":20251},{"value":6097190912},{"value":0},{"value":409604},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":0},"fp":{"value":0},"sp":{"value":6097727488},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6798167256},"far":{"value":0}}},{"id":2431433,"name":"CVDisplayLink","threadState":{"x":[{"value":316},{"value":0},{"value":0},{"value":0},{"value":0},{"value":65704},{"value":0},{"value":15634208},{"value":460545},{"value":0},{"value":0},{"value":2},{"value":2},{"value":0},{"value":0},{"value":0},{"value":305},{"value":8533996752},{"value":0},{"value":531155444792},{"value":531155444856},{"value":1},{"value":15634208},{"value":0},{"value":0},{"value":460800},{"value":460545},{"value":6096580212},{"value":3364049238281}],"flavor":"ARM_THREAD_STATE64","lr":{"value":6798189052},"cpsr":{"value":2684354560},"fp":{"value":6096580016},"sp":{"value":6096579872},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6797919500},"far":{"value":0}},"frames":[{"imageOffset":17676,"symbol":"__psynch_cvwait","symbolLocation":8,"imageIndex":7},{"imageOffset":29180,"symbol":"_pthread_cond_wait","symbolLocation":1024,"imageIndex":9},{"imageOffset":15268,"symbol":"CVDisplayLink::waitUntil(unsigned long long)","symbolLocation":332,"imageIndex":14},{"imageOffset":11400,"symbol":"CVDisplayLink::runIOThread()","symbolLocation":452,"imageIndex":14},{"imageOffset":27904,"symbol":"_pthread_start","symbolLocation":136,"imageIndex":9},{"imageOffset":7404,"symbol":"thread_start","symbolLocation":8,"imageIndex":9}]},{"id":2431683,"frames":[],"threadState":{"x":[{"value":6092566528},{"value":115843},{"value":6092029952},{"value":0},{"value":409604},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":0},"fp":{"value":0},"sp":{"value":6092566528},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6798167256},"far":{"value":0}}},{"id":2431684,"frames":[],"threadState":{"x":[{"value":6098300928},{"value":126723},{"value":6097764352},{"value":0},{"value":409604},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":0},"fp":{"value":0},"sp":{"value":6098300928},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6798167256},"far":{"value":0}}},{"id":2431685,"frames":[],"threadState":{"x":[{"value":6098874368},{"value":133119},{"value":6098337792},{"value":0},{"value":409604},{"value":18446744073709551615},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0},{"value":0}],"flavor":"ARM_THREAD_STATE64","lr":{"value":0},"cpsr":{"value":0},"fp":{"value":0},"sp":{"value":6098874368},"esr":{"value":1442840704,"description":"(Syscall)"},"pc":{"value":6798167256},"far":{"value":0}}}],
+  "usedImages" : [
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4374872064,
+    "CFBundleShortVersionString" : "0.0.1",
+    "CFBundleIdentifier" : "com.trajet.app",
+    "size" : 5193728,
+    "uuid" : "994e5941-04a2-32b9-9b20-c61806f06d42",
+    "path" : "\/Users\/USER\/Documents\/*\/Trajet.app\/Contents\/MacOS\/Trajet",
+    "name" : "Trajet",
+    "CFBundleVersion" : "0.0.1"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 4384866304,
+    "size" : 49152,
+    "uuid" : "9ef9e491-f3d3-322c-918a-559d3b858d9a",
+    "path" : "\/usr\/lib\/libobjc-trampolines.dylib",
+    "name" : "libobjc-trampolines.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64",
+    "base" : 4754685952,
+    "CFBundleShortVersionString" : "1.9.5",
+    "CFBundleIdentifier" : "com.madronalabs.aalto",
+    "size" : 3112960,
+    "uuid" : "068c7812-a641-344a-a369-4a31689abf08",
+    "path" : "\/Library\/Audio\/Plug-Ins\/Components\/Aalto.component\/Contents\/MacOS\/Aalto",
+    "name" : "Aalto",
+    "CFBundleVersion" : "1.9.5"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6871838720,
+    "CFBundleShortVersionString" : "6.9",
+    "CFBundleIdentifier" : "com.apple.AppKit",
+    "size" : 23340300,
+    "uuid" : "2688afbc-5c39-3132-bcf5-8d00d32d7615",
+    "path" : "\/System\/Library\/Frameworks\/AppKit.framework\/Versions\/C\/AppKit",
+    "name" : "AppKit",
+    "CFBundleVersion" : "2775.10.103.1"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6793961472,
+    "size" : 784100,
+    "uuid" : "d341ddcb-7969-3a9c-8e03-0cf4751398a9",
+    "path" : "\/usr\/lib\/dyld",
+    "name" : "dyld"
+  },
+  {
+    "size" : 0,
+    "source" : "A",
+    "base" : 0,
+    "uuid" : "00000000-0000-0000-0000-000000000000"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6795988992,
+    "size" : 351328,
+    "uuid" : "2339cb57-fe5a-3154-a206-a76059c749eb",
+    "path" : "\/usr\/lib\/system\/libsystem_malloc.dylib",
+    "name" : "libsystem_malloc.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6797901824,
+    "size" : 256428,
+    "uuid" : "f63bf418-8f75-34a4-aaf1-8caf2b9b6a05",
+    "path" : "\/usr\/lib\/system\/libsystem_kernel.dylib",
+    "name" : "libsystem_kernel.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6798446592,
+    "CFBundleShortVersionString" : "6.9",
+    "CFBundleIdentifier" : "com.apple.CoreFoundation",
+    "size" : 4787872,
+    "uuid" : "727e905e-f344-3823-8e13-e7a096388321",
+    "path" : "\/System\/Library\/Frameworks\/CoreFoundation.framework\/Versions\/A\/CoreFoundation",
+    "name" : "CoreFoundation",
+    "CFBundleVersion" : "5027.0.69"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6798159872,
+    "size" : 51484,
+    "uuid" : "5a1828c3-cbc2-3b85-bd07-c8ed10021a41",
+    "path" : "\/usr\/lib\/system\/libsystem_pthread.dylib",
+    "name" : "libsystem_pthread.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6797180928,
+    "size" : 610356,
+    "uuid" : "1e9ba4aa-b5da-3cf3-80ac-4b880049573f",
+    "path" : "\/usr\/lib\/libc++.1.dylib",
+    "name" : "libc++.1.dylib"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 7361880064,
+    "CFBundleShortVersionString" : "2.0",
+    "CFBundleIdentifier" : "com.apple.audio.midi.CoreMIDI",
+    "size" : 811860,
+    "uuid" : "da3e2cf1-d70c-3055-bf59-0f604da694a9",
+    "path" : "\/System\/Library\/Frameworks\/CoreMIDI.framework\/Versions\/A\/CoreMIDI",
+    "name" : "CoreMIDI",
+    "CFBundleVersion" : "88"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 7015481344,
+    "CFBundleShortVersionString" : "1.0",
+    "CFBundleIdentifier" : "com.apple.audio.caulk",
+    "size" : 172116,
+    "uuid" : "c7ba2b3e-b175-30e9-abf6-4d568d9daa51",
+    "path" : "\/System\/Library\/PrivateFrameworks\/caulk.framework\/Versions\/A\/caulk",
+    "name" : "caulk"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6851497984,
+    "CFBundleShortVersionString" : "5.0",
+    "CFBundleIdentifier" : "com.apple.audio.CoreAudio",
+    "size" : 7984692,
+    "uuid" : "3ab8f076-7437-38aa-9f5b-b083cf020ada",
+    "path" : "\/System\/Library\/Frameworks\/CoreAudio.framework\/Versions\/A\/CoreAudio",
+    "name" : "CoreAudio",
+    "CFBundleVersion" : "5.0"
+  },
+  {
+    "source" : "P",
+    "arch" : "arm64e",
+    "base" : 6983036928,
+    "CFBundleShortVersionString" : "1.8",
+    "CFBundleIdentifier" : "com.apple.CoreVideo",
+    "size" : 674756,
+    "uuid" : "2dd9bdac-2339-34e3-b1d4-3c6680f85485",
+    "path" : "\/System\/Library\/Frameworks\/CoreVideo.framework\/Versions\/A\/CoreVideo",
+    "name" : "CoreVideo",
+    "CFBundleVersion" : "758.27"
+  }
+],
+  "sharedCache" : {
+  "base" : 6789218304,
+  "size" : 7410368512,
+  "uuid" : "c284a291-b68b-3d0d-a1a0-3f866f87efdc"
+},
+  "vmSummary" : "ReadOnly portion of Libraries: Total=2.9G resident=0K(0%) swapped_out_or_unallocated=2.9G(100%)\nWritable regions: Total=158.2M written=689K(0%) resident=689K(0%) swapped_out=0K(0%) unallocated=157.5M(100%)\n\n                                VIRTUAL   REGION \nREGION TYPE                        SIZE    COUNT (non-coalesced) \n===========                     =======  ======= \nAccelerate Framework               256K        2 \nActivity Tracing                   256K        1 \nAttributeGraph Data               1024K        1 \nCG Image                           144K        3 \nColorSync                           48K        3 \nCoreAnimation                      704K       35 \nCoreGraphics                        32K        2 \nCoreUI Image Data                  448K        3 \nDeferred Reclaim                  64.0M        1 \nFoundation                          16K        1 \nGuard                            385.0G        1 \nMalloc                            76.3M       28 \nMalloc Guard Page                 3904K        4 \nOS Alloc Once                       32K        1 \nStack                             14.4M       13 \nStack Guard                       56.2M       13 \nUntagged                           432K       15 \nUntagged (reserved)                 32K        1         reserved VM address space (unallocated)\n__AUTH                            6669K      705 \n__AUTH_CONST                      99.7M     1057 \n__CTF                               824        1 \n__DATA                            40.5M     1065 \n__DATA_CONST                      37.3M     1064 \n__DATA_DIRTY                      14.6M      943 \n__FONT_DATA                        2352        1 \n__LINKEDIT                         1.6G        4 \n__OBJC_RO                        118.0M        1 \n__OBJC_RW                         2735K        1 \n__TEXT                             1.4G     1151 \n__TPRO_CONST                       132K        4 \nmapped file                      429.8M       32 \npage table in kernel               689K        1 \nshared memory                     1392K       15 \n===========                     =======  ======= \nTOTAL                            388.9G     6173 \nTOTAL, minus reserved VM space   388.9G     6173 \n",
+  "legacyInfo" : {
+  "threadTriggered" : {
+    "name" : "JUCE v9.0.4: Message Thread",
+    "queue" : "com.apple.main-thread"
+  }
+},
+  "logWritingSignature" : "e6543123b9b6d4d87c49db850f3c15638316715d",
+  "bug_type" : "309",
+  "roots_installed" : 0,
+  "trmStatus" : 1,
+  "trialInfo" : {
+  "rollouts" : [
+    {
+      "rolloutId" : "661464ecda55e5192b100804",
+      "factorPackIds" : [
+
+      ],
+      "deploymentId" : 240000005
+    },
+    {
+      "rolloutId" : "695fd05d8ca5554688521e5e",
+      "factorPackIds" : [
+        "695fd08781fcd20ded79c1d3",
+        "695fd0d28ca5554688521e5f",
+        "695fd09c8774dc09015a80e9",
+        "695fd0b18774dc09015a80ea"
+      ],
+      "deploymentId" : 3
+    }
+  ],
+  "experiments" : [
+
+  ]
+}
+}
+
+Model: Mac16,12, BootROM 20457.1.29, proc 10:0:4:6 processors, 24 GB, SMC 
+Graphics: Apple M4, Apple M4, Built-In
+Display: Color LCD, 2560 x 1664 Retina, Main, MirrorOff, Online
+Memory Module: LPDDR5, Hynix
+AirPort: spairport_wireless_card_type_wifi (0x14E4, 0x4388), wl0: Jul  2 2026 00:44:50 version 23.10.1039.0.41.51.239 FWID 01-974167da
+IO80211_driverkit-1585.80 "IO80211_driverkit-1585.80" Sep 18 2026 22:02:52
+AirPort: 
+Bluetooth: Version (null), 0 services, 0 devices, 0 incoming serial ports
+Network Service: Wi-Fi, AirPort, en0
+Thunderbolt Bus: MacBook Air, Apple Inc.
+Thunderbolt Bus: MacBook Air, Apple Inc.
