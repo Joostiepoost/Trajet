@@ -56,6 +56,16 @@ public:
     /** True if this parameter currently has a lane (safe from any thread). */
     bool isParameterAutomated (int index) const noexcept;
 
+    /** Offline rendering: tells the plugin it is not running in real time. */
+    void setNonRealtime (bool isNonRealtime) noexcept override
+    {
+        AudioProcessor::setNonRealtime (isNonRealtime);
+        if (plugin != nullptr) plugin->setNonRealtime (isNonRealtime);
+    }
+
+    /** Clears the plugin's sound (delay lines, envelopes) without touching its patch. */
+    void resetPlugin()                              { if (plugin != nullptr) plugin->reset(); }
+
     /** Frees snapshots the audio thread no longer uses (call regularly). */
     void collectGarbage();
 

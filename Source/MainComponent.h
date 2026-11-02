@@ -14,6 +14,7 @@
 #include "UI/Inspector.h"
 #include "UI/ItemEditor.h"
 #include "UI/TransportBar.h"
+#include "UI/RenderDialog.h"
 
 class MainComponent : public juce::Component,
                       public juce::ApplicationCommandTarget,
@@ -42,7 +43,8 @@ public:
         cmdZoomIn, cmdZoomOut, cmdZoomFit,
         cmdNudgeLeft, cmdNudgeRight, cmdNudgeUp, cmdNudgeDown,
         cmdNudgeLeftBig, cmdNudgeRightBig, cmdNudgeUpBig, cmdNudgeDownBig,
-        cmdSelectAll, cmdSmooth, cmdThin, cmdReverse, cmdInvert, cmdOpenItemEditor
+        cmdSelectAll, cmdSmooth, cmdThin, cmdReverse, cmdInvert, cmdOpenItemEditor,
+        cmdRender, cmdExportCsv
     };
 
     juce::ApplicationCommandTarget* getNextCommandTarget() override   { return nullptr; }
@@ -78,6 +80,8 @@ private:
     void showParameterPicker (juce::Component& button);
     void showStatus (const juce::String& text);
     void openItemEditor (juce::ValueTree item);
+    void showRenderDialog (bool csvOnly);
+    juce::File defaultExportFile (const juce::String& extension) const;
 
     PluginHost host;
     Project project { host };
@@ -102,6 +106,8 @@ private:
     std::unique_ptr<PluginWindow> pluginWindow;
     std::unique_ptr<juce::DocumentWindow> scannerWindow;
     std::unique_ptr<ItemEditorWindow> itemEditorWindow;
+    std::unique_ptr<juce::FileChooser> exportChooser;
+    juce::File lastExportFolder;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (MainComponent)
 };

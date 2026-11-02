@@ -171,6 +171,25 @@ bool PluginHost::deviceIsRunning() const
     return device != nullptr && device->isPlaying();
 }
 
+void PluginHost::beginOfflineRender()
+{
+    if (rendering) return;
+    rendering = true;
+    soundingNote = -1;              // the render itself silences the note
+    player.setProcessor (nullptr);  // the device now plays silence
+}
+
+void PluginHost::endOfflineRender()
+{
+    if (! rendering) return;
+    rendering = false;
+    engine.resetPlugin();
+    if (plugin != nullptr)
+        player.setProcessor (&engine);
+    if (heldNoteOn)
+        sendNoteOn();
+}
+
 void PluginHost::sendNoteOn()
 {
     if (plugin == nullptr || ! deviceIsRunning())

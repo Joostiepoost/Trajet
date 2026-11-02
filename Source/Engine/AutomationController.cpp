@@ -119,26 +119,8 @@ void AutomationController::rebuild()
         // A muted lane (or one left out by solo) plays its patch value.
         const bool silent = (bool) laneTree[IDs::mute] || (anySolo && ! (bool) laneTree[IDs::solo]);
 
-        for (const auto& itemTree : laneTree)
-        {
-            if (silent || ! itemTree.hasType (IDs::ITEM))
-                continue;
-
-            ItemTime time (itemTree);
-            Automation::Item item;
-            item.start = itemTree[IDs::start];
-            item.end = item.start + (double) itemTree[IDs::length];
-            item.musical = time.isMusical();
-            item.tempo = time.tempo;
-            item.localEnd = time.localLength();
-            item.points = Project::getPoints (itemTree);   // already in the item's own units
-            item.generator = ItemTime::readGenerator (itemTree);
-
-            lane.items.push_back (std::move (item));
-        }
-
-        std::sort (lane.items.begin(), lane.items.end(),
-                   [] (const auto& a, const auto& b) { return a.start < b.start; });
+        if (! silent)
+            buildItems (laneTree, lane);
 
         snapshot->lanes.push_back (std::move (lane));
     }
@@ -159,6 +141,41 @@ void AutomationController::rebuild()
     }
 
     engine.setSnapshot (snapshot);
+}
+
+void AutomationController::buildItems (const juce::ValueTree& laneTree, Automation::Lane& lane)
+{
+    for (const auto& itemTree : laneTree)
+    {
+        if (! itemTree.hasType (IDs::ITEM))
+            continue;
+
+        ItemTime time (itemTree);
+        Automation::Item item;
+        item.start = itemTree[IDs::start];
+        item.end = item.start + (double) itemTree[IDs::length];
+        item.musical = time.isMusical();
+        item.tempo = time.tempo;
+        item.localEnd = time.localLength();
+        item.points = Project::getPoints (itemTree);   // already in the item's own units
+        item.generator = ItemTime::readGenerator (itemTree);
+
+        lane.items.push_back (std::move (item));
+    }
+
+    std::sort (lane.items.begin(), lane.items.end(),
+               [] (const auto& a, const auto& b) { return a.start < b.start; });
+}
+
+float AutomationController::getBaseValue (int paramIndex) const
+{
+    auto it = baseValues.find (paramIndex);
+    if (it != baseValues.end() && ! isPatchMode())
+        return it->second;
+    if (auto* plugin = host.getPlugin())
+        if (auto* param = plugin->getParameters()[paramIndex])
+            return param->getValue();
+    return 0.0f;
 }
 
 void AutomationController::captureBaseValues()

@@ -41,6 +41,15 @@ public:
     /** Resolves a lane to the plugin's parameter index (by index, checked by name). */
     int resolveParameterIndex (const juce::ValueTree& lane) const;
 
+    /** Sends the latest automation to the engine right away (before a render). */
+    void rebuildNow()                   { rebuild(); }
+
+    /** The patch value of a parameter (what it plays before the first item). */
+    float getBaseValue (int paramIndex) const;
+
+    /** Fills a lane with the items of a LANE tree, in time order. */
+    static void buildItems (const juce::ValueTree& laneTree, Automation::Lane&);
+
 private:
     void rebuild();
     void restoreBaseValues();

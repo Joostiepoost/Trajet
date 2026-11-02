@@ -53,6 +53,14 @@ public:
     void setAudioEnabled (bool shouldBeEnabled);
     bool isAudioEnabled() const noexcept    { return audioEnabled; }
 
+    /** Offline rendering: detaches the engine from the audio device so another thread
+        can drive it, and gives it back afterwards. Message thread only. */
+    void beginOfflineRender();
+    void endOfflineRender();
+    bool isRendering() const noexcept       { return rendering; }
+    int getHeldNoteNumber() const noexcept  { return heldNote; }
+    int getHeldVelocity() const noexcept    { return heldVelocity; }
+
     /** True once if the plugin's patch changed since the last call (you turned a dial,
         picked a preset...). Used to mark the project as unsaved. */
     bool consumePatchChangedFlag() noexcept  { return patchChanged.exchange (false); }
@@ -84,7 +92,7 @@ private:
     juce::AudioProcessorPlayer player;
     std::unique_ptr<juce::AudioPluginInstance> plugin;
 
-    bool audioEnabled = true;
+    bool audioEnabled = true, rendering = false;
     std::atomic<bool> patchChanged { false };
     bool heldNoteOn = false;
     int heldNote = 48, heldVelocity = 100, soundingNote = -1;
