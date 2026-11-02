@@ -109,6 +109,8 @@ public:
 
 private:
     void applyAutomation (double seconds);
+    void playNotes (juce::int64 pos, int len, bool isPlaying);
+    void releaseAllNotes (int sampleOffset);
 
     juce::AudioPluginInstance* plugin = nullptr;
     juce::Array<juce::AudioProcessorParameter*> params;
@@ -131,6 +133,10 @@ private:
     std::atomic<int> limiterLatency { 0 };
     bool limiterWasOn = false;
     Limiter limiter;
+
+    // Notes of the note lanes that are sounding: until when (in samples), -1 = silent.
+    std::array<juce::int64, 128> noteEnds;
+    juce::int64 expectedNotePos = -1;
 
     juce::AudioBuffer<float> pluginBuffer;
     juce::MidiBuffer chunkMidi;

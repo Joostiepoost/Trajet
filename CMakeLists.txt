@@ -58,6 +58,7 @@ target_sources(Trajet PRIVATE
     Source/UI/GeneratorPanel.cpp
     Source/UI/RenderDialog.cpp
     Source/UI/OutputStrip.cpp
+    Source/UI/NoteEditor.cpp
     Source/Render/Renderer.cpp
     Source/Model/PointOps.cpp
     Source/UI/TransportBar.cpp)

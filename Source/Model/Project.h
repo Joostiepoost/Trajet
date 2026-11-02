@@ -52,6 +52,15 @@ public:
 
     juce::ValueTree addPoint (juce::ValueTree item, double time, float value);
 
+    // Note lanes: MIDI notes for the plugin, in items like automation.
+    juce::ValueTree addNoteLane();
+    static bool isNoteLane (const juce::ValueTree& lane)        { return lane[IDs::kind].toString() == "notes"; }
+    static bool isNoteItem (const juce::ValueTree& item)        { return isNoteLane (item.getParent()); }
+    /** Time and length in the item's own units (seconds or beats). */
+    juce::ValueTree addNote (juce::ValueTree item, double time, double length, int pitch, int velocity);
+    /** The notes of an item, in absolute seconds, clipped to the item. */
+    static std::vector<Automation::Note> getNotes (const juce::ValueTree& item);
+
     //==============================================================================
     // Groups (undoable). A lane belongs to at most one group; a group's lanes are
     // always next to each other in the lane order.

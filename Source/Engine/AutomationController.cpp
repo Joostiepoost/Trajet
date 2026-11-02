@@ -55,7 +55,7 @@ void AutomationController::pluginReady()
 int AutomationController::resolveParameterIndex (const juce::ValueTree& lane) const
 {
     auto* plugin = host.getPlugin();
-    if (plugin == nullptr)
+    if (plugin == nullptr || Project::isNoteLane (lane))
         return -1;
 
     auto& params = plugin->getParameters();
@@ -108,6 +108,17 @@ void AutomationController::rebuild()
         if (! laneTree.hasType (IDs::LANE))
             continue;
 
+        if (Project::isNoteLane (laneTree))
+        {
+            const bool silent = (bool) laneTree[IDs::mute] || (anySolo && ! (bool) laneTree[IDs::solo]);
+            if (! silent)
+                for (const auto& itemTree : laneTree)
+                    if (itemTree.hasType (IDs::ITEM))
+                        for (auto& n : Project::getNotes (itemTree))
+                            snapshot->notes.push_back (n);
+            continue;
+        }
+
         const int index = resolveParameterIndex (laneTree);
         if (index < 0 || inUse.count (index) > 0)
             continue;
@@ -130,6 +141,9 @@ void AutomationController::rebuild()
 
         snapshot->lanes.push_back (std::move (lane));
     }
+
+    std::stable_sort (snapshot->notes.begin(), snapshot->notes.end(),
+                      [] (const auto& a, const auto& b) { return a.start < b.start; });
 
     // Parameters whose lane was removed go back to their patch value.
     for (auto it = baseValues.begin(); it != baseValues.end();)

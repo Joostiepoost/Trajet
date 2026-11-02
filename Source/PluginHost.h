@@ -47,6 +47,9 @@ public:
     void setHeldNote (bool shouldBeOn, int noteNumber, int velocity);
     bool isHeldNoteOn() const noexcept      { return heldNoteOn; }
 
+    /** Plays a short note now (piano roll audition). */
+    void previewNote (int pitch, int velocity);
+
     //==============================================================================
     /** Audio processing on/off: off closes the audio device, so neither the device
         nor the plugin uses any CPU. The plugin and its settings stay loaded. */

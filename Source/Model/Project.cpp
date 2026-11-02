@@ -161,6 +161,69 @@ juce::ValueTree Project::addLane (int paramIndex, const juce::String& paramName)
     return lane;
 }
 
+juce::ValueTree Project::addNoteLane()
+{
+    int count = 1;
+    for (auto l : getLanes())
+        if (isNoteLane (l)) ++count;
+
+    juce::ValueTree lane (IDs::LANE);
+    lane.setProperty (IDs::laneId, juce::Uuid().toString(), nullptr);
+    lane.setProperty (IDs::kind, "notes", nullptr);
+    lane.setProperty (IDs::paramIndex, -1, nullptr);
+    lane.setProperty (IDs::name, count == 1 ? juce::String ("Notes") : "Notes " + juce::String (count), nullptr);
+    lane.setProperty (IDs::colour, getLanes().getNumChildren() % paletteSize, nullptr);
+    lane.setProperty (IDs::height, 96, nullptr);
+
+    juce::ValueTree item (IDs::ITEM);
+    item.setProperty (IDs::start, 0.0, nullptr);
+    item.setProperty (IDs::length, juce::jmin (8.0, getLengthSeconds()), nullptr);
+    item.setProperty (IDs::timebase, "linear", nullptr);
+    lane.appendChild (item, nullptr);
+
+    getLanes().appendChild (lane, &undoManager);
+    return lane;
+}
+
+juce::ValueTree Project::addNote (juce::ValueTree item, double time, double length, int pitch, int velocity)
+{
+    juce::ValueTree note (IDs::NOTE);
+    note.setProperty (IDs::time, time, nullptr);
+    note.setProperty (IDs::length, juce::jmax (0.001, length), nullptr);
+    note.setProperty (IDs::pitch, juce::jlimit (0, 127, pitch), nullptr);
+    note.setProperty (IDs::velocity, juce::jlimit (1, 127, velocity), nullptr);
+    item.appendChild (note, &undoManager);
+    return note;
+}
+
+std::vector<Automation::Note> Project::getNotes (const juce::ValueTree& item)
+{
+    std::vector<Automation::Note> notes;
+    const ItemTime it (item);
+    const double itemStart = item[IDs::start];
+    const double itemEnd = itemStart + (double) item[IDs::length];
+    const double localEnd = it.localLength();
+
+    for (const auto& n : item)
+    {
+        if (! n.hasType (IDs::NOTE))
+            continue;
+        const double t0 = juce::jmax (0.0, (double) n[IDs::time]);
+        const double t1 = juce::jmin (localEnd, (double) n[IDs::time] + (double) n[IDs::length]);
+        if (t1 <= t0 || t0 >= localEnd)
+            continue;
+
+        Automation::Note note;
+        note.start = it.absolute (t0);
+        note.end = juce::jmin (itemEnd, it.absolute (t1));
+        note.pitch = juce::jlimit (0, 127, (int) n[IDs::pitch]);
+        note.velocity = juce::jlimit (1, 127, (int) n[IDs::velocity]);
+        notes.push_back (note);
+    }
+    std::sort (notes.begin(), notes.end(), [] (const auto& a, const auto& b) { return a.start < b.start; });
+    return notes;
+}
+
 void Project::removeLane (juce::ValueTree lane)
 {
     getLanes().removeChild (lane, &undoManager);
@@ -427,8 +490,11 @@ void Project::setTimebase (juce::ValueTree item, bool musical, double bpm)
     {
         bpm = juce::jlimit (10.0, 999.0, bpm);
         for (auto p : item)
-            if (p.hasType (IDs::POINT))
+            if (p.hasType (IDs::POINT) || p.hasType (IDs::NOTE))
                 p.setProperty (IDs::time, (double) p[IDs::time] * bpm / 60.0, &um);
+        for (auto n : item)
+            if (n.hasType (IDs::NOTE))
+                n.setProperty (IDs::length, (double) n[IDs::length] * bpm / 60.0, &um);
 
         item.setProperty (IDs::timebase, "musical", &um);
         item.setProperty (IDs::beatsPerBar, 4, &um);
@@ -444,8 +510,14 @@ void Project::setTimebase (juce::ValueTree item, bool musical, double bpm)
     }
     else
     {
+        for (auto n : item)
+            if (n.hasType (IDs::NOTE))
+            {
+                const double b0 = n[IDs::time], b1 = b0 + (double) n[IDs::length];
+                n.setProperty (IDs::length, current.toSeconds (b1) - current.toSeconds (b0), &um);
+            }
         for (auto p : item)
-            if (p.hasType (IDs::POINT))
+            if (p.hasType (IDs::POINT) || p.hasType (IDs::NOTE))
                 p.setProperty (IDs::time, current.toSeconds ((double) p[IDs::time]), &um);
 
         for (int i = item.getNumChildren(); --i >= 0;)

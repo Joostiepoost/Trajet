@@ -101,10 +101,13 @@ private:
 class ItemEditorWindow : public juce::DocumentWindow
 {
 public:
-    ItemEditorWindow (std::unique_ptr<ItemEditor> editor, std::function<void()> onCloseRequested)
-        : DocumentWindow ("Item editor", juce::Colour (0xff1e2126), DocumentWindow::allButtons),
+    /** Works for the item editor and the piano roll: any editor with getItem() and onItemGone. */
+    template <typename Editor>
+    ItemEditorWindow (std::unique_ptr<Editor> editor, std::function<void()> onCloseRequested, const juce::String& title = "Item editor")
+        : DocumentWindow (title, juce::Colour (0xff1e2126), DocumentWindow::allButtons),
           onClose (std::move (onCloseRequested))
     {
+        item = editor->getItem();
         setUsingNativeTitleBar (true);
         editor->onItemGone = [this] { if (onClose) onClose(); };
         setContentOwned (editor.release(), true);
@@ -114,9 +117,10 @@ public:
         setVisible (true);
     }
 
-    ItemEditor* getEditor() const   { return dynamic_cast<ItemEditor*> (getContentComponent()); }
+    juce::ValueTree getItem() const     { return item; }
     void closeButtonPressed() override   { if (onClose) onClose(); }
 
 private:
     std::function<void()> onClose;
+    juce::ValueTree item;
 };

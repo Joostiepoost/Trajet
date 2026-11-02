@@ -186,9 +186,11 @@ void Inspector::refresh()
         f->value.setVisible (hasPoint);
     }
     shapeBox.setVisible (hasPoint);
-    generatorPanel.setItem (hasPoint ? juce::ValueTree() : currentItem);
-    generatorPanel.setVisible (hasItem && ! hasPoint);
-    generatorHeading.setVisible (hasItem && ! hasPoint);
+    const bool noteItem = hasItem && Project::isNoteItem (currentItem);
+    generatorPanel.setItem (hasPoint || noteItem ? juce::ValueTree() : currentItem);
+    generatorPanel.setVisible (hasItem && ! hasPoint && ! noteItem);
+    generatorHeading.setVisible (hasItem && ! hasPoint && ! noteItem);
+    countField->name.setText (noteItem ? "Notes" : "Points", juce::dontSendNotification);
 
     if (! hasItem && selection.getItems().size() > 1)
     {
@@ -204,7 +206,7 @@ void Inspector::refresh()
     {
         auto lane = currentItem.getParent();
         int numPoints = 0;
-        for (const auto& c : currentItem) if (c.hasType (IDs::POINT)) ++numPoints;
+        for (const auto& c : currentItem) if (c.hasType (IDs::POINT) || c.hasType (IDs::NOTE)) ++numPoints;
 
         laneField->value.setText (lane[IDs::name].toString(), juce::dontSendNotification);
         startField->value.setText (TimeFormat::format (currentItem[IDs::start]), juce::dontSendNotification);
@@ -295,7 +297,7 @@ void Inspector::resized()
         placeField (valueField);
         shapeBox.setBounds (r.removeFromTop (24));
     }
-    else
+    else if (generatorPanel.isVisible())
     {
         r.removeFromTop (12);
         generatorHeading.setBounds (r.removeFromTop (22));

@@ -3,6 +3,7 @@
 AutomationEngine::AutomationEngine()
     : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true))
 {
+    noteEnds.fill (-1);
     lastSent.reserve (4096);   // so the audio thread never has to allocate
 }
 
@@ -143,6 +144,69 @@ void AutomationEngine::applyAutomation (double seconds)
     }
 }
 
+void AutomationEngine::releaseAllNotes (int sampleOffset)
+{
+    for (int p = 0; p < 128; ++p)
+        if (noteEnds[(size_t) p] >= 0)
+        {
+            chunkMidi.addEvent (juce::MidiMessage::noteOff (1, p), sampleOffset);
+            noteEnds[(size_t) p] = -1;
+        }
+}
+
+void AutomationEngine::playNotes (juce::int64 pos, int len, bool isPlaying)
+{
+    auto* snapshot = current.get();
+
+    if (! isPlaying || snapshot == nullptr)
+    {
+        releaseAllNotes (0);
+        expectedNotePos = -1;
+        return;
+    }
+
+    // The playhead jumped (locate, loop): silence what was sounding.
+    if (pos != expectedNotePos)
+        releaseAllNotes (0);
+
+    const double rate = currentRate.load();
+    const juce::int64 chunkEnd = pos + len;
+
+    // Note-ons starting in this piece.
+    const auto& notes = snapshot->notes;
+    const double t0 = ((double) pos - 0.5) / rate;     // half a sample early: rounding never skips a note
+    auto it = std::lower_bound (notes.begin(), notes.end(), t0,
+                                [] (const Automation::Note& n, double t) { return n.start < t; });
+    for (; it != notes.end(); ++it)
+    {
+        const auto startSample = (juce::int64) std::llround (it->start * rate);
+        if (startSample >= chunkEnd)
+            break;
+        if (startSample < pos)
+            continue;
+        const int offset = (int) juce::jlimit ((juce::int64) 0, (juce::int64) len - 1, startSample - pos);
+        const auto p = (size_t) it->pitch;
+        if (noteEnds[p] >= 0)   // the same pitch is still sounding: end it first
+            chunkMidi.addEvent (juce::MidiMessage::noteOff (1, it->pitch),
+                                (int) juce::jlimit ((juce::int64) 0, (juce::int64) offset, noteEnds[p] - pos));
+        chunkMidi.addEvent (juce::MidiMessage::noteOn (1, it->pitch, (juce::uint8) it->velocity), offset);
+        noteEnds[p] = juce::jmax (startSample + 1, (juce::int64) std::llround (it->end * rate));
+    }
+
+    // Note-offs due in this piece (also of notes that started in it).
+    for (int p = 0; p < 128; ++p)
+    {
+        const auto end = noteEnds[(size_t) p];
+        if (end >= 0 && end < chunkEnd)
+        {
+            chunkMidi.addEvent (juce::MidiMessage::noteOff (1, p), (int) juce::jlimit ((juce::int64) 0, (juce::int64) len - 1, end - pos));
+            noteEnds[(size_t) p] = -1;
+        }
+    }
+
+    expectedNotePos = chunkEnd;
+}
+
 void AutomationEngine::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midi)
 {
     // Pick up new automation if the UI has prepared some (never blocks).
@@ -192,11 +256,12 @@ void AutomationEngine::processBlock (juce::AudioBuffer<float>& buffer, juce::Mid
         if (! patchMode.load() && ! writesPaused.load())
             applyAutomation ((double) pos / rate);
 
-        // MIDI (the held note) for just this piece.
+        // MIDI (the held note) for just this piece, then the note lanes' notes.
         chunkMidi.clear();
         for (const auto meta : midi)
             if (meta.samplePosition >= start && meta.samplePosition < start + len)
                 chunkMidi.addEvent (meta.data, meta.numBytes, meta.samplePosition - start);
+        playNotes (pos, len, playing.load());
 
         juce::AudioBuffer<float> piece (pluginBuffer.getArrayOfWritePointers(), pluginChannels, 0, len);
         piece.clear();

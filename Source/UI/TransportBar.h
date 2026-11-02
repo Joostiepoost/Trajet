@@ -18,6 +18,7 @@ public:
     TransportBar (Project&, PluginHost&, AutomationController&, SnapSettings&);
 
     std::function<void (juce::Component& button)> onAddLane;
+    std::function<void()> onAddNoteLane;
     std::function<void()> onZoomToFit;
     ~TransportBar() override;
 
@@ -37,7 +38,7 @@ private:
     SnapSettings& snap;
 
     juce::TextButton startButton { "|<" }, playButton { "Play" }, loopButton { "Loop" }, patchButton { "Patch" },
-                     snapButton { "Snap" }, addLaneButton { "+ Lane" }, fitButton { "Fit" };
+                     snapButton { "Snap" }, addLaneButton { "+ Lane" }, addNotesButton { "+ Notes" }, fitButton { "Fit" };
     juce::ComboBox gridBox;
     juce::Label timeLabel, lengthLabel, intervalLabel;
     juce::Slider lengthSlider;

@@ -19,7 +19,7 @@ namespace
 TransportBar::TransportBar (Project& p, PluginHost& h, AutomationController& c, SnapSettings& s)
     : project (p), host (h), controller (c), snap (s)
 {
-    for (auto* b : { &startButton, &playButton, &loopButton, &patchButton, &snapButton, &addLaneButton, &fitButton })
+    for (auto* b : { &startButton, &playButton, &loopButton, &patchButton, &snapButton, &addLaneButton, &addNotesButton, &fitButton })
         addAndMakeVisible (b);
 
     snapButton.setClickingTogglesState (true);
@@ -37,6 +37,8 @@ TransportBar::TransportBar (Project& p, PluginHost& h, AutomationController& c, 
 
     addLaneButton.setTooltip ("Add a lane for one of the plugin's parameters");
     addLaneButton.onClick = [this] { if (onAddLane) onAddLane (addLaneButton); };
+    addNotesButton.setTooltip ("Add a note lane: MIDI notes for the plugin, edited in a piano roll (Shift-Cmd-N)");
+    addNotesButton.onClick = [this] { if (onAddNoteLane) onAddNoteLane(); };
     fitButton.setTooltip ("Show the whole project (Cmd-0)");
     fitButton.onClick = [this] { if (onZoomToFit) onZoomToFit(); };
 
@@ -174,6 +176,8 @@ void TransportBar::resized()
     gridBox.setBounds (r.removeFromLeft (90));      r.removeFromLeft (12);
     fitButton.setBounds (r.removeFromLeft (44));    r.removeFromLeft (20);
     addLaneButton.setBounds (r.removeFromLeft (76));
+    r.removeFromLeft (4);
+    addNotesButton.setBounds (r.removeFromLeft (76));
 
     intervalBox.setBounds (r.removeFromRight (130)); r.removeFromRight (6);
     intervalLabel.setBounds (r.removeFromRight (90)); r.removeFromRight (16);

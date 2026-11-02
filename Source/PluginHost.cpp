@@ -198,6 +198,26 @@ void PluginHost::endOfflineRender()
         sendNoteOn();
 }
 
+void PluginHost::previewNote (int pitch, int velocity)
+{
+    if (plugin == nullptr || ! deviceIsRunning() || rendering)
+        return;
+
+    auto& collector = player.getMidiMessageCollector();
+    const auto now = juce::Time::getMillisecondCounterHiRes() * 0.001;
+    pitch = juce::jlimit (0, 127, pitch);
+    collector.addMessageToQueue (juce::MidiMessage::noteOn (1, pitch, (juce::uint8) juce::jlimit (1, 127, velocity)).withTimeStamp (now));
+
+    std::weak_ptr<bool> weakAlive = alive;
+    juce::Timer::callAfterDelay (250, [this, weakAlive, pitch]
+    {
+        if (weakAlive.lock() == nullptr || plugin == nullptr || ! deviceIsRunning())
+            return;
+        player.getMidiMessageCollector().addMessageToQueue (
+            juce::MidiMessage::noteOff (1, pitch).withTimeStamp (juce::Time::getMillisecondCounterHiRes() * 0.001));
+    });
+}
+
 void PluginHost::sendNoteOn()
 {
     if (plugin == nullptr || ! deviceIsRunning())
