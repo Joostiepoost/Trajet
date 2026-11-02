@@ -29,7 +29,8 @@ Other options:
 | 0 | Toolchain: blank window | done |
 | 1 | Plugin host: scan, load, open editor, audio settings, parameter list, held note, audio on/off | done |
 | 2 | Projects: new, open, save (with the plugin's patch), undo/redo, menu bar | done |
-| 3 | Playback engine: transport, lanes with points, automation driving the plugin, chase / patch | testing |
+| 3 | Playback engine: transport, lanes with points, automation driving the plugin, chase / patch | done |
+| 4 | Main window: zoom/scroll, lane headers (reorder, resize, mute/solo, colour), items, point gestures, snap, inspector | testing |
 
 ## Using step 1
 
@@ -50,6 +51,28 @@ The last loaded plugin is reloaded automatically when Trajet starts.
 - **Edit menu**: Undo (⌘Z) and Redo (⇧⌘Z). For now only the held-note settings are undoable; lanes and points join from step 3 on.
 - **Audio menu**: audio processing on/off (⇧⌘A) and the plugin's panel (⌘E).
 - Trajet reopens the last project when it starts, and asks to save unsaved changes when you quit.
+
+## Using the main window (step 4)
+
+**Lanes**
+- **+ Lane** opens the parameter list; double-click a parameter to add its lane (type in the filter first, e.g. `osc`).
+- Drag a lane header up or down to reorder; drag its lower edge to resize (or Option-scroll over the lane).
+- Double-click the name to rename. **M** mutes (the lane plays its patch value), **S** solos. Right-click the header for colour and *Remove lane*.
+
+**Items**
+- Double-click empty space in a lane: new item (up to 4 s, in the free space). Items never overlap.
+- Drag the coloured title strip to move; Option-drag it to copy; drag an edge to trim.
+- Right-click an item: duplicate or delete. ⌘C / ⌘X / ⌘V (paste at the playhead) / ⌘D (duplicate right after) / Delete.
+
+**Points** (inside an item, below the title strip)
+- ⌥-click: add a point · ⌥-drag: draw freehand (points are thinned automatically) · ⌥⇧-drag: straight ramp, replacing points underneath.
+- Drag a point to move it (all selected points move together); ⇧ locks to time or value; ⌘ moves finely without snapping.
+- ⌘-click adds a point to the selection · ⌃-drag a segment bends it · double-click a point to type its time and value · right-click for the segment shape.
+
+**View and snap**
+- Scroll: lanes up/down · ⇧-scroll or trackpad sideways: time · ⌘-scroll: zoom around the mouse · **Fit** or ⌘0: whole project · ⌘= / ⌘-: zoom in/out.
+- **Snap** (or S) with the grid size next to it; hold ⌘ while dragging to bypass.
+- The **Inspector** on the right shows the selected item or point; click a value to type a new one.
 
 ## Using step 3
 

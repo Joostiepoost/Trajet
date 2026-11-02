@@ -143,6 +143,8 @@ juce::ValueTree Project::addLane (int paramIndex, const juce::String& paramName)
     lane.setProperty (IDs::paramIndex, paramIndex, nullptr);
     lane.setProperty (IDs::paramName, paramName, nullptr);
     lane.setProperty (IDs::name, paramName, nullptr);
+    lane.setProperty (IDs::colour, getLanes().getNumChildren() % paletteSize, nullptr);
+    lane.setProperty (IDs::height, 72, nullptr);
 
     juce::ValueTree item (IDs::ITEM);
     item.setProperty (IDs::start, 0.0, nullptr);
@@ -176,6 +178,82 @@ juce::ValueTree Project::addPoint (juce::ValueTree item, double time, float valu
     point.setProperty (IDs::tension, 0.0, nullptr);
     item.appendChild (point, &undoManager);
     return point;
+}
+
+juce::Array<juce::ValueTree> Project::getSortedItems (const juce::ValueTree& lane)
+{
+    juce::Array<juce::ValueTree> items;
+    for (const auto& c : lane)
+        if (c.hasType (IDs::ITEM))
+            items.add (c);
+
+    std::sort (items.begin(), items.end(),
+               [] (const auto& a, const auto& b) { return (double) a[IDs::start] < (double) b[IDs::start]; });
+    return items;
+}
+
+juce::Range<double> Project::getFreeRange (const juce::ValueTree& lane, const juce::ValueTree& item, double atTime) const
+{
+    double lo = 0.0, hi = juce::jmax (getLengthSeconds(), 0.0);
+    const double ref = item.isValid() ? (double) item[IDs::start] : atTime;
+
+    for (const auto& other : getSortedItems (lane))
+    {
+        if (other == item)
+            continue;
+
+        const double s = other[IDs::start];
+        const double e = s + (double) other[IDs::length];
+
+        if (e <= ref + 1.0e-9)       lo = juce::jmax (lo, e);
+        else if (s >= ref - 1.0e-9)  { hi = juce::jmin (hi, s); }
+        else                         { lo = hi = ref; break; }   // ref lies inside another item
+    }
+
+    return { lo, juce::jmax (lo, hi) };
+}
+
+bool Project::isFree (const juce::ValueTree& lane, double start, double length, const juce::ValueTree& exclude) const
+{
+    if (start < -1.0e-9 || start + length > getLengthSeconds() + 1.0e-9)
+        return false;
+
+    for (const auto& other : lane)
+    {
+        if (! other.hasType (IDs::ITEM) || other == exclude)
+            continue;
+
+        const double s = other[IDs::start];
+        const double e = s + (double) other[IDs::length];
+        if (start < e - 1.0e-9 && start + length > s + 1.0e-9)
+            return false;
+    }
+    return true;
+}
+
+juce::ValueTree Project::addItem (juce::ValueTree lane, double start, double length)
+{
+    juce::ValueTree item (IDs::ITEM);
+    item.setProperty (IDs::start, start, nullptr);
+    item.setProperty (IDs::length, juce::jmax (minItemLength, length), nullptr);
+    item.setProperty (IDs::timebase, "linear", nullptr);
+    lane.appendChild (item, &undoManager);
+    return item;
+}
+
+juce::Colour Project::paletteColour (int index)
+{
+    static const juce::uint32 colours[paletteSize] = {
+        0xffe07b4f, 0xff3fb98a, 0xff5b9bd5, 0xffd4a73a, 0xffc0679f, 0xff4fb8c9, 0xff8f86e0, 0xff9ab54a };
+    return juce::Colour (colours[(size_t) juce::jlimit (0, paletteSize - 1, index)]);
+}
+
+juce::Colour Project::laneColour (const juce::ValueTree& lane)
+{
+    // Lanes from older files have no colour yet: use their position.
+    const int index = lane.hasProperty (IDs::colour) ? (int) lane[IDs::colour]
+                                                     : juce::jmax (0, lane.getParent().indexOf (lane));
+    return paletteColour ((index % paletteSize + paletteSize) % paletteSize);
 }
 
 std::vector<Automation::Point> Project::getPoints (const juce::ValueTree& item)

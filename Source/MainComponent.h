@@ -10,7 +10,8 @@
 #include "ParameterListComponent.h"
 #include "Model/Project.h"
 #include "Engine/AutomationController.h"
-#include "UI/LanesView.h"
+#include "UI/ScoreView.h"
+#include "UI/Inspector.h"
 #include "UI/TransportBar.h"
 
 class MainComponent : public juce::Component,
@@ -35,7 +36,9 @@ public:
         cmdNew = 0x2000, cmdOpen, cmdSave, cmdSaveAs,
         cmdUndo, cmdRedo,
         cmdAudioOnOff, cmdEditPatch,
-        cmdPlayStop, cmdToStart, cmdPatchMode
+        cmdPlayStop, cmdToStart, cmdPatchMode,
+        cmdDelete, cmdCopy, cmdCut, cmdPaste, cmdDuplicate, cmdSnap,
+        cmdZoomIn, cmdZoomOut, cmdZoomFit
     };
 
     juce::ApplicationCommandTarget* getNextCommandTarget() override   { return nullptr; }
@@ -68,6 +71,8 @@ private:
     void updateWindowTitle();
     void timerCallback() override;
     void addLaneForParameter (int paramIndex);
+    void showParameterPicker (juce::Component& button);
+    void showStatus (const juce::String& text);
 
     PluginHost host;
     Project project { host };
@@ -83,9 +88,10 @@ private:
     juce::ToggleButton heldNoteToggle { "Held note" };
     juce::Slider     noteSlider, velocitySlider;
 
-    TransportBar transportBar { project, host, controller };
-    LanesView lanesView { project, host, controller };
-    ParameterListComponent parameterList;
+    SnapSettings snap;
+    TransportBar transportBar { project, host, controller, snap };
+    ScoreView scoreView { project, host, controller, snap };
+    Inspector inspector { project, host, controller, scoreView.getSelection() };
     juce::String statusText, lastUndoState;
 
     std::unique_ptr<PluginWindow> pluginWindow;

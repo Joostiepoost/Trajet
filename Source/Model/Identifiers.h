@@ -10,7 +10,7 @@
 //     PLUGIN   (description = XML text, state = base64 text)
 //     HELDNOTE (on, note, velocity)
 //     LANES
-//       LANE   (laneId, paramIndex, paramName, name)
+//       LANE   (laneId, paramIndex, paramName, name, colour, height, mute, solo)
 //         ITEM (start, length, timebase)          -- seconds; musical items in step 6
 //           POINT (time, value, shape, tension)   -- time relative to the item start
 
@@ -49,6 +49,10 @@ namespace IDs
     TRAJET_ID (paramIndex)
     TRAJET_ID (paramName)
     TRAJET_ID (name)
+    TRAJET_ID (colour)
+    TRAJET_ID (height)
+    TRAJET_ID (mute)
+    TRAJET_ID (solo)
 
     // ITEM properties
     TRAJET_ID (start)

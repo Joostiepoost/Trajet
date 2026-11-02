@@ -89,9 +89,18 @@ MainComponent::MainComponent()
     }
 
     addAndMakeVisible (transportBar);
-    addAndMakeVisible (lanesView);
-    addAndMakeVisible (parameterList);
-    parameterList.onParameterDoubleClicked = [this] (int index) { addLaneForParameter (index); };
+    addAndMakeVisible (scoreView);
+    addAndMakeVisible (inspector);
+    transportBar.onAddLane   = [this] (juce::Component& b) { showParameterPicker (b); };
+    transportBar.onZoomToFit = [this] { scoreView.zoomToFit(); };
+    scoreView.onStatus       = [this] (const juce::String& text) { showStatus (text); };
+
+    // Snap settings are remembered between sessions.
+    {
+        auto* settings = host.appProperties.getUserSettings();
+        snap.setOn (settings->getBoolValue ("snapOn", true));
+        snap.setGrid (settings->getDoubleValue ("snapGrid", 0.1));
+    }
 
     // Commands, keyboard shortcuts and the macOS menu bar.
     commandManager.registerAllCommandsForTarget (this);
@@ -138,7 +147,11 @@ MainComponent::~MainComponent()
     project.onProjectLoaded = nullptr;
     pluginWindow = nullptr;     // the plugin's editor must go before the plugin itself
     scannerWindow = nullptr;
-    parameterList.setPlugin (nullptr);
+
+    auto* settings = host.appProperties.getUserSettings();
+    settings->setValue ("snapOn", snap.isOn());
+    settings->setValue ("snapGrid", snap.getGrid());
+    settings->saveIfNeeded();
 }
 
 //==============================================================================
@@ -392,8 +405,8 @@ void MainComponent::pluginChanged()
                          juce::dontSendNotification);
 
     editButton.setEnabled (plugin != nullptr);
-    parameterList.setPlugin (plugin);
     controller.pluginReady();
+    scoreView.repaint();
     commandManager.commandStatusChanged();
     repaint();
 }
@@ -452,15 +465,47 @@ void MainComponent::addLaneForParameter (int paramIndex)
 
     if (project.findLaneForParameter (paramIndex).isValid())
     {
-        statusText = "That parameter already has a lane.";
-        repaint();
-        juce::Component::SafePointer<MainComponent> safeThis (this);
-        juce::Timer::callAfterDelay (2500, [safeThis] { if (safeThis != nullptr) { safeThis->statusText = {}; safeThis->repaint(); } });
+        showStatus ("That parameter already has a lane.");
         return;
     }
 
     project.getUndoManager().beginNewTransaction ("Add lane");
     project.addLane (paramIndex, plugin->getParameters()[paramIndex]->getName (128));
+}
+
+void MainComponent::showStatus (const juce::String& text)
+{
+    statusText = text;
+    repaint();
+    juce::Component::SafePointer<MainComponent> safeThis (this);
+    juce::Timer::callAfterDelay (3500, [safeThis, text]
+    {
+        if (safeThis != nullptr && safeThis->statusText == text)
+        {
+            safeThis->statusText = {};
+            safeThis->repaint();
+        }
+    });
+}
+
+void MainComponent::showParameterPicker (juce::Component& button)
+{
+    auto* plugin = host.getPlugin();
+    if (plugin == nullptr)
+        return;
+
+    auto list = std::make_unique<ParameterListComponent>();
+    list->setPlugin (plugin);
+    list->setSize (560, 460);
+
+    juce::Component::SafePointer<MainComponent> safeThis (this);
+    list->onParameterDoubleClicked = [safeThis] (int index)
+    {
+        if (safeThis != nullptr)
+            safeThis->addLaneForParameter (index);
+    };
+
+    juce::CallOutBox::launchAsynchronously (std::move (list), button.getScreenBounds(), nullptr);
 }
 
 void MainComponent::updateWindowTitle()
@@ -500,7 +545,9 @@ void MainComponent::timerCallback()
 void MainComponent::getAllCommands (juce::Array<juce::CommandID>& commands)
 {
     commands.addArray ({ cmdNew, cmdOpen, cmdSave, cmdSaveAs, cmdUndo, cmdRedo, cmdAudioOnOff, cmdEditPatch,
-                         cmdPlayStop, cmdToStart, cmdPatchMode });
+                         cmdPlayStop, cmdToStart, cmdPatchMode,
+                         cmdDelete, cmdCopy, cmdCut, cmdPaste, cmdDuplicate, cmdSnap,
+                         cmdZoomIn, cmdZoomOut, cmdZoomFit });
 }
 
 void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommandInfo& info)
@@ -568,6 +615,29 @@ void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommand
             info.addDefaultKeypress ('p', 0);
             break;
 
+        case cmdDelete:
+            info.setInfo ("Delete", "Delete the selected points or items", "Edit", 0);
+            info.addDefaultKeypress (juce::KeyPress::backspaceKey, 0);
+            info.addDefaultKeypress (juce::KeyPress::deleteKey, 0);
+            break;
+        case cmdCopy:      info.setInfo ("Copy", "Copy the selected items", "Edit", 0);
+                           info.addDefaultKeypress ('c', cmd); break;
+        case cmdCut:       info.setInfo ("Cut", "Cut the selected items", "Edit", 0);
+                           info.addDefaultKeypress ('x', cmd); break;
+        case cmdPaste:     info.setInfo ("Paste at playhead", "Paste items at the playhead", "Edit", 0);
+                           info.addDefaultKeypress ('v', cmd); break;
+        case cmdDuplicate: info.setInfo ("Duplicate", "Duplicate the selected items right after themselves", "Edit", 0);
+                           info.addDefaultKeypress ('d', cmd); break;
+        case cmdSnap:      info.setInfo ("Snap to grid", "Turn snapping on or off", "Edit", 0);
+                           info.setTicked (snap.isOn());
+                           info.addDefaultKeypress ('s', 0); break;
+        case cmdZoomIn:    info.setInfo ("Zoom in", "Zoom in on time", "View", 0);
+                           info.addDefaultKeypress ('=', cmd); break;
+        case cmdZoomOut:   info.setInfo ("Zoom out", "Zoom out on time", "View", 0);
+                           info.addDefaultKeypress ('-', cmd); break;
+        case cmdZoomFit:   info.setInfo ("Show whole project", "Fit the whole project in the window", "View", 0);
+                           info.addDefaultKeypress ('0', cmd); break;
+
         default: break;
     }
 }
@@ -587,6 +657,15 @@ bool MainComponent::perform (const InvocationInfo& info)
         case cmdPlayStop:   controller.togglePlay(); break;
         case cmdToStart:    controller.toStart(); break;
         case cmdPatchMode:  controller.setPatchMode (! controller.isPatchMode()); break;
+        case cmdDelete:     scoreView.deleteSelection(); break;
+        case cmdCopy:       scoreView.copySelection(); break;
+        case cmdCut:        scoreView.cutSelection(); break;
+        case cmdPaste:      scoreView.paste(); break;
+        case cmdDuplicate:  scoreView.duplicateSelection(); break;
+        case cmdSnap:       snap.setOn (! snap.isOn()); break;
+        case cmdZoomIn:     scoreView.zoomIn(); break;
+        case cmdZoomOut:    scoreView.zoomOut(); break;
+        case cmdZoomFit:    scoreView.zoomToFit(); break;
         default:            return false;
     }
 
@@ -596,7 +675,7 @@ bool MainComponent::perform (const InvocationInfo& info)
 
 juce::StringArray MainComponent::getMenuBarNames()
 {
-    return { "File", "Edit", "Transport", "Audio" };
+    return { "File", "Edit", "View", "Transport", "Audio" };
 }
 
 juce::PopupMenu MainComponent::getMenuForIndex (int menuIndex, const juce::String&)
@@ -615,15 +694,29 @@ juce::PopupMenu MainComponent::getMenuForIndex (int menuIndex, const juce::Strin
     {
         menu.addCommandItem (&commandManager, cmdUndo);
         menu.addCommandItem (&commandManager, cmdRedo);
+        menu.addSeparator();
+        menu.addCommandItem (&commandManager, cmdCut);
+        menu.addCommandItem (&commandManager, cmdCopy);
+        menu.addCommandItem (&commandManager, cmdPaste);
+        menu.addCommandItem (&commandManager, cmdDuplicate);
+        menu.addCommandItem (&commandManager, cmdDelete);
+        menu.addSeparator();
+        menu.addCommandItem (&commandManager, cmdSnap);
     }
     else if (menuIndex == 2)
+    {
+        menu.addCommandItem (&commandManager, cmdZoomIn);
+        menu.addCommandItem (&commandManager, cmdZoomOut);
+        menu.addCommandItem (&commandManager, cmdZoomFit);
+    }
+    else if (menuIndex == 3)
     {
         menu.addCommandItem (&commandManager, cmdPlayStop);
         menu.addCommandItem (&commandManager, cmdToStart);
         menu.addSeparator();
         menu.addCommandItem (&commandManager, cmdPatchMode);
     }
-    else if (menuIndex == 3)
+    else if (menuIndex == 4)
     {
         menu.addCommandItem (&commandManager, cmdAudioOnOff);
         menu.addCommandItem (&commandManager, cmdEditPatch);
@@ -669,6 +762,17 @@ void MainComponent::paint (juce::Graphics& g)
     g.setColour (juce::Colours::white.withAlpha (0.6f));
     g.setFont (juce::FontOptions (12.0f));
     g.drawText (text, status.reduced (12, 0), juce::Justification::centredLeft);
+
+    // Gesture reminder on the right.
+    const juce::String opt  = juce::String (juce::CharPointer_UTF8 ("\xe2\x8c\xa5"));
+    const juce::String sh   = juce::String (juce::CharPointer_UTF8 ("\xe2\x87\xa7"));
+    const juce::String cmdk = juce::String (juce::CharPointer_UTF8 ("\xe2\x8c\x98"));
+    const juce::String ctl  = juce::String (juce::CharPointer_UTF8 ("\xe2\x8c\x83"));
+    const auto gestures = opt + "-click add  " + dot + "  " + opt + "-drag draw  " + dot + "  " + opt + sh + "-drag ramp  " + dot + "  "
+                          + sh + " constrain  " + dot + "  " + cmdk + " fine  " + dot + "  " + ctl + "-drag bend  " + dot + "  "
+                          + "S snap  " + dot + "  " + cmdk + "-scroll zoom";
+    g.setColour (juce::Colours::white.withAlpha (0.4f));
+    g.drawText (gestures, status.reduced (12, 0), juce::Justification::centredRight);
 }
 
 void MainComponent::resized()
@@ -690,6 +794,6 @@ void MainComponent::resized()
     pluginLabel.setBounds (toolbar);
 
     transportBar.setBounds (area.removeFromTop (40));
-    parameterList.setBounds (area.removeFromBottom (juce::jmax (180, area.getHeight() / 3)));
-    lanesView.setBounds (area);
+    inspector.setBounds (area.removeFromRight (230));
+    scoreView.setBounds (area);
 }

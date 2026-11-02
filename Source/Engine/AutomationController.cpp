@@ -92,6 +92,10 @@ void AutomationController::rebuild()
     auto snapshot = std::make_shared<Automation::Snapshot>();
     std::set<int> inUse;
 
+    bool anySolo = false;
+    for (const auto& laneTree : project.getLanes())
+        anySolo = anySolo || (bool) laneTree[IDs::solo];
+
     for (const auto& laneTree : project.getLanes())
     {
         if (! laneTree.hasType (IDs::LANE))
@@ -111,9 +115,12 @@ void AutomationController::rebuild()
         lane.paramIndex = index;
         lane.baseValue = baseValues[index];
 
+        // A muted lane (or one left out by solo) plays its patch value.
+        const bool silent = (bool) laneTree[IDs::mute] || (anySolo && ! (bool) laneTree[IDs::solo]);
+
         for (const auto& itemTree : laneTree)
         {
-            if (! itemTree.hasType (IDs::ITEM))
+            if (silent || ! itemTree.hasType (IDs::ITEM))
                 continue;
 
             Automation::Item item;

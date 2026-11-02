@@ -10,11 +10,35 @@ namespace
     }
 }
 
-TransportBar::TransportBar (Project& p, PluginHost& h, AutomationController& c)
-    : project (p), host (h), controller (c)
+namespace
 {
-    for (auto* b : { &startButton, &playButton, &loopButton, &patchButton })
+    const double gridValues[] = { 0.001, 0.01, 0.05, 0.1, 0.25, 0.5, 1.0 };
+    const char* const gridNames[] = { "1 ms", "10 ms", "50 ms", "100 ms", "250 ms", "500 ms", "1 s" };
+}
+
+TransportBar::TransportBar (Project& p, PluginHost& h, AutomationController& c, SnapSettings& s)
+    : project (p), host (h), controller (c), snap (s)
+{
+    for (auto* b : { &startButton, &playButton, &loopButton, &patchButton, &snapButton, &addLaneButton, &fitButton })
         addAndMakeVisible (b);
+
+    snapButton.setClickingTogglesState (true);
+    snapButton.setTooltip ("Snap to grid (S). Hold Cmd while dragging to bypass.");
+    snapButton.setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff3b5f8f));
+    snapButton.onClick = [this] { snap.setOn (snapButton.getToggleState()); };
+
+    for (int i = 0; i < 7; ++i)
+        gridBox.addItem (gridNames[i], i + 1);
+    gridBox.setTooltip ("Grid size");
+    gridBox.onChange = [this] { snap.setGrid (gridValues[juce::jlimit (0, 6, gridBox.getSelectedId() - 1)]); };
+    addAndMakeVisible (gridBox);
+    snap.addChangeListener (this);
+    changeListenerCallback (nullptr);
+
+    addLaneButton.setTooltip ("Add a lane for one of the plugin's parameters");
+    addLaneButton.onClick = [this] { if (onAddLane) onAddLane (addLaneButton); };
+    fitButton.setTooltip ("Show the whole project (Cmd-0)");
+    fitButton.onClick = [this] { if (onZoomToFit) onZoomToFit(); };
 
     startButton.setTooltip ("Back to the start (Return)");
     startButton.onClick = [this] { controller.toStart(); };
@@ -92,7 +116,16 @@ TransportBar::TransportBar (Project& p, PluginHost& h, AutomationController& c)
 TransportBar::~TransportBar()
 {
     stopTimer();
+    snap.removeChangeListener (this);
     project.getState().removeListener (this);
+}
+
+void TransportBar::changeListenerCallback (juce::ChangeBroadcaster*)
+{
+    snapButton.setToggleState (snap.isOn(), juce::dontSendNotification);
+    for (int i = 0; i < 7; ++i)
+        if (std::abs (gridValues[i] - snap.getGrid()) < 1.0e-9)
+            gridBox.setSelectedId (i + 1, juce::dontSendNotification);
 }
 
 void TransportBar::updateLength()
@@ -120,6 +153,7 @@ void TransportBar::timerCallback()
     const bool hasPlugin = host.getPlugin() != nullptr;
     playButton.setEnabled (hasPlugin);
     patchButton.setEnabled (hasPlugin);
+    addLaneButton.setEnabled (hasPlugin);
 }
 
 void TransportBar::paint (juce::Graphics& g)
@@ -135,7 +169,11 @@ void TransportBar::resized()
     playButton.setBounds (r.removeFromLeft (70));   r.removeFromLeft (6);
     loopButton.setBounds (r.removeFromLeft (60));   r.removeFromLeft (12);
     timeLabel.setBounds (r.removeFromLeft (120));   r.removeFromLeft (12);
-    patchButton.setBounds (r.removeFromLeft (70));
+    patchButton.setBounds (r.removeFromLeft (64));  r.removeFromLeft (20);
+    snapButton.setBounds (r.removeFromLeft (56));   r.removeFromLeft (4);
+    gridBox.setBounds (r.removeFromLeft (90));      r.removeFromLeft (12);
+    fitButton.setBounds (r.removeFromLeft (44));    r.removeFromLeft (20);
+    addLaneButton.setBounds (r.removeFromLeft (76));
 
     intervalBox.setBounds (r.removeFromRight (130)); r.removeFromRight (6);
     intervalLabel.setBounds (r.removeFromRight (90)); r.removeFromRight (16);

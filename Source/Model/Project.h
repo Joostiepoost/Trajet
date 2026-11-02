@@ -52,6 +52,21 @@ public:
 
     juce::ValueTree addPoint (juce::ValueTree item, double time, float value);
 
+    // Items: never overlapping on one lane.
+    static constexpr double minItemLength = 0.01;
+    static juce::Array<juce::ValueTree> getSortedItems (const juce::ValueTree& lane);
+    /** Free space around an item: end of the previous item and start of the next
+        (0 and the project length if there are none). Pass an invalid item to ask about a time. */
+    juce::Range<double> getFreeRange (const juce::ValueTree& lane, const juce::ValueTree& item, double atTime) const;
+    juce::ValueTree addItem (juce::ValueTree lane, double start, double length);
+    /** True if [start, start + length) fits in the project and overlaps no item except `exclude`. */
+    bool isFree (const juce::ValueTree& lane, double start, double length, const juce::ValueTree& exclude = {}) const;
+
+    /** Lane colours: a palette of distinct hues. */
+    static juce::Colour laneColour (const juce::ValueTree& lane);
+    static juce::Colour paletteColour (int index);
+    static constexpr int paletteSize = 8;
+
     /** An item's points as Automation::Point, sorted, times relative to the item. */
     static std::vector<Automation::Point> getPoints (const juce::ValueTree& item);
 

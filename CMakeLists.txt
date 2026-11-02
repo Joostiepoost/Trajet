@@ -50,7 +50,9 @@ target_sources(Trajet PRIVATE
     Source/Model/Project.cpp
     Source/Engine/AutomationEngine.cpp
     Source/Engine/AutomationController.cpp
-    Source/UI/LanesView.cpp
+    Source/UI/ScoreView.cpp
+    Source/UI/LaneTrack.cpp
+    Source/UI/Inspector.cpp
     Source/UI/TransportBar.cpp)
 
 target_compile_definitions(Trajet PRIVATE
