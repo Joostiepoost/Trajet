@@ -186,6 +186,14 @@ void PluginHost::endOfflineRender()
     engine.resetPlugin();
     if (plugin != nullptr)
         player.setProcessor (&engine);
+
+    // Re-attach the player to the device, so the engine and plugin are prepared afresh
+    // at the device's own sample rate (the render may have used another one).
+    if (audioEnabled)
+    {
+        deviceManager.removeAudioCallback (&player);
+        deviceManager.addAudioCallback (&player);
+    }
     if (heldNoteOn)
         sendNoteOn();
 }

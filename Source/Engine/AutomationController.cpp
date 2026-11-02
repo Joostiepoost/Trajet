@@ -81,6 +81,12 @@ void AutomationController::rebuild()
     auto* plugin = host.getPlugin();
     auto& engine = host.getEngine();
     engine.setProjectLength (project.getLengthSeconds());
+    {
+        const auto& st = project.getState();
+        engine.setOutput ((float) (double) st.getProperty (IDs::outputGain, 0.0),
+                          (bool) st.getProperty (IDs::limiter, false),
+                          (float) (double) st.getProperty (IDs::limiterCeiling, -0.3));
+    }
     applyLoopRange();
 
     if (plugin == nullptr)

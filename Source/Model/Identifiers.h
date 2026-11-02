@@ -6,7 +6,7 @@
 //
 // Model layout (grows step by step):
 //
-//   PROJECT  (formatVersion, lengthSeconds)
+//   PROJECT  (formatVersion, lengthSeconds, outputGain dB, limiter, limiterCeiling dB)
 //     PLUGIN   (description = XML text, state = base64 text)
 //     HELDNOTE (on, note, velocity)
 //     LANES
@@ -40,6 +40,9 @@ namespace IDs
     // PROJECT properties
     TRAJET_ID (formatVersion)
     TRAJET_ID (lengthSeconds)
+    TRAJET_ID (outputGain)
+    TRAJET_ID (limiter)
+    TRAJET_ID (limiterCeiling)
 
     // PLUGIN properties
     TRAJET_ID (description)

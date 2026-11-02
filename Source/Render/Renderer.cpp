@@ -140,6 +140,12 @@ RenderJob::RenderJob (Project& p, PluginHost& h, AutomationController& c, const 
 {
 }
 
+void RenderJob::log (const juce::String& line)
+{
+    const juce::ScopedLock sl (logLock);
+    logText << juce::Time::getCurrentTime().formatted ("%H:%M:%S") << "  " << line << "\n";
+}
+
 void RenderJob::prepare()
 {
     auto& engine = host.getEngine();
@@ -156,6 +162,18 @@ void RenderJob::prepare()
     controller.setPatchMode (false);    // remembers the patch values, starts writing automation
     controller.rebuildNow();
 
+    auto* plugin = host.getPlugin();
+    auto* device = host.deviceManager.getCurrentAudioDevice();
+    log ("Render of " + settings.file.getFullPathName());
+    log ("Plugin: " + plugin->getName() + ", device: "
+         + (device != nullptr ? device->getName() + " at " + juce::String (device->getCurrentSampleRate()) + " Hz"
+                                + (device->isPlaying() ? ", running" : ", stopped")
+                              : juce::String ("none")));
+    log ("Range " + juce::String (settings.start, 3) + " to " + juce::String (settings.end, 3) + " s, tail "
+         + juce::String (settings.tail, 1) + " s, " + juce::String (settings.sampleRate) + " Hz, "
+         + juce::String (settings.bitDepth) + " bit, update every " + juce::String (settings.interval) + " samples");
+    log ("Was in patch mode: " + juce::String (wasPatchMode ? "yes" : "no") + ", held note: " + juce::String (heldNoteOn ? "on" : "off"));
+
     host.beginOfflineRender();
 
     engine.setLoop (false, 0.0, project.getLengthSeconds());
@@ -163,6 +181,9 @@ void RenderJob::prepare()
     engine.setNonRealtime (true);
     engine.prepareToPlay (settings.sampleRate, 512);
     engine.resetPlugin();
+    log ("Prepared. Plugin suspended: " + juce::String (plugin->isSuspended() ? "YES" : "no")
+         + ", plugin outputs: " + juce::String (plugin->getTotalNumOutputChannels())
+         + ", limiter latency: " + juce::String (engine.getOutputLatency()) + " samples");
 }
 
 void RenderJob::restore()
@@ -218,12 +239,15 @@ void RenderJob::run()
     {
         midi.addEvent (juce::MidiMessage::allNotesOff (1), 0);
         midi.addEvent (juce::MidiMessage::allSoundOff (1), 0);
+        float warmPeak = 0.0f;
         for (int i = 0; i < (int) (0.25 * rate) / blockSize + 1 && ! threadShouldExit(); ++i)
         {
             buffer.clear();
             engine.processBlock (buffer, midi);
             midi.clear();
+            warmPeak = juce::jmax (warmPeak, buffer.getMagnitude (0, buffer.getNumSamples()));
         }
+        log ("Warm-up done, its peak (not written): " + juce::String (warmPeak, 4));
         engine.resetPlugin();
     }
 
@@ -231,6 +255,8 @@ void RenderJob::run()
     const auto scoreSamples = (juce::int64) std::llround ((settings.end - settings.start) * rate);
     const auto tailSamples  = (juce::int64) std::llround (juce::jmax (0.0, settings.tail) * rate);
     const auto total = scoreSamples + tailSamples;
+    const auto latency = (juce::int64) engine.getOutputLatency();   // the limiter's look-ahead
+    juce::int64 toSkip = latency;
 
     engine.setPositionSeconds (settings.start);
     engine.play();
@@ -240,13 +266,13 @@ void RenderJob::run()
     juce::int64 done = 0;
     bool noteReleased = false;
 
-    while (done < total)
+    while (done < total + latency)
     {
         if (threadShouldExit())
             break;
 
         // Blocks end exactly at the end of the score, so the transport stops there.
-        int len = (int) juce::jmin ((juce::int64) blockSize, total - done);
+        int len = (int) juce::jmin ((juce::int64) blockSize, total + latency - done);
         if (done < scoreSamples)
             len = (int) juce::jmin ((juce::int64) len, scoreSamples - done);
 
@@ -263,15 +289,22 @@ void RenderJob::run()
         engine.processBlock (buffer, midi);
         midi.clear();
 
-        peak = juce::jmax (peak, buffer.getMagnitude (0, len));
-        if (! writer->writeFromAudioSampleBuffer (buffer, 0, len))
+        // The limiter delays the sound a little: drop that much from the start.
+        const int skip = (int) juce::jmin ((juce::int64) len, toSkip);
+        toSkip -= skip;
+        if (len > skip)
         {
-            error = "Writing the file failed (is the disk full?).";
-            break;
+            for (int ch = 0; ch < 2; ++ch)
+                peak = juce::jmax (peak, buffer.getMagnitude (ch, skip, len - skip));
+            if (! writer->writeFromAudioSampleBuffer (buffer, skip, len - skip))
+            {
+                error = "Writing the file failed (is the disk full?).";
+                break;
+            }
+            samplesWritten += len - skip;
         }
 
         done += len;
-        samplesWritten = done;
 
         if ((done / blockSize) % 32 == 0)
         {
@@ -282,6 +315,8 @@ void RenderJob::run()
         }
     }
 
+    log ("Wrote " + juce::String (samplesWritten) + " samples, peak " + juce::String (peak, 4)
+         + (threadShouldExit() ? ", cancelled" : ""));
     writer.reset();     // finishes the file header
     seconds = (double) samplesWritten / rate;
 }
@@ -289,6 +324,8 @@ void RenderJob::run()
 void RenderJob::threadComplete (bool userPressedCancel)
 {
     restore();
+    log ("Restored. Device: " + juce::String (host.deviceManager.getCurrentAudioDevice() != nullptr
+                                                  && host.deviceManager.getCurrentAudioDevice()->isPlaying() ? "running" : "not running"));
 
     juce::String result;
     if (userPressedCancel || samplesWritten == 0 || error.isNotEmpty())
@@ -303,8 +340,11 @@ void RenderJob::threadComplete (bool userPressedCancel)
                 << " (" << juce::String (settings.sampleRate / 1000.0, 1) << " kHz, "
                 << (settings.bitDepth == 32 ? juce::String ("32-bit float") : juce::String (settings.bitDepth) + "-bit")
                 << "). Peak " << juce::String (db, 1) << " dBFS.";
-        if (peak > 1.0f && settings.bitDepth != 32)
-            result << " Warning: the sound clipped; lower the level in the patch or render as 32-bit float.";
+        if (peak <= 0.0f)
+            result << " Warning: the file is silent. Please send me the render log: "
+                   << host.appProperties.getUserSettings()->getFile().getSiblingFile ("render.log").getFullPathName();
+        else if (peak > 1.0f && settings.bitDepth != 32)
+            result << " Warning: the sound clipped. Turn on the limiter (top bar) or lower the output gain, or render as 32-bit float.";
         else if (peak > 1.0f)
             result << " The peak is above 0 dBFS; the float file keeps it, but lower it before converting.";
 
@@ -315,6 +355,15 @@ void RenderJob::threadComplete (bool userPressedCancel)
             result << (csvError.isEmpty() ? " Automation written to " + csvFile.getFileName() + "."
                                            : " CSV failed: " + csvError);
         }
+    }
+
+    log (result);
+    {
+        // Keep the last few renders' logs, for diagnosis.
+        auto logFile = host.appProperties.getUserSettings()->getFile().getSiblingFile ("render.log");
+        auto old = logFile.loadFileAsString();
+        if (old.length() > 60000) old = old.substring (old.length() - 40000);
+        logFile.replaceWithText (old + logText + "\n");
     }
 
     auto done = std::move (onFinished);

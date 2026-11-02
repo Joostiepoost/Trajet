@@ -91,6 +91,7 @@ MainComponent::MainComponent()
     addAndMakeVisible (transportBar);
     addAndMakeVisible (scoreView);
     addAndMakeVisible (inspector);
+    addAndMakeVisible (outputStrip);
     transportBar.onAddLane   = [this] (juce::Component& b) { showParameterPicker (b); };
     transportBar.onZoomToFit = [this] { scoreView.zoomToFit(); };
     scoreView.onStatus       = [this] (const juce::String& text) { showStatus (text); };
@@ -889,9 +890,10 @@ void MainComponent::resized()
 
     audioButton.setBounds (toolbar.removeFromRight (80));  toolbar.removeFromRight (6);
     audioOnButton.setBounds (toolbar.removeFromRight (84)); toolbar.removeFromRight (16);
-    velocitySlider.setBounds (toolbar.removeFromRight (120)); toolbar.removeFromRight (6);
-    noteSlider.setBounds (toolbar.removeFromRight (120));  toolbar.removeFromRight (6);
+    velocitySlider.setBounds (toolbar.removeFromRight (110)); toolbar.removeFromRight (6);
+    noteSlider.setBounds (toolbar.removeFromRight (100));  toolbar.removeFromRight (6);
     heldNoteToggle.setBounds (toolbar.removeFromRight (96)); toolbar.removeFromRight (12);
+    outputStrip.setBounds (toolbar.removeFromRight (290)); toolbar.removeFromRight (16);
 
     pluginLabel.setBounds (toolbar);
 

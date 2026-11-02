@@ -15,6 +15,7 @@
 #include "UI/ItemEditor.h"
 #include "UI/TransportBar.h"
 #include "UI/RenderDialog.h"
+#include "UI/OutputStrip.h"
 
 class MainComponent : public juce::Component,
                       public juce::ApplicationCommandTarget,
@@ -101,6 +102,7 @@ private:
     TransportBar transportBar { project, host, controller, snap };
     ScoreView scoreView { project, host, controller, snap };
     Inspector inspector { project, host, controller, scoreView.getSelection() };
+    OutputStrip outputStrip { project, host };
     juce::String statusText, lastUndoState;
 
     std::unique_ptr<PluginWindow> pluginWindow;

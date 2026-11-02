@@ -65,6 +65,10 @@ private:
     bool heldNoteOn = false;
     int heldNote = 48, heldVelocity = 100;
 
+    void log (const juce::String&);
+    juce::String logText;
+    juce::CriticalSection logLock;
+
     // Results (written by the render thread).
     juce::String error;
     float peak = 0.0f;

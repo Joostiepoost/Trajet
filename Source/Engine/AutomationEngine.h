@@ -11,6 +11,7 @@
 
 #include <JuceHeader.h>
 #include "Automation.h"
+#include "Limiter.h"
 
 class AutomationEngine : public juce::AudioProcessor
 {
@@ -66,6 +67,22 @@ public:
     /** Clears the plugin's sound (delay lines, envelopes) without touching its patch. */
     void resetPlugin()                              { if (plugin != nullptr) plugin->reset(); }
 
+    //==============================================================================
+    // Output stage: gain, optional look-ahead limiter, level meter.
+    void setOutput (float gainDb, bool limiterOn, float ceilingDb)
+    {
+        outputGain = juce::Decibels::decibelsToGain (gainDb, -100.0f);
+        limiterEnabled = limiterOn;
+        limiterCeiling = juce::Decibels::decibelsToGain (juce::jlimit (-12.0f, 0.0f, ceilingDb));
+    }
+
+    /** Samples by which the output stage delays the sound (the limiter's look-ahead). */
+    int getOutputLatency() const noexcept           { return limiterEnabled.load() ? limiterLatency.load() : 0; }
+
+    /** Highest output level since the last call (1.0 = 0 dBFS), and the limiter's deepest gain. */
+    float takePeak() noexcept                       { return peakLevel.exchange (0.0f); }
+    float takeLimiterGain() noexcept                { return limiterGain.exchange (1.0f); }
+
     /** Frees snapshots the audio thread no longer uses (call regularly). */
     void collectGarbage();
 
@@ -108,6 +125,12 @@ private:
 
     std::unique_ptr<std::atomic<bool>[]> automatedFlags;
     int numParams = 0;
+
+    std::atomic<float> outputGain { 1.0f }, limiterCeiling { 0.966f }, peakLevel { 0.0f }, limiterGain { 1.0f };
+    std::atomic<bool> limiterEnabled { false };
+    std::atomic<int> limiterLatency { 0 };
+    bool limiterWasOn = false;
+    Limiter limiter;
 
     juce::AudioBuffer<float> pluginBuffer;
     juce::MidiBuffer chunkMidi;
