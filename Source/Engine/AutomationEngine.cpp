@@ -97,6 +97,10 @@ void AutomationEngine::prepareToPlay (double sampleRate, int maxBlockSize)
         pluginBuffer.setSize (channels, preparedBlockSize, false, true, false);
     }
 
+    limiter.prepare (sampleRate, 2);
+    limiterLatency = limiter.getLatency();
+    limiterWasOn = false;
+
     resendAll = true;
 }
 
@@ -230,6 +234,29 @@ void AutomationEngine::processBlock (juce::AudioBuffer<float>& buffer, juce::Mid
 
         start += len;
     }
+
+    // Output stage: gain, then the limiter (if on), then the meter.
+    const float gain = outputGain.load();
+    if (std::abs (gain - 1.0f) > 1.0e-6f)
+        buffer.applyGain (0, numSamples, gain);
+
+    const bool limiterOn = limiterEnabled.load();
+    if (limiterOn != limiterWasOn)
+    {
+        limiter.reset();
+        limiterWasOn = limiterOn;
+    }
+    if (limiterOn)
+    {
+        limiter.process (buffer, 0, numSamples, limiterCeiling.load());
+        const float g = limiter.takeGainReduction();
+        if (g < limiterGain.load()) limiterGain = g;
+    }
+
+    float peak = 0.0f;
+    for (int ch = 0; ch < buffer.getNumChannels(); ++ch)
+        peak = juce::jmax (peak, buffer.getMagnitude (ch, 0, numSamples));
+    if (peak > peakLevel.load()) peakLevel = peak;
 
     midi.clear();
 }

@@ -66,7 +66,13 @@ The last loaded plugin is reloaded automatically when Trajet starts.
 - **Automation update**: how often the parameters are set while rendering (every 16 samples by default, every sample for the finest result). This is independent of the *Live update* setting for playback.
 - Muted and solo lanes work as in playback. Before the render the plugin gets a short silent warm-up at the start values, so the file does not begin with a glide from the patch.
 - The audio output is silent during the render; afterwards Trajet returns to where you were (patch or chase, playhead).
-- The report gives the peak level and warns if a 16- or 24-bit file clipped.
+- The report gives the peak level and warns if a 16- or 24-bit file clipped. If a file comes out silent, the report says so; a log of the last renders is kept in `~/Library/Application Support/Trajet/render.log`.
+- The file is written directly under the name you chose (no temporary or hidden files); a cancelled or failed render deletes it.
+
+**Output stage (top bar)**: a level meter, the output gain and the limiter. They are saved with the project and apply to playback *and* render, so what you hear is what you get.
+- **Meter**: the upper bar shows the output level with a peak marker; the light on the right turns red when the output went over 0 dBFS and stays red until you click the meter. The lower orange bar shows how much the limiter is turning the sound down.
+- **Gain**: −24 to +12 dB after the plugin (double-click for 0 dB).
+- **Limit**: a look-ahead peak limiter (5 ms look-ahead, smooth release). No sample goes above the ceiling and there is no clipping distortion. Right-click the button to choose the ceiling (0 to −6 dBFS; default −0.3). The look-ahead delay is compensated in renders, so the file stays sample-aligned with the score.
 
 **File → Export automation as CSV… (⇧⌘R)**, or tick *Also write the automation as CSV* in the render dialog, writes a table: `time_s` and one column per lane, one row every 1–100 ms. Values are either normalised (0 to 1, as Trajet stores them) or in the plugin's own units (the number the plugin shows, without its unit label). Handy for reading the score into Max (`[coll]`, `[text]`) or Python.
 
