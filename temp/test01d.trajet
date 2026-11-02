@@ -1,0 +1,2384 @@
+{
+  "format": "trajet",
+  "version": 1,
+  "project": {
+    "type": "PROJECT",
+    "properties": {
+      "formatVersion": 1,
+      "lengthSeconds": 150.0
+    },
+    "children": [
+      {
+        "type": "PLUGIN",
+        "properties": {
+          "description": "<?xml version=\"1.0\" encoding=\"UTF-8\"?> <PLUGIN name=\"Aalto\" format=\"AudioUnit\" category=\"Synth\" manufacturer=\"Madrona Labs\" version=\"1.9.5\" file=\"AudioUnit:Synths/aumu,Aalt,MLbs\" uniqueId=\"6d586372\" isInstrument=\"1\" fileTime=\"0\" infoUpdateTime=\"1a19b33488d\" numInputs=\"0\" numOutputs=\"2\" isShell=\"0\" hasARAExtension=\"0\" uid=\"6d586372\"/>",
+          "state": "6185.hAGaoMGcv.C1AHv.DTfAGfPBJr.DQHwDTvUag4VclE1XzUmbkIGUjEFcgwUYrUVak4Fcs3VXsU1UyUmXzkGbkckckI2bo8laTQWdvU1WP7fZ0MVYPwVcmklaSQWXzUFUtEVakIQSLI1bOEAAr...............DB..............A.........f..........L..........D.........PA.........X..........G..........B.........j..........J.........vB.........v..........M.........fC.........7..........P.........PD.........HA.........S..........E.........TA.........V.........vE.........fA.........Y.........fF.........rA.........b.........PG.........3A.........e..........H.........DB.........h.........vH.........PB.........k.........fI.........bB.........n.........PJ.........nB.........q..........K.........zB.........t.........vK..........C.........w.........fL.........LC.........z.........PM.........XC.........2..........N.........jC.........5.........vN.........vC.........8.........fO.........7C..........A........PP.........HD.........CA.........Q.........TD.........FA........vQ.........fD.........IA........fR.........rD.........LA........PS.........3D.........OA.........T.........DE.........RA........vT.........PE.........UA........fU.........bE.........XA........PV.........nE.........aA.........W.........zE.........dA........vW..........F.........gA........fX.........LF.........jA........PY.........XF.........mA.........Z.........jF.........pA........vZ.........vF.........sA........fa.........7F.........vA........Pb.........HG.........yA.........c.........TG.........1A........vc.........fG.........4A........fd.........rG.........7A........Pe.........3G.........+A.........f.........DH.........BB........vf.....DMCMDkLQ6vCQAiUOUGcvUGcRDTXrQGD.HQX00VcOEwDjrmBIHBbgQ2XnIhNIrmBIjfHjUFagk2Wo4Fb0QmH5j.LtHCMv.CLvvhBIjfHsE1bzUlbeQWctUlH5j.Mz.CKJjPBhLWYw8Ecxk1YhnSBvvhBIjfHqUVdeY2aoMVYyIhNIPCKJjPBhrVY48UauQlH5jPLrnPBIHxZkk2WhUlajIhNIbCKJjPBhrVY48Uctk1bu4lH5j.LrnPBIHxZkk2WmwVZjUlH5j.Lt.SLv.CLvvhBIjfHyUVbeIWXzU1WwUWXtQWZ5UlH5j.LrnPBIHxbkE2Wr81XgwlH5jPLrnPBIHxbkE2Wn81bzIhNI.CKJjPBhLWYw8Eau8FbhnSBwvhBIjfHyUVbeIWXzUlH5j.LrnPBIHxbkE2WxEFco8lH5jPLrnPBIHxbkE2WxEFck8EbhnSBvvhBIjfHyUVbeMGckA2bhnSBwXCKJjPBhLWYw80bzUFby8EbhnSBvvhBIjfHyUVbe8lYlMWYzIhNI.CKJjPBhLWYw80alY1bkQ2WvIhNI.CKJjPBhLWYw8kbg41YkIhNIDiLrnPBIHxbkE2WwUWXtQWZ5UlH5j.LrnPBIHxbkE2WmwVZjUlH5j.LrnPBIHxbkE2WvcmH5jPMvvhBIjfHyUVbeYWXrUWYeQVYrEVdhnSBvvhBIjfHyUVbeAWcrMWYeQVYrEVdhnSBvvhBIjfHyUVbeYWXrUWYvHhNI.CKJjPBhLWYw8kcgwVckEiH5j.LrnPBIHxbkE2W1EFa0UlLhnSBvvhBIjfHyUVbeYWXrUWYyHhNI.CKJjPBhLWYw8kcgwVckQiH5j.LrnPBIHxbkE2W1EFa0UVMhnSBvvhBIjfHyUVbeYWXrUWY1HhNI.CKJjPBhLWYw8kcgwVckciH5j.LrnPBIHxbkE2W1EFa0UFNhnSBvvhBIjfHyUVbeYWXrUWY4HhNI.CKJjPBhLWYw8kcgwVckECLhnSBvvhBIjfHyUVbeYWXrUWYwDiH5j.LrnPBIHxbkE2W1EFa0UVLxHhNI.CKJjPBhLWYw8kcgwVckEyLhnSBvvhBIjfHyUVbeYWXrUWYwPiH5j.LrnPBIHxbkE2W1EFa0UVL0HhNI.CKJjPBhLWYw8Eb0w1bkAiH5j.LrnPBIHxbkE2WvUGayUVLhnSBvvhBIjfHyUVbeAWcrMWYxHhNI.CKJjPBhLWYw8Eb0w1bkMiH5j.LrnPBIHxbkE2WvUGayUFMhnSBvvhBIjfHyUVbeAWcrMWY0HhNI.CKJjPBhLWYw8Eb0w1bkYiH5j.LrnPBIHxbkE2WvUGayU1MhnSBvvhBIjfHyUVbeAWcrMWY3HhNI.CKJjPBhLWYw8Eb0w1bkkiH5j.LrnPBIHxbkE2WvUGayUVLvHhNI.CKJjPBhLWYw8Eb0w1bkESLhnSBvvhBIjfHyUVbeAWcrMWYwHiH5j.LrnPBIHxbkE2WvUGayUVLyHhNI.CKJjPBhLWYw8Eb0w1bkECMhnSBvvhBIjfHyUVbeAWcrMWYwTiH5j.LrnPBIHBal81WlIWYwIhNIDCKJjPBhvlYu8kauk1bkIhNI.CKJjPBhvlYu8EakYWYrIhNI.CKJjPBhvlYu8EakYWYr8EbhnSBvvhBIjfHrY1aeYlbkE2WvIhNI.CKJjPBhTla1EyWgQGcgM1ZhnSBv3BLvDCLv.CKJjPBhTla1EyWjU1XgkmH5jPLrnPBIHRYtYWLeMWcyQWXo4lH5j.LtTCLv.CLvvhBIjfHk4lcw7kbkwVYgMWYhnSBv3RMv.CLv.CKJjPBhTla1EyWrUlckwlH5jPLrnPBIHRYtYWLegmckwlH5jPLrnPBIHRYtYWLeQmboc1WyUFakMFchnSBwvhBIjfHk4lcw7UXzQWXis1WvIhNI.CKJjPBhTla1EyWjU1Xgk2WvIhNI.CKJjPBhTla1EyWxUFakE1bk8EbhnSBvvhBIjfHk4lcx7kbkAWYgQmH5j.LrnPBIHRYtYmLeQVYrEVdhnSBvvhBIjfHk4lcx7UXzQWXislH5j.Lt.CLw.CLvvhBIjfHk4lcx70b0MGcgklahnSBvvhBIjfHk4lcx7kbkwVYgMWYhnSBv3BLw.CLv.CKJjPBhTla1IyW3YWYrIhNI.CKJjPBhTla1IyWzIWZm80bkwVYiQmH5jPLrnPBIHRYtYmLegWYtYWLhnSBwvhBIjfHk4lcx7EYkwVX48EbhnSBvvhBIjfHk4lcx7UXzQWXis1WvIhNI.CKJjPBhTla1IyWxUFbkEFceAmH5jPLrnPBIHxayM1Wt8VZyUlH5j.LtPSMv.CLvvhBIjfHuM2XeIWXzk1ahnSByvhBIjfHuM2Xe8lYlMWYzIhNIfCLtfCLv.SLwvhBIjfHuM2XeklajUFdhnSBw3RMw.CLv.CKJjPBh71bi8Eco0lXxUlH5j.LtDCMv.CLvvhBIjfHuM2XeAWZzMFZhnSBxbiK0.CLv.CLrnPBIHxayM1W2ElckMGZgAWYhnSBvvhBIjfHuM2Xe41aoMWYeAmH5j.LrnPBIHxayM1WxEFco81WvIhNI.CKJjPBh71bi80alY1bkQ2WvIhNI.CKJjPBh71bi8UZtQVY38EbhnSBvvhBIjfHuM2XeQWZsIlbk8EbhnSBvvhBIjfHuM2XeAWZzMFZeUFdv8EbhnSBwvhBIjfHuM2XeAWZzMFZewVZt8EbhnSBvvhBIjfHuM2XecWX1U1bnEFbk8EbhnSBvvhBIjfHuM2XeMVXxIWZkI2WuUGchnSBv3RMv.CLv.CKJjPBh71bi8UauQ1WuUGchnSBvvhBIjfHmEFck8EakYWYrIhNI.CKJjPBhbVXzU1Ws8FYkIhNI.CKJjPBhbVXzU1WjU1XgkmH5j.LtjCNv.CLvvhBIjfHmEFck8EakYWYr8EbhnSBwvhBIjfHjUFagk2WvUVXqYlbkEmH5jPLv.CLrnPBIHBYkwVX48EYxklckIhNI.iK0.CLv.CLrnPBIHBYkwVX48EbkE1ZxU1bhnSBx3xL3.CLv.CKJjPBhPVYrEVdeYVYkQlXgM1ZhnSBv3BLx.CLv.CKJjPBhPVYrEVdeYlbkEmH5j.Mz.CKJjPBhPVYrEVdeklavUGceAmH5j.LtTCLv.CLvvhBIjfHjUFagk2WvUVXqYlbkE2WvIhNIDCKJjPBhPVYrEVdeQlboYWYeAmH5j.LrnPBIHBYkwVX48EbkE1ZxU1beAmH5j.LrnPBIHBYkwVX48kYkUFYhE1Xq8EbhnSBvvhBIjfHjUFagk2WlIWYw8EbhnSBwvhBIjfHjUFagk2WuUGcvUGcecWYzIhNIHCKJjPBhPVYrEVde8VczAWcz8EYxkmH5jPLrnPBIHhYowFckI2WiUGcuYlYhnSB2jiM0vhBIjfHlkFazUlbeEmH5j.LtHyLv.CLvvhBIjfHlkFazUlbe0VZ3IhNIzBLtTiL0XCLyvhBIjfHlkFazUlbeMVcz8lYl8EbhnSBwvhBIjfHlkFazUlbeE2WvIhNI.CKJjPBhXVZrQWYx8Uaog2WvIhNI.CKJjPBh7VczAWcz8UZtAWcz80YgklahnSBwvhBIjfHuUGcvUGceIWY1UlbhIhNI.iKx.CLv.CLrnPBIHxa0QGb0Q2WvElahnSBvvhBIjfHuUGcvUGceIWY1Ulbh8EbhnSBvvhBIjfHuUGcvUGceAWXt8EbhnSBvvhBIjfHvEFcigVYx8UagQmbogmH5jvdJjPBIHBc4AWYhnSBhLWZm4VXrIBKJjPBIHxcoQFcnIhNIDCMrnPBIjfHnUVZmgFchnSByDCKJjPBIHBYkAGcnIhNIDCKJjPBIHBYgQWXhnSBaACKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.CKf.SWJjPB8whBIjfHqUVdeM2XgwVYhnSBhDjYxk1Xg41KhEFagY1atIBKJjPBhrVY48UauQ1WsAWYegmH5jvMyvhBIjfHqUVdeIVYtQ1WsAWYhnSBzfCKJjPBh.mbkMWYzIhNIHRPgwFcuABYkYVX0wFchvhBIjfHsE1ZkI2WtEVakIhNIHRSgQlbu4VXfvTXhMmHrnPBIHRXvA2WtEVakIhNIHRPgwFcuIBKJjPBhDFbv8kckI2bo8lahnSB1bCNzTiBIzGKJjfHk4lcoI2at0VYtQmH5jvdJjPBh.mbuQ2ai8FahnSBvvhBIjfHkQVZz8lbeElao0lH5jPLrnPBIHRYjkFcuI2Wh8VctQ1bhnSB6oPBIjfHzkGbkIhNIHxboclagwlHrnPBIjfH2kFYzglH5j.MrnPBIjfHnUVZmgFchnSBwvhBIjPBhPVYvQGZhnSBwvhBIjPBhPVXzElH5jvVvvBHvvBH4DiLr.hMxPSWJjPB8whBIjfHkQVZz8lbe4VcsIhNIDCKJjPBh71bi8EbuIGce8lYlMWYzIhNI.CKJjPBhzVXqUlbe4VXsUlH5jfHMEFYx8lagABSgI1bhvhBIjfHgAGbe4VXsUlH5jfHAEFaz8VQjkFcuImHrnPBIHRXvA2W1Ulbyk1atIhNIXyM3PSMJjPeJzGT.f..Y.fI.rB.3..P.fD.MAvW.PF.oQPlDvIAdRPnDLJApRvqDDKA1dg2........BD..........U...................W7M"
+        },
+        "children": []
+      },
+      {
+        "type": "HELDNOTE",
+        "properties": {
+          "on": false,
+          "note": 65,
+          "velocity": 100
+        },
+        "children": []
+      },
+      {
+        "type": "LANES",
+        "properties": {
+        },
+        "children": [
+          {
+            "type": "LANE",
+            "properties": {
+              "laneId": "50eab3486c5c4f0d9db5685191ec0eb6",
+              "paramIndex": 98,
+              "paramName": "gate_level",
+              "name": "gate_level",
+              "mute": false
+            },
+            "children": [
+              {
+                "type": "ITEM",
+                "properties": {
+                  "start": 0.0,
+                  "length": 66.243148491549775,
+                  "timebase": "musical",
+                  "beatsPerBar": 4,
+                  "beatUnit": 4,
+                  "gridBeats": 0.125,
+                  "lengthBeats": 123.75
+                },
+                "children": [
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 0.0,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 16.366,
+                      "value": 0.681640625,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 25.956,
+                      "value": 0.259137839078903,
+                      "shape": 1,
+                      "tension": 0.168684895833333
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 40.247999999999998,
+                      "value": 0.658133387565613,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 44.485999999999997,
+                      "value": 0.37458148598671,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 48.905999999999999,
+                      "value": 0.603166878223419,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 56.521999999999998,
+                      "value": 0.242466524243355,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 58.012000000000008,
+                      "value": 0.64892578125,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 77.686000000000007,
+                      "value": 0.45368304848671,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 100.600000000000009,
+                      "value": 0.352326780557632,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 83.426000000000002,
+                      "value": 0.923549115657806,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 89.872,
+                      "value": 0.163364961743355,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 85.719999999999999,
+                      "value": 0.486607134342194,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 94.817999999999998,
+                      "value": 0.029436383396387,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 11.494,
+                      "value": 0.44035992026329,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 70.950000000000003,
+                      "value": 0.68798828125,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 3.69,
+                      "value": 0.795061409473419,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 7.136,
+                      "value": 0.35442242026329,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 8.936,
+                      "value": 0.614536821842194,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 18.943999999999999,
+                      "value": 0.28125,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 106.800000000000011,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "TEMPO",
+                    "properties": {
+                      "beat": 0.0,
+                      "bpm": 120.0,
+                      "ramp": true
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "TEMPO",
+                    "properties": {
+                      "beat": 34.5,
+                      "bpm": 133.900000000000006,
+                      "ramp": true
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "TEMPO",
+                    "properties": {
+                      "beat": 51.5,
+                      "bpm": 117.200000000000003,
+                      "ramp": false
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "TEMPO",
+                    "properties": {
+                      "beat": 75.625,
+                      "bpm": 98.099999999999994,
+                      "ramp": false
+                    },
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "type": "ITEM",
+                "properties": {
+                  "start": 66.5,
+                  "length": 24.0,
+                  "timebase": "linear"
+                },
+                "children": [
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 6.900000000000006,
+                      "value": 0.300441563129425,
+                      "shape": 1,
+                      "tension": 0.048307291666667
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 10.5,
+                      "value": 0.58534300327301,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 0.800000000000004,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 22.70000000000001,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 5.100000000000009,
+                      "value": 0.367102593183517,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": -2.899999999999999,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "LANE",
+            "properties": {
+              "laneId": "db5f2a3003ab4be190f306bdae7c4eb6",
+              "paramIndex": 86,
+              "paramName": "osc_pitch",
+              "name": "main pitch"
+            },
+            "children": [
+              {
+                "type": "ITEM",
+                "properties": {
+                  "start": 0.1,
+                  "length": 55.199999999999996,
+                  "timebase": "linear"
+                },
+                "children": [
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 12.932000000000002,
+                      "value": 0.642996668815613,
+                      "shape": 1,
+                      "tension": -0.600000023841858
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 23.941000000000003,
+                      "value": 0.22266474366188,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 35.369,
+                      "value": 0.829380571842194,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 46.786000000000001,
+                      "value": 1.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 54.300000000000004,
+                      "value": 0.387195825576782,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 30.088999999999999,
+                      "value": 0.135672435164452,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 32.637999999999998,
+                      "value": 0.42236328125,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 37.361000000000004,
+                      "value": 0.17333984375,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 41.468000000000004,
+                      "value": 0.71533203125,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 8.280000000000001,
+                      "value": 0.033342633396387,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 0.5,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "type": "ITEM",
+                "properties": {
+                  "start": 55.299999999999997,
+                  "length": 16.089000000000013,
+                  "timebase": "linear"
+                },
+                "children": [
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 4.710000000000015,
+                      "value": 0.386633843183517,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 14.832000000000015,
+                      "value": 0.347231656312943,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 6.31900000000001,
+                      "value": 0.81029212474823,
+                      "shape": 1,
+                      "tension": 0.600000023841858
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 12.110000000000014,
+                      "value": 0.232846468687057,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "LANE",
+            "properties": {
+              "laneId": "fb4b1e0ed9a34fca8c0fd98ba661e446",
+              "paramIndex": 84,
+              "paramName": "osc_index",
+              "name": "osc_index",
+              "height": 129
+            },
+            "children": [
+              {
+                "type": "ITEM",
+                "properties": {
+                  "start": 8.9,
+                  "length": 40.300000000000004,
+                  "timebase": "linear"
+                },
+                "children": [
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 6.516,
+                      "value": 0.691506564617157,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 12.62510029498525,
+                      "value": 0.23608161509037,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 38.712000000000003,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 0.0,
+                      "value": 0.0,
+                      "shape": 1,
+                      "tension": 0.18642578125
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 8.134218289085547,
+                      "value": 0.818378329277039,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 10.254867256637167,
+                      "value": 0.726976871490479,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 11.070501474926255,
+                      "value": 0.633667826652527,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 13.843657817109149,
+                      "value": 0.367344319820404,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 16.861504424778765,
+                      "value": 0.310543030500412,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 17.840265486725663,
+                      "value": 0.311058223247528,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 18.819026548672568,
+                      "value": 0.350378423929214,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 20.450294985250743,
+                      "value": 0.472885102033615,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 22.0,
+                      "value": 0.776036620140076,
+                      "shape": 1,
+                      "tension": 0.255436197916667
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 29.600000000000001,
+                      "value": 0.825845658779144,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 33.200000000000003,
+                      "value": 0.808345019817352,
+                      "shape": 1,
+                      "tension": 0.386458333333333
+                    },
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "type": "ITEM",
+                "properties": {
+                  "start": 53.5,
+                  "length": 13.100000000000001,
+                  "timebase": "linear"
+                },
+                "children": [
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 2.600000000000001,
+                      "value": 0.620779752731323,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 1.299999999999997,
+                      "value": 0.217815890908241,
+                      "shape": 1,
+                      "tension": 0.140266927083333
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 7.399999999999999,
+                      "value": 0.760105311870575,
+                      "shape": 1,
+                      "tension": -0.600000023841858
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 12.299999999999997,
+                      "value": 0.203634515404701,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 9.099999999999994,
+                      "value": 0.638129591941833,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 9.400000000000006,
+                      "value": 0.638569951057434,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 2.917647058823526,
+                      "value": 0.435457170009613,
+                      "shape": 1,
+                      "tension": 1.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 6.700000000000003,
+                      "value": 0.224927425384521,
+                      "shape": 1,
+                      "tension": 0.5619140625
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 5.767798665858102,
+                      "value": 0.224927425384521,
+                      "shape": 1,
+                      "tension": 0.545540364583333
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 5.301697998787134,
+                      "value": 0.224927425384521,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 4.188235294117653,
+                      "value": 0.270266026258469,
+                      "shape": 0,
+                      "tension": -0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 5.534748332322621,
+                      "value": 0.350106090307236,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 6.400000000000006,
+                      "value": 0.761554896831512,
+                      "shape": 1,
+                      "tension": -0.785286458333333
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 10.700000000000003,
+                      "value": 0.366690039634705,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 9.799999999999997,
+                      "value": 0.366690039634705,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "LANE",
+            "properties": {
+              "laneId": "4d29617886b140f8b5aa4982a5dde00c",
+              "paramIndex": 82,
+              "paramName": "osc_ratio",
+              "name": "osc_ratio"
+            },
+            "children": [
+              {
+                "type": "ITEM",
+                "properties": {
+                  "start": 0.0,
+                  "length": 49.281999999999996,
+                  "timebase": "linear"
+                },
+                "children": [
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 8.933,
+                      "value": 1.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 1.707,
+                      "value": 0.43805804848671,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 21.369,
+                      "value": 0.471051901578903,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 27.609999999999999,
+                      "value": 0.687081456184387,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 34.213999999999999,
+                      "value": 0.197823658585548,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 37.597000000000001,
+                      "value": 0.639369428157806,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 38.942999999999998,
+                      "value": 0.755510628223419,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 43.598999999999997,
+                      "value": 0.026646206155419,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 47.116,
+                      "value": 1.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "type": "ITEM",
+                "properties": {
+                  "start": 50.872999999999998,
+                  "length": 13.100000000000001,
+                  "timebase": "linear"
+                },
+                "children": [
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 2.600000000000001,
+                      "value": 0.640285313129425,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 1.299999999999997,
+                      "value": 0.217815890908241,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 7.399999999999999,
+                      "value": 0.760105311870575,
+                      "shape": 1,
+                      "tension": -0.600000023841858
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 9.799999999999997,
+                      "value": 0.367866843938828,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 12.299999999999997,
+                      "value": 0.203634515404701,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "type": "ITEM",
+                "properties": {
+                  "start": 64.700000000000003,
+                  "length": 14.600000000000009,
+                  "timebase": "linear"
+                },
+                "children": [
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 1.799999999999997,
+                      "value": 0.58491849899292,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 3.799999999999997,
+                      "value": 0.912194311618805,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 5.799999999999997,
+                      "value": 0.498811155557632,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 6.900000000000006,
+                      "value": 0.241338312625885,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 7.600000000000009,
+                      "value": 0.001103940187022,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 7.900000000000006,
+                      "value": 0.171705156564713,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 10.100000000000009,
+                      "value": 0.568019688129425,
+                      "shape": 1,
+                      "tension": 0.421028645833333
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 14.600000000000009,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "LANE",
+            "properties": {
+              "laneId": "2b90f813f1494919beda5cdb802e8d71",
+              "paramIndex": 85,
+              "paramName": "osc_timbre",
+              "name": "osc_timbre"
+            },
+            "children": [
+              {
+                "type": "ITEM",
+                "properties": {
+                  "start": 11.0,
+                  "length": 53.400000000000006,
+                  "timebase": "linear"
+                },
+                "children": [
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 3.698,
+                      "value": 0.30998882651329,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 5.659,
+                      "value": 0.819266200065613,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 7.717,
+                      "value": 0.157924100756645,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 8.733000000000001,
+                      "value": 0.736607134342194,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 10.346,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 12.098000000000001,
+                      "value": 0.931919634342194,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 12.961,
+                      "value": 0.004185267724097,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 15.101000000000001,
+                      "value": 0.998046875,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 17.062999999999999,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 19.105,
+                      "value": 1.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 24.169,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 28.466999999999999,
+                      "value": 0.990373909473419,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 35.186,
+                      "value": 0.01123046875,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 42.942999999999998,
+                      "value": 1.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 51.709000000000003,
+                      "value": 0.003557477612048,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "LANE",
+            "properties": {
+              "laneId": "30bd8597a1a44bf2aeba9f451114e781",
+              "paramIndex": 83,
+              "paramName": "osc_offset",
+              "name": "osc_offset"
+            },
+            "children": [
+              {
+                "type": "ITEM",
+                "properties": {
+                  "start": 0.0,
+                  "length": 53.600000000000009,
+                  "timebase": "linear"
+                },
+                "children": [
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 6.565,
+                      "value": 0.329938620328903,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 16.367999999999999,
+                      "value": 0.066476002335548,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 27.632999999999999,
+                      "value": 0.128836497664452,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 39.721000000000004,
+                      "value": 0.648856043815613,
+                      "shape": 2,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 52.842000000000006,
+                      "value": 0.337611615657806,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 21.920999999999999,
+                      "value": 0.415666848421097,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 1.7,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 0.0,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "type": "ITEM",
+                "properties": {
+                  "start": 59.600000000000001,
+                  "length": 12.489000000000004,
+                  "timebase": "linear"
+                },
+                "children": [
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 1.110000000000007,
+                      "value": 0.386633843183517,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 11.232000000000006,
+                      "value": 0.347231656312943,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 2.719000000000001,
+                      "value": 0.81029212474823,
+                      "shape": 1,
+                      "tension": 0.600000023841858
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 8.510000000000005,
+                      "value": 0.232846468687057,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "LANE",
+            "properties": {
+              "laneId": "f170af28860744c6a380c06be9fdf5cd",
+              "paramIndex": 107,
+              "paramName": "delay_freq",
+              "name": "delay_freq"
+            },
+            "children": [
+              {
+                "type": "ITEM",
+                "properties": {
+                  "start": 4.600000000000001,
+                  "length": 53.100000000000001,
+                  "timebase": "linear"
+                },
+                "children": [
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 0.879,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 7.42,
+                      "value": 0.404645651578903,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 11.234,
+                      "value": 0.203752785921097,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 15.646000000000001,
+                      "value": 1.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 25.390999999999998,
+                      "value": 0.064662389457226,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 30.373999999999999,
+                      "value": 0.4482421875,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 34.918999999999997,
+                      "value": 0.29827007651329,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 37.743000000000002,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 43.450000000000003,
+                      "value": 0.363420754671097,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 48.015000000000001,
+                      "value": 1.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 51.860999999999997,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 18.699999999999999,
+                      "value": 0.373495727777481,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "LANE",
+            "properties": {
+              "laneId": "1950a300ea7c4c2196e40974c8b82d8b",
+              "paramIndex": 105,
+              "paramName": "delay_peakres",
+              "name": "delay_peakres",
+              "colour": 8,
+              "height": 72
+            },
+            "children": [
+              {
+                "type": "ITEM",
+                "properties": {
+                  "start": 18.600000000000001,
+                  "length": 53.400000000000006,
+                  "timebase": "linear"
+                },
+                "children": [
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 3.698,
+                      "value": 0.30998882651329,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 5.659,
+                      "value": 0.819266200065613,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 7.717,
+                      "value": 0.157924100756645,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 8.733000000000001,
+                      "value": 0.736607134342194,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 10.346,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 12.098000000000001,
+                      "value": 0.931919634342194,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 12.961,
+                      "value": 0.004185267724097,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 15.101000000000001,
+                      "value": 0.998046875,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 17.062999999999999,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 19.105,
+                      "value": 1.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 24.169,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 28.466999999999999,
+                      "value": 0.990373909473419,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 35.186,
+                      "value": 0.01123046875,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 42.942999999999998,
+                      "value": 1.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 51.709000000000003,
+                      "value": 0.003557477612048,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "LANE",
+            "properties": {
+              "laneId": "618d903ad92a42b79ffbf31b5a8723fc",
+              "paramIndex": 106,
+              "paramName": "delay_feedback",
+              "name": "delay_feedback",
+              "mute": false
+            },
+            "children": [
+              {
+                "type": "ITEM",
+                "properties": {
+                  "start": 0.0,
+                  "length": 54.5,
+                  "timebase": "linear"
+                },
+                "children": [
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 39.200000000000003,
+                      "value": 0.0,
+                      "shape": 1,
+                      "tension": 0.600000023841858
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 15.898,
+                      "value": 0.665457606315613,
+                      "shape": 1,
+                      "tension": 0.280794270833333
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 2.5,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 30.253,
+                      "value": 0.525530159473419,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 8.184999999999999,
+                      "value": 0.367954790592194,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 47.593000000000004,
+                      "value": 0.786551356315613,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 53.438000000000002,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 0.0,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "type": "ITEM",
+                "properties": {
+                  "start": 54.5,
+                  "length": 13.100000000000001,
+                  "timebase": "linear"
+                },
+                "children": [
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 2.600000000000001,
+                      "value": 0.640285313129425,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 1.299999999999997,
+                      "value": 0.217815890908241,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 7.399999999999999,
+                      "value": 0.760105311870575,
+                      "shape": 1,
+                      "tension": -0.600000023841858
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 9.799999999999997,
+                      "value": 0.367866843938828,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 12.299999999999997,
+                      "value": 0.203634515404701,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "LANE",
+            "properties": {
+              "laneId": "eef75b6e14834973910f34e1ab2fe830",
+              "paramIndex": 116,
+              "paramName": "filter_cutoff",
+              "name": "filter_cutoff",
+              "colour": 9,
+              "height": 85
+            },
+            "children": [
+              {
+                "type": "ITEM",
+                "properties": {
+                  "start": 0.0,
+                  "length": 51.981999999999992,
+                  "timebase": "linear"
+                },
+                "children": [
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 11.633000000000001,
+                      "value": 1.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 0.3,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 24.068999999999999,
+                      "value": 0.471051901578903,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 30.309999999999999,
+                      "value": 0.687081456184387,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 36.913999999999994,
+                      "value": 0.197823658585548,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 40.296999999999997,
+                      "value": 0.639369428157806,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 41.642999999999994,
+                      "value": 0.755510628223419,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 46.298999999999992,
+                      "value": 0.026646206155419,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 49.815999999999995,
+                      "value": 1.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 1.6,
+                      "value": 1.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 3.2,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 51.981999999999992,
+                      "value": 0.307070970535278,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  }
+                ]
+              },
+              {
+                "type": "ITEM",
+                "properties": {
+                  "start": 51.981999999999992,
+                  "length": 25.818000000000019,
+                  "timebase": "linear"
+                },
+                "children": [
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 4.016000000000012,
+                      "value": 0.30998882651329,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 5.977000000000012,
+                      "value": 0.819266200065613,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 8.035000000000011,
+                      "value": 0.157924100756645,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 9.051000000000013,
+                      "value": 0.736607134342194,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 10.664000000000012,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 12.416000000000013,
+                      "value": 0.931919634342194,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 13.279000000000012,
+                      "value": 0.004185267724097,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 14.818,
+                      "value": 0.975203812122345,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 15.918000000000017,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 17.11800000000002,
+                      "value": 1.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 18.218000000000007,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 18.618000000000016,
+                      "value": 1.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 19.518000000000008,
+                      "value": 0.017153533175588,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 20.118000000000016,
+                      "value": 1.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 20.718000000000011,
+                      "value": 0.031844429671764,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 21.018000000000008,
+                      "value": 0.964928686618805,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 21.618000000000016,
+                      "value": 0.038043476641178,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 21.718000000000011,
+                      "value": 0.97749662399292,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 21.918000000000013,
+                      "value": 0.030570652335882,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 22.218000000000011,
+                      "value": 0.944887936115265,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 22.318000000000005,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 22.818000000000005,
+                      "value": 0.980129063129425,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 23.218000000000011,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 24.218000000000011,
+                      "value": 1.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 24.818000000000019,
+                      "value": 0.269870936870575,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 25.218000000000011,
+                      "value": 0.056810460984707,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 25.818000000000019,
+                      "value": 0.0,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  },
+                  {
+                    "type": "POINT",
+                    "properties": {
+                      "time": 0.018000000000008,
+                      "value": 0.293498396873474,
+                      "shape": 0,
+                      "tension": 0.0
+                    },
+                    "children": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
