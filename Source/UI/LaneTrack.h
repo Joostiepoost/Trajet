@@ -20,8 +20,10 @@
 #include "../Engine/AutomationController.h"
 #include "EditorState.h"
 #include "../Model/ItemTime.h"
+#include "../Model/Library.h"
 
-class LaneTrack : public juce::Component
+class LaneTrack : public juce::Component,
+                  public juce::DragAndDropTarget
 {
 public:
     /** Tools for the item editor; in the main window gestures use modifier keys instead. */
@@ -47,6 +49,7 @@ public:
         /** Rubber-band selection across lanes: screen rectangle, add to selection, gesture finished. */
         std::function<void (juce::Rectangle<int>, bool, bool)> rubberBand;
         std::function<void (juce::ValueTree item)> openItemEditor;
+        std::function<void()> saveToLibrary;    // the selected item
     };
 
     LaneTrack (Context&, juce::ValueTree lane);
@@ -58,6 +61,12 @@ public:
     void mouseUp (const juce::MouseEvent&) override;
     void mouseDoubleClick (const juce::MouseEvent&) override;
     void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
+
+    // Library entries dragged onto the lane.
+    bool isInterestedInDragSource (const SourceDetails&) override;
+    void itemDragMove (const SourceDetails&) override;
+    void itemDragExit (const SourceDetails&) override;
+    void itemDropped (const SourceDetails&) override;
 
     static constexpr int stripHeight = 14;
 
@@ -76,6 +85,11 @@ private:
 
     juce::ValueTree itemAt (float x) const;
     juce::Rectangle<float> itemBounds (const juce::ValueTree& item) const;
+    bool loadDragEntry (const SourceDetails&);
+    Library::Entry dragEntry;
+    juce::String dragEntryPath;
+    double dropTime = -1.0;
+    bool dropFits = false;
     void paintNotes (juce::Graphics&, const juce::ValueTree& item, juce::Rectangle<float> itemArea,
                      juce::Range<int> pitches, juce::Colour, bool muted);
     Zone zoneFor (const juce::ValueTree& item, juce::Point<float> pos) const;

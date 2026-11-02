@@ -594,6 +594,7 @@ ScoreView::ScoreView (Project& p, PluginHost& h, AutomationController& c, SnapSe
     trackContext.handleWheel = [this] (const juce::MouseEvent& e, const juce::MouseWheelDetails& w, juce::Component& src) { handleWheel (e, w, src); };
     trackContext.rubberBand  = [this] (juce::Rectangle<int> area, bool add, bool finished) { rubberBand (area, add, finished); };
     trackContext.openItemEditor = [this] (juce::ValueTree item) { if (onOpenItemEditor) onOpenItemEditor (item); };
+    trackContext.saveToLibrary  = [this] { if (onSaveToLibrary) onSaveToLibrary(); };
     trackContext.laneAt      = [this] (juce::Point<int> screenPos)
     {
         for (auto* row : rows)

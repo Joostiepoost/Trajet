@@ -36,7 +36,9 @@ Other options:
 | 7 | Generator items: LFO, random, formula; bake to points | done |
 | 8 | Render to WAV (offline, 44.1–96 kHz, 16/24/32-float), automation CSV, output limiter | done |
 | 9 | Lane groups (fold, colour, move, group mute/solo), recent files | done |
-| 10 | Note lanes: MIDI notes with a piano roll and velocity strip | testing |
+| 10 | Note lanes: MIDI notes with a piano roll and velocity strip | done |
+| 11 | Library: save items with name and tags, search, drag onto lanes | testing |
+| 12 | Export: MIDI file (CC 7/14-bit + notes), REAPER automation items, REAPER project from a template | testing |
 
 ## Using step 1
 
@@ -57,6 +59,25 @@ The last loaded plugin is reloaded automatically when Trajet starts.
 - **Edit menu**: Undo (⌘Z) and Redo (⇧⌘Z). For now only the held-note settings are undoable; lanes and points join from step 3 on.
 - **Audio menu**: audio processing on/off (⇧⌘A) and the plugin's panel (⌘E).
 - Trajet reopens the last project when it starts, and asks to save unsaved changes when you quit.
+
+## Library (step 11)
+
+Keep items you like (point curves, generators, note items) and reuse them in any project.
+
+- **Save**: select an item and press **⌘L**, or right-click it → *Save to library…*. Give it a name and tags (words separated by spaces).
+- The **Library** tab (beside the Inspector; **⇧⌘L**) lists the entries with a small picture, their length and tags. Type in the search box to filter by name, tag or source lane.
+- **Use**: drag an entry onto a lane (a ghost shows where it lands; red = no room or wrong kind of lane), or double-click it to put it at the playhead in the active lane. Automation items go in parameter lanes, note items in note lanes.
+- Right-click an entry: rename, edit tags, show in Finder, delete (to the bin).
+- Entries are plain files (`.trajetitem`, JSON) in `~/Music/Trajet Library`; **Folder…** picks another folder (a shared one, a project folder…).
+
+## Export (step 12)
+
+**File → Export lanes… (⌥⌘E)**. Choose the lanes (all, the active lane's group, or only the active lane) and a format:
+
+- **MIDI file**: every automation lane becomes one controller, in lane order from the first CC you choose (7-bit, or 14-bit as CC n + CC n+32 for CC 0-31), on the channel you choose. Curves are sampled at the resolution and written when the value changes; note lanes become notes. The file is at 120 bpm, so its times match the score in any DAW. The CC numbers are listed as text in the file.
+- **REAPER automation items**: one `.ReaperAutoItem` per lane in a folder. In REAPER show the plugin parameter's envelope, right-click it → *Insert automation item*, then load the file. Positions are in beats: set the tempo of the REAPER project they go into. (Put them in `~/Library/Application Support/REAPER/AutomationItems` to see them in REAPER's load menu.)
+- **REAPER project**: needs a template, made once: in REAPER, put the plugin (with the patch you want) on the first track of an empty project and save it. Trajet copies that project, adds one envelope per lane to the plugin and the notes as a MIDI item. The envelopes refer to parameters by number, as Trajet sees them; check in REAPER that each envelope sits on the right parameter.
+- **Points**: *Keep points editable* writes Trajet's linear, hold and smooth points as REAPER points (smooth becomes REAPER's "slow start/end", very close), and samples curves and generators. *Sample everything* samples every curve exactly. Before the first item a lane holds its patch value, and between items the last value holds, as in Trajet.
 
 ## Note lanes (step 10)
 

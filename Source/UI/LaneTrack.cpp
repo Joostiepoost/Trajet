@@ -463,6 +463,19 @@ void LaneTrack::paint (juce::Graphics& g)
         g.drawRect (rubberRect, 1.0f);
     }
 
+    // Where a dragged library entry would land.
+    if (dropTime >= 0.0)
+    {
+        const float x0 = tv.toX (dropTime), x1 = tv.toX (dropTime + (double) dragEntry.item[IDs::length]);
+        auto ghost = juce::Rectangle<float> (x0, 2.0f, juce::jmax (3.0f, x1 - x0), h - 4.0f);
+        g.setColour ((dropFits ? accent : juce::Colours::red).withAlpha (0.18f));
+        g.fillRoundedRectangle (ghost, 4.0f);
+        if (dropFits)
+            Library::drawThumbnail (g, dragEntry.item, ghost.reduced (2.0f, 6.0f), Project::laneColour (lane));
+        g.setColour ((dropFits ? accent : juce::Colours::red).withAlpha (0.9f));
+        g.drawRoundedRectangle (ghost, 4.0f, 1.5f);
+    }
+
     // Playhead.
     g.setColour (accent.withAlpha (0.9f));
     g.drawVerticalLine ((int) tv.toX (ctx.host.getEngine().getPositionSeconds()), 0.0f, h);
@@ -1207,6 +1220,7 @@ void LaneTrack::showItemMenu (juce::ValueTree item)
         m.addItem (14, "Bake generator to points", ItemTime::isGenerator (item));
     }
     m.addItem (4, Project::isNoteItem (item) ? "Open in piano roll" : "Open in item editor");
+    m.addItem (5, "Save to library...");
     m.addSeparator();
     m.addItem (2, "Delete item");
 
@@ -1244,6 +1258,12 @@ void LaneTrack::showItemMenu (juce::ValueTree item)
         if (result == 4)
         {
             if (safeThis->ctx.openItemEditor) safeThis->ctx.openItemEditor (item);
+            return;
+        }
+        if (result == 5)
+        {
+            safeThis->ctx.selection.selectItem (item);
+            if (safeThis->ctx.saveToLibrary) safeThis->ctx.saveToLibrary();
             return;
         }
 
@@ -1314,4 +1334,58 @@ void LaneTrack::editPointNumerically (juce::ValueTree point)
         point.setProperty (IDs::time, t, &um);
         point.setProperty (IDs::value, juce::jlimit (0.0f, 1.0f, v), &um);
     }), false);
+}
+
+//==============================================================================
+// Library entries dragged onto the lane
+
+bool LaneTrack::loadDragEntry (const SourceDetails& d)
+{
+    const auto text = d.description.toString();
+    if (! text.startsWith (Library::dragPrefix)) return false;
+    const auto path = text.fromFirstOccurrenceOf (Library::dragPrefix, false, false);
+    if (path != dragEntryPath)
+    {
+        dragEntryPath = path;
+        if (! Library::load (juce::File (path), dragEntry)) { dragEntryPath = {}; return false; }
+    }
+    return true;
+}
+
+bool LaneTrack::isInterestedInDragSource (const SourceDetails& d)
+{
+    return d.description.toString().startsWith (Library::dragPrefix);
+}
+
+void LaneTrack::itemDragMove (const SourceDetails& d)
+{
+    if (! loadDragEntry (d)) return;
+    dropTime = juce::jmax (0.0, ctx.snap.snap (ctx.timeView.toTime ((float) d.localPosition.x)));
+    // Near the end: slide it back so it ends with the project.
+    const double length = dragEntry.item[IDs::length];
+    if (dropTime + length > ctx.project.getLengthSeconds())
+        dropTime = juce::jmax (0.0, ctx.project.getLengthSeconds() - length);
+    dropFits = (Project::isNoteLane (lane) == (dragEntry.kind == "notes"))
+               && ctx.project.isFree (lane, dropTime, (double) dragEntry.item[IDs::length]);
+    repaint();
+}
+
+void LaneTrack::itemDragExit (const SourceDetails&)
+{
+    dropTime = -1.0;
+    repaint();
+}
+
+void LaneTrack::itemDropped (const SourceDetails& d)
+{
+    const double time = dropTime;
+    dropTime = -1.0;
+    repaint();
+    if (! loadDragEntry (d) || time < 0.0) return;
+
+    juce::ValueTree inserted;
+    const auto error = Library::insert (ctx.project, dragEntry, lane, time, &inserted);
+    ctx.showStatus (error.isEmpty() ? "Inserted \"" + dragEntry.name + "\"." : error);
+    if (inserted.isValid())
+        ctx.selection.selectItem (inserted);
 }
