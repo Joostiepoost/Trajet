@@ -579,7 +579,8 @@ void MainComponent::getAllCommands (juce::Array<juce::CommandID>& commands)
                          cmdZoomIn, cmdZoomOut, cmdZoomFit,
                          cmdNudgeLeft, cmdNudgeRight, cmdNudgeUp, cmdNudgeDown,
                          cmdNudgeLeftBig, cmdNudgeRightBig, cmdNudgeUpBig, cmdNudgeDownBig,
-                         cmdSelectAll, cmdSmooth, cmdThin, cmdReverse, cmdInvert, cmdOpenItemEditor });
+                         cmdSelectAll, cmdSmooth, cmdThin, cmdReverse, cmdInvert, cmdOpenItemEditor,
+                         cmdRender, cmdExportCsv });
 }
 
 void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommandInfo& info)
@@ -597,6 +598,12 @@ void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommand
                         info.addDefaultKeypress ('s', cmd); break;
         case cmdSaveAs: info.setInfo ("Save as...", "Save the project under a new name", "File", 0);
                         info.addDefaultKeypress ('s', cmd | shift); break;
+        case cmdRender: info.setInfo ("Render to WAV...", "Render the score to an audio file", "File", 0);
+                        info.addDefaultKeypress ('r', cmd);
+                        info.setActive (host.getPlugin() != nullptr && ! host.isRendering()); break;
+        case cmdExportCsv: info.setInfo ("Export automation as CSV...", "Write the lanes' values as a table", "File", 0);
+                        info.addDefaultKeypress ('r', cmd | shift);
+                        info.setActive (! host.isRendering()); break;
 
         case cmdUndo:
         {
@@ -704,12 +711,17 @@ void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommand
 
 bool MainComponent::perform (const InvocationInfo& info)
 {
+    if (host.isRendering())
+        return true;    // nothing may change while a render runs
+
     switch (info.commandID)
     {
         case cmdNew:        newProject(); break;
         case cmdOpen:       openProject(); break;
         case cmdSave:       saveProject (false); break;
         case cmdSaveAs:     saveProject (true); break;
+        case cmdRender:     showRenderDialog (false); break;
+        case cmdExportCsv:  showRenderDialog (true); break;
         case cmdUndo:       project.getUndoManager().undo(); break;
         case cmdRedo:       project.getUndoManager().redo(); break;
         case cmdAudioOnOff: setAudioEnabled (! host.isAudioEnabled()); break;
@@ -766,6 +778,9 @@ juce::PopupMenu MainComponent::getMenuForIndex (int menuIndex, const juce::Strin
         menu.addSeparator();
         menu.addCommandItem (&commandManager, cmdSave);
         menu.addCommandItem (&commandManager, cmdSaveAs);
+        menu.addSeparator();
+        menu.addCommandItem (&commandManager, cmdRender);
+        menu.addCommandItem (&commandManager, cmdExportCsv);
     }
     else if (menuIndex == 1)
     {
@@ -883,4 +898,76 @@ void MainComponent::resized()
     transportBar.setBounds (area.removeFromTop (40));
     inspector.setBounds (area.removeFromRight (230));
     scoreView.setBounds (area);
+}
+
+//==============================================================================
+// Render and CSV export
+
+juce::File MainComponent::defaultExportFile (const juce::String& extension) const
+{
+    auto folder = lastExportFolder;
+    if (! folder.isDirectory())
+        folder = project.getFile().existsAsFile() ? project.getFile().getParentDirectory()
+                                                  : juce::File::getSpecialLocation (juce::File::userMusicDirectory);
+    auto name = project.getFile().existsAsFile() ? project.getFile().getFileNameWithoutExtension() : juce::String ("Trajet render");
+    return folder.getChildFile (name + extension);
+}
+
+void MainComponent::showRenderDialog (bool csvOnly)
+{
+    if (! csvOnly && host.getPlugin() == nullptr)
+    {
+        showStatus ("Load a plugin first: there is nothing to render.");
+        return;
+    }
+
+    RenderSettings initial;
+    initial.load (*host.appProperties.getUserSettings());
+    initial.start = 0.0;
+    initial.end = project.getLengthSeconds();
+
+    juce::String noteText ("Held note: off");
+    if (host.isHeldNoteOn())
+        noteText = "Held note: " + juce::MidiMessage::getMidiNoteName (host.getHeldNoteNumber(), true, true, 3)
+                   + ", velocity " + juce::String (host.getHeldVelocity()) + " (released at the end)";
+
+    const auto mode = csvOnly ? RenderDialog::Mode::csv : RenderDialog::Mode::render;
+    RenderDialog::show (mode, initial, project.getLengthSeconds(), noteText, this, [this, csvOnly] (RenderSettings s)
+    {
+        s.save (*host.appProperties.getUserSettings());
+
+        const auto ext = csvOnly ? juce::String (".csv") : juce::String (".wav");
+        exportChooser = std::make_unique<juce::FileChooser> (csvOnly ? "Export automation as CSV" : "Render to WAV",
+                                                             defaultExportFile (ext), "*" + ext);
+        const auto chooserFlags = juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::canSelectFiles
+                           | juce::FileBrowserComponent::warnAboutOverwriting;
+
+        exportChooser->launchAsync (chooserFlags, [this, s, csvOnly, ext] (const juce::FileChooser& fc) mutable
+        {
+            auto file = fc.getResult();
+            if (file == juce::File())
+                return;
+            file = file.withFileExtension (ext);
+            lastExportFolder = file.getParentDirectory();
+            s.file = file;
+
+            if (csvOnly)
+            {
+                const auto error = AutomationCsv::write (file, project, host, controller, s);
+                showStatus (error.isEmpty() ? "Automation written to " + file.getFileName() + "." : "CSV export failed: " + error);
+                return;
+            }
+
+            if (pluginWindow != nullptr)
+                closePluginWindow();    // the plugin's own window should not change the patch meanwhile
+
+            RenderJob::start (project, host, controller, s, this, [this] (const juce::String& message)
+            {
+                showStatus (message);
+                juce::AlertWindow::showMessageBoxAsync (juce::MessageBoxIconType::InfoIcon, "Render", message, "OK", this);
+                commandManager.commandStatusChanged();
+            });
+            commandManager.commandStatusChanged();
+        });
+    });
 }
