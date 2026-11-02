@@ -46,7 +46,8 @@ target_sources(Trajet PRIVATE
     Source/Main.cpp
     Source/MainComponent.cpp
     Source/PluginHost.cpp
-    Source/ParameterListComponent.cpp)
+    Source/ParameterListComponent.cpp
+    Source/Model/Project.cpp)
 
 target_compile_definitions(Trajet PRIVATE
     JUCE_APPLICATION_NAME_STRING="$<TARGET_PROPERTY:Trajet,JUCE_PRODUCT_NAME>"

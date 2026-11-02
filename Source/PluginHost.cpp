@@ -84,6 +84,7 @@ void PluginHost::loadPlugin (const juce::PluginDescription& description,
             }
 
             plugin = std::move (instance);
+            plugin->addListener (this);
             player.setProcessor (plugin.get());
 
             if (auto xml = description.createXml())
@@ -104,6 +105,7 @@ void PluginHost::unloadPlugin()
 
     soundingNote = -1;
     player.setProcessor (nullptr);
+    plugin->removeListener (this);
     plugin.reset();
 
     if (onPluginChanged) onPluginChanged();

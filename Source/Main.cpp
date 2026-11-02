@@ -25,6 +25,14 @@ public:
 
     void systemRequestedQuit() override
     {
+        // Ask to save unsaved changes first.
+        if (mainWindow != nullptr)
+            if (auto* main = dynamic_cast<MainComponent*> (mainWindow->getContentComponent()))
+            {
+                main->tryToQuit ([] { juce::JUCEApplication::quit(); });
+                return;
+            }
+
         quit();
     }
 

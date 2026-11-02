@@ -8,7 +8,8 @@
 
 #include <JuceHeader.h>
 
-class PluginHost : private juce::ChangeListener
+class PluginHost : private juce::ChangeListener,
+                   private juce::AudioProcessorListener
 {
 public:
     PluginHost();
@@ -48,11 +49,23 @@ public:
     void setAudioEnabled (bool shouldBeEnabled);
     bool isAudioEnabled() const noexcept    { return audioEnabled; }
 
+    /** True once if the plugin's patch changed since the last call (you turned a dial,
+        picked a preset...). Used to mark the project as unsaved. */
+    bool consumePatchChangedFlag() noexcept  { return patchChanged.exchange (false); }
+
     /** Called (on the message thread) whenever a plugin has been loaded or unloaded. */
     std::function<void()> onPluginChanged;
 
 private:
     void changeListenerCallback (juce::ChangeBroadcaster*) override;
+
+    // AudioProcessorListener: may be called from any thread, so it only sets a flag.
+    void audioProcessorParameterChanged (juce::AudioProcessor*, int, float) override   { patchChanged = true; }
+    void audioProcessorChanged (juce::AudioProcessor*, const ChangeDetails& d) override
+    {
+        if (d.parameterInfoChanged || d.programChanged || d.nonParameterStateChanged)
+            patchChanged = true;
+    }
     void sendNoteOn();
     void sendNoteOff();
     bool deviceIsRunning() const;
@@ -61,6 +74,7 @@ private:
     std::unique_ptr<juce::AudioPluginInstance> plugin;
 
     bool audioEnabled = true;
+    std::atomic<bool> patchChanged { false };
     bool heldNoteOn = false;
     int heldNote = 48, heldVelocity = 100, soundingNote = -1;
 

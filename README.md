@@ -28,6 +28,7 @@ Other options:
 | --- | --- | --- |
 | 0 | Toolchain: blank window | done |
 | 1 | Plugin host: scan, load, open editor, audio settings, parameter list, held note, audio on/off | done |
+| 2 | Projects: new, open, save (with the plugin's patch), undo/redo, menu bar | testing |
 
 ## Using step 1
 
@@ -39,3 +40,12 @@ Other options:
 6. **Held note** sends a sustained note for synths that need one; set its pitch and velocity next to it.
 
 The last loaded plugin is reloaded automatically when Trajet starts.
+
+## Using step 2
+
+- **File menu**: New (⌘N), Open (⌘O), Save (⌘S), Save as (⇧⌘S). Projects are `.trajet` files: plain JSON you can open in a text editor.
+- A saved project stores the plugin **and its patch**: open it again and Aalto comes back exactly as you left it.
+- The window title shows the project name, with `*` when there are unsaved changes (turning a dial in Aalto counts as a change).
+- **Edit menu**: Undo (⌘Z) and Redo (⇧⌘Z). For now only the held-note settings are undoable; lanes and points join from step 3 on.
+- **Audio menu**: audio processing on/off (⇧⌘A) and the plugin's panel (⌘E).
+- Trajet reopens the last project when it starts, and asks to save unsaved changes when you quit.

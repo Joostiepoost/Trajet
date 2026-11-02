@@ -5,11 +5,12 @@ namespace
     const juce::Colour background   (0xff1e2126);
     const juce::Colour toolbarColour(0xff262a31);
 
-    // A middle dot, written so it survives any source-file encoding.
-    const juce::String dot = juce::String (juce::CharPointer_UTF8 ("\xc2\xb7"));
+    // A middle dot and an em dash, written so they survive any source-file encoding.
+    const juce::String dot  = juce::String (juce::CharPointer_UTF8 ("\xc2\xb7"));
+    const juce::String dash = juce::String (juce::CharPointer_UTF8 ("\xe2\x80\x94"));
 
     //==============================================================================
-    // A simple window that owns a component and deletes itself from its owner on close.
+    // A simple window that owns a component; its owner deletes it on close.
     class ToolWindow : public juce::DocumentWindow
     {
     public:
@@ -34,22 +35,12 @@ namespace
 //==============================================================================
 MainComponent::MainComponent()
 {
-    host.onPluginChanged = [this] { pluginChanged(); };
+    host.onPluginChanged       = [this] { pluginChanged(); };
+    project.onHeldNoteChanged  = [this] { heldNoteModelChanged(); };
+    project.onProjectLoaded    = [this] { loadPluginFromProject(); };
 
     for (auto* b : { &scanButton, &loadButton, &editButton, &audioButton, &audioOnButton })
         addAndMakeVisible (b);
-
-    // Audio processing on/off, to save CPU and battery while you think and draw.
-    audioOnButton.setClickingTogglesState (true);
-    audioOnButton.setToggleState (true, juce::dontSendNotification);
-    audioOnButton.setTooltip ("Pause audio processing to save CPU (the plugin stays loaded)");
-    audioOnButton.setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff2e7d4f));
-    audioOnButton.onClick = [this]
-    {
-        host.setAudioEnabled (audioOnButton.getToggleState());
-        updateAudioOnButton();
-    };
-    updateAudioOnButton();
 
     scanButton.setTooltip ("Scan for AU and VST3 plugins");
     scanButton.onClick  = [this] { showPluginScanner(); };
@@ -57,55 +48,157 @@ MainComponent::MainComponent()
     editButton.onClick  = [this] { togglePluginWindow(); };
     audioButton.onClick = [this] { showAudioSettings(); };
 
+    // Audio processing on/off, to save CPU and battery while you think and draw.
+    audioOnButton.setClickingTogglesState (true);
+    audioOnButton.setToggleState (true, juce::dontSendNotification);
+    audioOnButton.setTooltip ("Pause audio processing to save CPU (the plugin stays loaded)");
+    audioOnButton.setColour (juce::TextButton::buttonOnColourId, juce::Colour (0xff2e7d4f));
+    audioOnButton.onClick = [this] { setAudioEnabled (audioOnButton.getToggleState()); };
+    updateAudioOnButton();
+
     pluginLabel.setFont (juce::FontOptions (15.0f, juce::Font::bold));
     pluginLabel.setJustificationType (juce::Justification::centredLeft);
     addAndMakeVisible (pluginLabel);
 
-    // Held note: note number (shown as a note name) and velocity.
+    // Held note: stored in the project, so it is saved and undoable.
     addAndMakeVisible (heldNoteToggle);
-    heldNoteToggle.onClick = [this] { updateHeldNote(); };
+    heldNoteToggle.onClick = [this]
+    {
+        project.getUndoManager().beginNewTransaction ("Held note");
+        heldNoteControlsChanged();
+    };
 
     noteSlider.setSliderStyle (juce::Slider::LinearBar);
     noteSlider.setRange (0, 127, 1);
-    noteSlider.setValue (48, juce::dontSendNotification);
     noteSlider.textFromValueFunction = [] (double v)
     {
         return "Note " + juce::MidiMessage::getMidiNoteName ((int) v, true, true, 3);
     };
-    noteSlider.onValueChange = [this] { updateHeldNote(); };
-    noteSlider.updateText();
     addAndMakeVisible (noteSlider);
 
     velocitySlider.setSliderStyle (juce::Slider::LinearBar);
     velocitySlider.setRange (1, 127, 1);
-    velocitySlider.setValue (100, juce::dontSendNotification);
     velocitySlider.textFromValueFunction = [] (double v) { return "Velocity " + juce::String ((int) v); };
-    velocitySlider.onValueChange = [this] { updateHeldNote(); };
-    velocitySlider.updateText();
     addAndMakeVisible (velocitySlider);
+
+    for (auto* s : { &noteSlider, &velocitySlider })
+    {
+        // One undo step per drag, not one per pixel.
+        s->onDragStart   = [this] { project.getUndoManager().beginNewTransaction ("Held note"); };
+        s->onValueChange = [this] { heldNoteControlsChanged(); };
+    }
 
     addAndMakeVisible (parameterList);
 
+    // Commands, keyboard shortcuts and the macOS menu bar.
+    commandManager.registerAllCommandsForTarget (this);
+    commandManager.setFirstCommandTarget (this);
+    addKeyListener (commandManager.getKeyMappings());
+   #if JUCE_MAC
+    juce::MenuBarModel::setMacMainMenu (this);
+   #endif
+    setApplicationCommandManagerToWatch (&commandManager);
+
+    heldNoteModelChanged();
     pluginChanged();
 
-    // Reload the plugin used last time, if any.
-    if (auto last = host.getLastPluginDescription())
-        loadPlugin (*last);
+    // Reopen the last project; without one, reload the last plugin.
+    auto lastProject = project.getLastDocumentOpened();
+    juce::Component::SafePointer<MainComponent> safeThis (this);
 
-    startTimerHz (2);
+    if (lastProject.existsAsFile())
+    {
+        project.loadFromAsync (lastProject, false, [safeThis] (juce::Result result)
+        {
+            if (safeThis != nullptr && result.failed())
+                safeThis->project.resetToDefault();
+        });
+    }
+    else if (auto last = host.getLastPluginDescription())
+    {
+        loadPluginFromMenu (*last);
+        project.setChangedFlag (false);
+    }
+
+    startTimerHz (4);
     setSize (1200, 760);
 }
 
 MainComponent::~MainComponent()
 {
     stopTimer();
+   #if JUCE_MAC
+    juce::MenuBarModel::setMacMainMenu (nullptr);
+   #endif
     host.onPluginChanged = nullptr;
+    project.onHeldNoteChanged = nullptr;
+    project.onProjectLoaded = nullptr;
     pluginWindow = nullptr;     // the plugin's editor must go before the plugin itself
     scannerWindow = nullptr;
     parameterList.setPlugin (nullptr);
 }
 
 //==============================================================================
+// Projects
+
+void MainComponent::newProject()
+{
+    juce::Component::SafePointer<MainComponent> safeThis (this);
+    project.saveIfNeededAndUserAgreesAsync ([safeThis] (juce::FileBasedDocument::SaveResult r)
+    {
+        if (safeThis == nullptr || r != juce::FileBasedDocument::savedOk)
+            return;
+
+        safeThis->closePluginWindow();
+        safeThis->host.unloadPlugin();
+        safeThis->project.resetToDefault();
+        safeThis->updateWindowTitle();
+    });
+}
+
+void MainComponent::openProject()
+{
+    juce::Component::SafePointer<MainComponent> safeThis (this);
+    project.saveIfNeededAndUserAgreesAsync ([safeThis] (juce::FileBasedDocument::SaveResult r)
+    {
+        if (safeThis == nullptr || r != juce::FileBasedDocument::savedOk)
+            return;
+
+        safeThis->project.loadFromUserSpecifiedFileAsync (true, [safeThis] (juce::Result)
+        {
+            if (safeThis != nullptr)
+                safeThis->updateWindowTitle();
+        });
+    });
+}
+
+void MainComponent::saveProject (bool saveAs)
+{
+    juce::Component::SafePointer<MainComponent> safeThis (this);
+    auto done = [safeThis] (juce::FileBasedDocument::SaveResult)
+    {
+        if (safeThis != nullptr)
+            safeThis->updateWindowTitle();
+    };
+
+    if (saveAs || ! project.getFile().existsAsFile())
+        project.saveAsInteractiveAsync (true, done);
+    else
+        project.saveAsync (true, true, done);
+}
+
+void MainComponent::tryToQuit (std::function<void()> quit)
+{
+    project.saveIfNeededAndUserAgreesAsync ([quit] (juce::FileBasedDocument::SaveResult r)
+    {
+        if (r == juce::FileBasedDocument::savedOk && quit)
+            quit();
+    });
+}
+
+//==============================================================================
+// Plugins
+
 void MainComponent::showPluginScanner()
 {
     if (scannerWindow != nullptr)
@@ -132,11 +225,8 @@ void MainComponent::showPluginScanner()
 
 void MainComponent::showLoadMenu()
 {
-    auto types = host.knownPlugins.getTypes();
-
-    // Only instruments are interesting here.
     juce::Array<juce::PluginDescription> instruments;
-    for (auto& t : types)
+    for (auto& t : host.knownPlugins.getTypes())
         if (t.isInstrument)
             instruments.add (t);
 
@@ -163,18 +253,18 @@ void MainComponent::showLoadMenu()
 
                             auto index = juce::KnownPluginList::getIndexChosenByMenu (instruments, result);
                             if (juce::isPositiveAndBelow (index, instruments.size()))
-                                safeThis->loadPlugin (instruments.getReference (index));
+                                safeThis->loadPluginFromMenu (instruments.getReference (index));
                         });
 }
 
-void MainComponent::loadPlugin (const juce::PluginDescription& description)
+void MainComponent::loadPluginFromMenu (const juce::PluginDescription& description)
 {
     closePluginWindow();
     statusText = "Loading " + description.name + " ...";
     repaint();
 
     juce::Component::SafePointer<MainComponent> safeThis (this);
-    host.loadPlugin (description, [safeThis, name = description.name] (const juce::String& error)
+    host.loadPlugin (description, [safeThis, description] (const juce::String& error)
     {
         if (safeThis == nullptr)
             return;
@@ -183,7 +273,57 @@ void MainComponent::loadPlugin (const juce::PluginDescription& description)
 
         if (error.isNotEmpty())
             juce::AlertWindow::showMessageBoxAsync (juce::MessageBoxIconType::WarningIcon,
-                                                    "Could not load " + name, error);
+                                                    "Could not load " + description.name, error);
+        else
+            safeThis->project.setPluginDescription (description);
+
+        safeThis->repaint();
+    });
+}
+
+void MainComponent::loadPluginFromProject()
+{
+    closePluginWindow();
+    auto description = project.getPluginDescription();
+
+    if (description == nullptr)
+    {
+        host.unloadPlugin();
+        return;
+    }
+
+    statusText = "Loading " + description->name + " ...";
+    repaint();
+
+    juce::Component::SafePointer<MainComponent> safeThis (this);
+    host.loadPlugin (*description, [safeThis, name = description->name] (const juce::String& error)
+    {
+        if (safeThis == nullptr)
+            return;
+
+        safeThis->statusText = {};
+
+        if (error.isNotEmpty())
+        {
+            juce::AlertWindow::showMessageBoxAsync (juce::MessageBoxIconType::WarningIcon,
+                                                    "Could not load " + name,
+                                                    error + "\n\nThe project opened without its plugin.");
+        }
+        else
+        {
+            safeThis->project.restorePluginState();
+
+            // Restoring the patch makes the plugin report changes; those are not edits.
+            juce::Timer::callAfterDelay (500, [safeThis]
+            {
+                if (safeThis != nullptr)
+                {
+                    safeThis->host.consumePatchChangedFlag();
+                    safeThis->project.setChangedFlag (false);
+                }
+            });
+        }
+
         safeThis->repaint();
     });
 }
@@ -249,26 +389,194 @@ void MainComponent::pluginChanged()
 
     editButton.setEnabled (plugin != nullptr);
     parameterList.setPlugin (plugin);
+    commandManager.commandStatusChanged();
     repaint();
 }
 
-void MainComponent::updateHeldNote()
+//==============================================================================
+// Held note: controls -> model -> (controls + audio)
+
+void MainComponent::heldNoteControlsChanged()
 {
-    host.setHeldNote (heldNoteToggle.getToggleState(),
-                      (int) noteSlider.getValue(),
-                      (int) velocitySlider.getValue());
+    project.setHeldNote (heldNoteToggle.getToggleState(),
+                         (int) noteSlider.getValue(),
+                         (int) velocitySlider.getValue());
+}
+
+void MainComponent::heldNoteModelChanged()
+{
+    auto heldNote = project.getHeldNote();
+    bool on = heldNote[IDs::on];
+    int note = heldNote[IDs::note];
+    int velocity = heldNote[IDs::velocity];
+
+    heldNoteToggle.setToggleState (on, juce::dontSendNotification);
+    noteSlider.setValue (note, juce::dontSendNotification);
+    velocitySlider.setValue (velocity, juce::dontSendNotification);
+    noteSlider.updateText();
+    velocitySlider.updateText();
+
+    host.setHeldNote (on, note, velocity);
+}
+
+//==============================================================================
+// Audio on/off
+
+void MainComponent::setAudioEnabled (bool enabled)
+{
+    host.setAudioEnabled (enabled);
+    updateAudioOnButton();
 }
 
 void MainComponent::updateAudioOnButton()
 {
+    audioOnButton.setToggleState (host.isAudioEnabled(), juce::dontSendNotification);
     audioOnButton.setButtonText (host.isAudioEnabled() ? "Audio on" : "Audio off");
     audioButton.setEnabled (host.isAudioEnabled());   // device settings only while audio runs
+    commandManager.commandStatusChanged();
     repaint();
+}
+
+//==============================================================================
+
+void MainComponent::updateWindowTitle()
+{
+    if (auto* window = findParentComponentOfClass<juce::DocumentWindow>())
+    {
+        auto title = project.getDocumentTitle() + (project.hasChangedSinceSaved() ? " *" : "")
+                     + "  " + dash + "  Trajet";
+        if (window->getName() != title)
+            window->setName (title);
+    }
 }
 
 void MainComponent::timerCallback()
 {
+    // Turning dials in the plugin's own panel changes the patch: mark the project unsaved.
+    if (host.consumePatchChangedFlag() && host.getPlugin() != nullptr)
+        project.changed();
+
+    // Keep Undo/Redo menu items in step with the undo history.
+    auto& um = project.getUndoManager();
+    auto undoState = juce::String (um.canUndo() ? "u" : "-") + (um.canRedo() ? "r" : "-")
+                     + um.getUndoDescription() + "|" + um.getRedoDescription();
+    if (undoState != lastUndoState)
+    {
+        lastUndoState = undoState;
+        commandManager.commandStatusChanged();
+    }
+
+    updateWindowTitle();
     repaint (getLocalBounds().removeFromBottom (26));
+}
+
+//==============================================================================
+// Commands and menus
+
+void MainComponent::getAllCommands (juce::Array<juce::CommandID>& commands)
+{
+    commands.addArray ({ cmdNew, cmdOpen, cmdSave, cmdSaveAs, cmdUndo, cmdRedo, cmdAudioOnOff, cmdEditPatch });
+}
+
+void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommandInfo& info)
+{
+    const auto cmd = juce::ModifierKeys::commandModifier;
+    const auto shift = juce::ModifierKeys::shiftModifier;
+
+    switch (id)
+    {
+        case cmdNew:    info.setInfo ("New project", "Start an empty project", "File", 0);
+                        info.addDefaultKeypress ('n', cmd); break;
+        case cmdOpen:   info.setInfo ("Open...", "Open a project", "File", 0);
+                        info.addDefaultKeypress ('o', cmd); break;
+        case cmdSave:   info.setInfo ("Save", "Save the project", "File", 0);
+                        info.addDefaultKeypress ('s', cmd); break;
+        case cmdSaveAs: info.setInfo ("Save as...", "Save the project under a new name", "File", 0);
+                        info.addDefaultKeypress ('s', cmd | shift); break;
+
+        case cmdUndo:
+        {
+            auto& um = project.getUndoManager();
+            auto name = um.getUndoDescription();
+            info.setInfo (name.isNotEmpty() ? "Undo " + name : juce::String ("Undo"), "Undo", "Edit", 0);
+            info.setActive (um.canUndo());
+            info.addDefaultKeypress ('z', cmd);
+            break;
+        }
+        case cmdRedo:
+        {
+            auto& um = project.getUndoManager();
+            auto name = um.getRedoDescription();
+            info.setInfo (name.isNotEmpty() ? "Redo " + name : juce::String ("Redo"), "Redo", "Edit", 0);
+            info.setActive (um.canRedo());
+            info.addDefaultKeypress ('z', cmd | shift);
+            break;
+        }
+
+        case cmdAudioOnOff:
+            info.setInfo ("Audio processing", "Turn audio processing on or off", "Audio", 0);
+            info.setTicked (host.isAudioEnabled());
+            info.addDefaultKeypress ('a', cmd | shift);
+            break;
+
+        case cmdEditPatch:
+            info.setInfo ("Edit patch", "Open the plugin's own panel", "Audio", 0);
+            info.setActive (host.getPlugin() != nullptr);
+            info.addDefaultKeypress ('e', cmd);
+            break;
+
+        default: break;
+    }
+}
+
+bool MainComponent::perform (const InvocationInfo& info)
+{
+    switch (info.commandID)
+    {
+        case cmdNew:        newProject(); break;
+        case cmdOpen:       openProject(); break;
+        case cmdSave:       saveProject (false); break;
+        case cmdSaveAs:     saveProject (true); break;
+        case cmdUndo:       project.getUndoManager().undo(); break;
+        case cmdRedo:       project.getUndoManager().redo(); break;
+        case cmdAudioOnOff: setAudioEnabled (! host.isAudioEnabled()); break;
+        case cmdEditPatch:  togglePluginWindow(); break;
+        default:            return false;
+    }
+
+    commandManager.commandStatusChanged();
+    return true;
+}
+
+juce::StringArray MainComponent::getMenuBarNames()
+{
+    return { "File", "Edit", "Audio" };
+}
+
+juce::PopupMenu MainComponent::getMenuForIndex (int menuIndex, const juce::String&)
+{
+    juce::PopupMenu menu;
+
+    if (menuIndex == 0)
+    {
+        menu.addCommandItem (&commandManager, cmdNew);
+        menu.addCommandItem (&commandManager, cmdOpen);
+        menu.addSeparator();
+        menu.addCommandItem (&commandManager, cmdSave);
+        menu.addCommandItem (&commandManager, cmdSaveAs);
+    }
+    else if (menuIndex == 1)
+    {
+        menu.addCommandItem (&commandManager, cmdUndo);
+        menu.addCommandItem (&commandManager, cmdRedo);
+    }
+    else if (menuIndex == 2)
+    {
+        menu.addCommandItem (&commandManager, cmdAudioOnOff);
+        menu.addCommandItem (&commandManager, cmdEditPatch);
+    }
+
+    return menu;
 }
 
 //==============================================================================
