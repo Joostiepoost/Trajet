@@ -5101,7 +5101,7 @@
               "groupId": 1,
               "name": "Osc",
               "colour": 1,
-              "folded": true
+              "folded": false
             },
             "children": []
           },
