@@ -50,7 +50,8 @@ public:
         cmdNudgeLeftBig, cmdNudgeRightBig, cmdNudgeUpBig, cmdNudgeDownBig,
         cmdSelectAll, cmdSmooth, cmdThin, cmdReverse, cmdInvert, cmdOpenItemEditor,
         cmdRender, cmdExportCsv,
-        cmdNewGroup, cmdFoldAll, cmdOpenAll, cmdAddNoteLane, cmdExportLanes, cmdSaveToLibrary, cmdShowLibrary
+        cmdNewGroup, cmdFoldAll, cmdOpenAll, cmdAddNoteLane, cmdExportLanes, cmdSaveToLibrary, cmdShowLibrary,
+        cmdSplit, cmdSplitAtPoints
     };
 
     juce::ApplicationCommandTarget* getNextCommandTarget() override   { return nullptr; }

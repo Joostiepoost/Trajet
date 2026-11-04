@@ -174,11 +174,20 @@ namespace Automation
         double phase = 0.0;          // 0..1 (LFO)
         int seed = 1;                // random
         Formula::Expression formula;
+
+        // Set on pieces of a split item, so the generator carries on where the cut was.
+        double offset = 0.0;         // item units added to the position
+        double offsetSeconds = 0.0;  // seconds added to the formula's s
+        double span = 0.0;           // the original item's length in its units (0 = this item's)
     };
 
     /** 0..1 shape value of a generator at a position (local units), before mapping to min..max. */
     inline double generatorShape (const Generator& g, double local, double localLength, double seconds) noexcept
     {
+        local += g.offset;
+        seconds += g.offsetSeconds;
+        if (g.span > 0.0) localLength = g.span;
+
         switch (g.type)
         {
             case GeneratorType::lfo:

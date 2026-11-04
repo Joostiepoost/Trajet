@@ -16,7 +16,8 @@
 //         ITEM (start, length, timebase)          -- start/length always in seconds
 //              musical items also: beatsPerBar, beatUnit, gridBeats, lengthBeats
 //              generator items also: generator (lfo/random/formula), genShape, genRate,
-//              genMin, genMax, genPhase, genSeed, formula -- used instead of the points
+//              genMin, genMax, genPhase, genSeed, formula -- used instead of the points;
+//              pieces of a split generator item also: genOffset, genOffsetSeconds, genSpan
 //           TEMPO (beat, bpm, ramp)               -- musical items: the tempo map
 //           POINT (time, value, shape, tension)   -- time from the item start, in seconds
 //                                                    (linear items) or beats (musical items)
@@ -101,6 +102,9 @@ namespace IDs
     TRAJET_ID (genMax)
     TRAJET_ID (genPhase)
     TRAJET_ID (genSeed)
+    TRAJET_ID (genOffset)          // pieces of a split generator item: where they start in the original,
+    TRAJET_ID (genOffsetSeconds)   // the same in seconds,
+    TRAJET_ID (genSpan)            // and the original's length (item units)
     TRAJET_ID (formula)
 
     // POINT properties

@@ -565,6 +565,7 @@ void Project::setGenerator (juce::ValueTree item, const juce::String& type)
     if (type.isEmpty())
     {
         item.removeProperty (IDs::generator, &um);
+        for (auto id : { IDs::genOffset, IDs::genOffsetSeconds, IDs::genSpan }) item.removeProperty (id, &um);
         return;
     }
 
@@ -613,7 +614,10 @@ int Project::bakeGenerator (juce::ValueTree item)
     {
         // Exact: one held point per step.
         const double step = (g.type == Automation::GeneratorType::lfo ? 0.5 : 1.0) / g.rate;
-        double first = g.type == Automation::GeneratorType::lfo ? -std::fmod (g.phase, 0.5) / g.rate : 0.0;
+        // The step before the start (pieces of a split item start part-way into the generator).
+        const double stepX = g.type == Automation::GeneratorType::lfo ? 0.5 : 1.0;
+        const double x0 = g.offset * g.rate + (g.type == Automation::GeneratorType::lfo ? g.phase : 0.0);
+        const double first = (std::floor (x0 / stepX + 1.0e-9) * stepX - x0) / g.rate;
         for (double local = first; local < length && count < 20000; local += step, ++count)
         {
             const double t = juce::jmax (0.0, local);
@@ -621,6 +625,7 @@ int Project::bakeGenerator (juce::ValueTree item)
         }
         addPoint (length, Automation::generatorValue (g, length, length, it.toSeconds (length)), Automation::Shape::hold);
         item.removeProperty (IDs::generator, &um);
+        for (auto id : { IDs::genOffset, IDs::genOffsetSeconds, IDs::genSpan }) item.removeProperty (id, &um);
         return count + 1;
     }
 
@@ -636,6 +641,7 @@ int Project::bakeGenerator (juce::ValueTree item)
     PointOps::thin (added, um, 0.0015f);
 
     item.removeProperty (IDs::generator, &um);
+    for (auto id : { IDs::genOffset, IDs::genOffsetSeconds, IDs::genSpan }) item.removeProperty (id, &um);
     int remaining = 0;
     for (const auto& c : item) if (c.hasType (IDs::POINT)) ++remaining;
     return remaining;

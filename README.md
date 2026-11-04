@@ -39,6 +39,7 @@ Other options:
 | 10 | Note lanes: MIDI notes with a piano roll and velocity strip | done |
 | 11 | Library: save items with name and tags, search, drag onto lanes | testing |
 | 12 | Export: MIDI file (CC 7/14-bit + notes), REAPER automation items, REAPER project from a template | testing |
+| 13 | Splitting items: at the playhead, at selected points, here, into equal parts (shared with Effet) | testing |
 
 ## Using step 1
 
@@ -59,6 +60,21 @@ The last loaded plugin is reloaded automatically when Trajet starts.
 - **Edit menu**: Undo (⌘Z) and Redo (⇧⌘Z). For now only the held-note settings are undoable; lanes and points join from step 3 on.
 - **Audio menu**: audio processing on/off (⇧⌘A) and the plugin's panel (⌘E).
 - Trajet reopens the last project when it starts, and asks to save unsaved changes when you quit.
+
+## Splitting items (step 13)
+
+Cut a roughly edited item into segments, for instance to keep the good parts or to save pieces to the library. The pieces together play exactly as the original did.
+
+- **Split at playhead (⌘T)**: cuts the selected items at the playhead; with nothing selected, every item under the playhead (in all lanes).
+- **Split at selected points (⇧⌘T)**: select points (⌘-click, or drag a box) and cut at each of them.
+- **Right-click an item → Split**: *Split here* (where you clicked, snapped to the grid), *Split at the selected points*, or *Into 2 / 3 / 4 / 6 / 8 / 12 / 16 equal parts* (equal beats for musical items). This also works in the item editor.
+- After a split the pieces are selected, so **⌘L** can save one to the library right away. One **⌘Z** undoes a whole split.
+- What carries over:
+  - **points**: a point is added on each side of the cut. Straight lines, bends and held values stay exactly the same. A smooth (S-shaped) segment across a cut is traced with a few extra points, within a fraction of a percent.
+  - **generators** (LFO, random, formula) carry on where the cut was instead of starting over. Each piece remembers its place in the original. *Bake* takes that into account.
+  - **musical items**: the tempo map is cut too (a ramp is split at the tempo at the cut), so each piece keeps its bars, beats and length in beats.
+  - **notes**: a note across the cut becomes two notes.
+- Cuts closer than 10 ms to an item's edge are skipped.
 
 ## Library (step 11)
 

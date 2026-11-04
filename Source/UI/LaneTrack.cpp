@@ -1,4 +1,5 @@
 #include "LaneTrack.h"
+#include "../Model/ItemSplit.h"
 #include "../Model/ItemTime.h"
 
 namespace
@@ -607,7 +608,7 @@ void LaneTrack::mouseDown (const juce::MouseEvent& e)
     {
         auto hit = pointAt (item, e.position);
         if (hit.isValid()) showPointMenu (hit);
-        else               showItemMenu (item);
+        else               showItemMenu (item, ctx.timeView.toTime (e.position.x));
         return;
     }
 
@@ -1202,9 +1203,23 @@ void LaneTrack::showPointMenu (juce::ValueTree point)
     });
 }
 
-void LaneTrack::showItemMenu (juce::ValueTree item)
+void LaneTrack::showItemMenu (juce::ValueTree item, double clickSeconds)
 {
     juce::PopupMenu m;
+    const double cutAt = ctx.snap.snap (clickSeconds);
+    std::vector<double> pointCuts;
+    {
+        const ItemTime itemTime (item);
+        for (auto& p : ctx.selection.getPoints())
+            if (p.getParent() == item)
+                pointCuts.push_back (itemTime.absolute ((double) p[IDs::time]));
+    }
+    juce::PopupMenu splits;
+    splits.addItem (20, "Split here", ItemSplit::canSplit (item, cutAt));
+    splits.addItem (21, "Split at the selected points", ! pointCuts.empty());
+    splits.addSeparator();
+    for (int n : { 2, 3, 4, 6, 8, 12, 16 })
+        splits.addItem (30 + n, "Into " + juce::String (n) + " equal parts", ItemSplit::canSplit (item, (double) item[IDs::start] + (double) item[IDs::length] / n));
     const bool musical = ItemTime (item).isMusical();
     const auto genType = item[IDs::generator].toString();
     juce::PopupMenu generators;
@@ -1213,6 +1228,7 @@ void LaneTrack::showItemMenu (juce::ValueTree item)
     generators.addItem (12, "Random", true, genType == "random");
     generators.addItem (13, "Formula", true, genType == "formula");
     m.addItem (1, "Duplicate after itself");
+    m.addSubMenu ("Split", splits);
     m.addItem (3, musical ? "Make linear (seconds)" : "Make musical (bars and beats)");
     if (! Project::isNoteItem (item))
     {
@@ -1225,7 +1241,7 @@ void LaneTrack::showItemMenu (juce::ValueTree item)
     m.addItem (2, "Delete item");
 
     juce::Component::SafePointer<LaneTrack> safeThis (this);
-    m.showMenuAsync (juce::PopupMenu::Options(), [safeThis, item] (int result) mutable
+    m.showMenuAsync (juce::PopupMenu::Options(), [safeThis, item, cutAt, pointCuts] (int result) mutable
     {
         if (safeThis == nullptr || result == 0)
             return;
@@ -1233,6 +1249,21 @@ void LaneTrack::showItemMenu (juce::ValueTree item)
         auto& project = safeThis->ctx.project;
         auto& um = project.getUndoManager();
         auto laneTree = item.getParent();
+
+        if (result == 20 || result == 21 || result >= 30)
+        {
+            um.beginNewTransaction ("Split item");
+            auto& sel = safeThis->ctx.selection;
+            sel.clear();
+            const auto pieces = result == 20 ? ItemSplit::splitAt (item, { cutAt }, &um)
+                              : result == 21 ? ItemSplit::splitAt (item, pointCuts, &um)
+                                             : ItemSplit::splitEqually (item, result - 30, &um);
+            for (auto& p : pieces)
+                sel.selectItem (p, true);
+            safeThis->ctx.showStatus (pieces.size() > 1 ? "Split into " + juce::String (pieces.size()) + " items."
+                                                         : juce::String ("Nothing to split there."));
+            return;
+        }
 
         if (result >= 10 && result <= 13)
         {

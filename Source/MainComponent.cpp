@@ -677,7 +677,7 @@ void MainComponent::getAllCommands (juce::Array<juce::CommandID>& commands)
                          cmdNudgeLeftBig, cmdNudgeRightBig, cmdNudgeUpBig, cmdNudgeDownBig,
                          cmdSelectAll, cmdSmooth, cmdThin, cmdReverse, cmdInvert, cmdOpenItemEditor,
                          cmdRender, cmdExportCsv, cmdNewGroup, cmdFoldAll, cmdOpenAll, cmdAddNoteLane,
-                         cmdExportLanes, cmdSaveToLibrary, cmdShowLibrary });
+                         cmdExportLanes, cmdSaveToLibrary, cmdShowLibrary, cmdSplit, cmdSplitAtPoints });
 }
 
 void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommandInfo& info)
@@ -806,6 +806,11 @@ void MainComponent::getCommandInfo (juce::CommandID id, juce::ApplicationCommand
                                info.addDefaultKeypress (juce::KeyPress::upKey, shift); break;
         case cmdNudgeDownBig:  info.setInfo ("Nudge down 10%", "", "Points", 0);
                                info.addDefaultKeypress (juce::KeyPress::downKey, shift); break;
+        case cmdSplit:         info.setInfo ("Split at playhead", "Cut the selected items at the playhead (every item under it if none is selected)", "Edit", 0);
+                               info.addDefaultKeypress ('t', cmd); break;
+        case cmdSplitAtPoints: info.setInfo ("Split at selected points", "Cut items at each of their selected points", "Edit", 0);
+                               info.setActive (! scoreView.getSelection().getPoints().isEmpty());
+                               info.addDefaultKeypress ('t', cmd | shift); break;
         case cmdSelectAll:     info.setInfo ("Select all points in lane", "Select every point of the active lane", "Points", 0);
                                info.addDefaultKeypress ('a', cmd); break;
         case cmdSmooth:        info.setInfo ("Smooth", "Smooth the selected points", "Points", 0); break;
@@ -867,6 +872,8 @@ bool MainComponent::perform (const InvocationInfo& info)
         case cmdNudgeUpBig:     scoreView.nudge ( 1, true,  true);  break;
         case cmdNudgeDownBig:   scoreView.nudge (-1, true,  true);  break;
         case cmdSelectAll:      scoreView.selectAllInActiveLane(); break;
+        case cmdSplit:          scoreView.splitAtPlayhead(); break;
+        case cmdSplitAtPoints:  scoreView.splitAtSelectedPoints(); break;
         case cmdSmooth:         scoreView.applyPointOp ("smooth"); break;
         case cmdThin:           scoreView.applyPointOp ("thin"); break;
         case cmdReverse:        scoreView.applyPointOp ("reverse"); break;
@@ -923,6 +930,9 @@ juce::PopupMenu MainComponent::getMenuForIndex (int menuIndex, const juce::Strin
         menu.addCommandItem (&commandManager, cmdPaste);
         menu.addCommandItem (&commandManager, cmdDuplicate);
         menu.addCommandItem (&commandManager, cmdDelete);
+        menu.addSeparator();
+        menu.addCommandItem (&commandManager, cmdSplit);
+        menu.addCommandItem (&commandManager, cmdSplitAtPoints);
         menu.addSeparator();
         menu.addCommandItem (&commandManager, cmdAddNoteLane);
         menu.addCommandItem (&commandManager, cmdNewGroup);

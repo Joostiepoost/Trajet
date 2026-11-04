@@ -65,6 +65,7 @@ target_sources(Trajet PRIVATE
     Source/UI/LibraryPanel.cpp
     Source/Model/Library.cpp
     Source/Model/PointOps.cpp
+    Source/Model/ItemSplit.cpp
     Source/UI/TransportBar.cpp)
 
 target_compile_definitions(Trajet PRIVATE

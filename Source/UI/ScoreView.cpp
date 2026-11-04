@@ -1,4 +1,6 @@
 #include "ScoreView.h"
+#include "../Model/ItemSplit.h"
+#include "../Model/ItemTime.h"
 
 juce::Array<juce::ValueTree> ScoreView::clipboard;
 bool ScoreView::lastCopyWasPoints = false;
@@ -1302,4 +1304,76 @@ void ScoreView::timerCallback()
         for (auto* bar : groupBars)
             bar->repaint();
     }
+}
+
+//==============================================================================
+// Splitting items
+
+void ScoreView::splitAtPlayhead()
+{
+    const double at = snap.snap (host.getEngine().getPositionSeconds());
+    juce::Array<juce::ValueTree> targets;
+    const bool fromSelection = ! selection.getItems().isEmpty();
+
+    if (fromSelection)
+    {
+        for (auto& item : selection.getItems())
+            if (ItemSplit::canSplit (item, at))
+                targets.add (item);
+    }
+    else
+    {
+        for (const auto& lane : project.getLanes())
+            for (const auto& item : lane)
+                if (item.hasType (IDs::ITEM) && ItemSplit::canSplit (item, at))
+                    targets.add (item);
+    }
+
+    if (targets.isEmpty())
+    {
+        showStatus (fromSelection ? "The playhead is not inside a selected item (or too close to its edge)."
+                                  : "No item under the playhead to split.");
+        return;
+    }
+
+    auto& um = project.getUndoManager();
+    um.beginNewTransaction ("Split at playhead");
+    selection.clear();
+    for (auto& item : targets)
+        for (auto& piece : ItemSplit::splitAt (item, { at }, &um))
+            selection.selectItem (piece, true);
+
+    showStatus ("Split " + juce::String (targets.size()) + (targets.size() == 1 ? " item" : " items")
+                + (fromSelection ? juce::String() : juce::String (" (nothing was selected: every item under the playhead)")) + ".");
+}
+
+void ScoreView::splitAtSelectedPoints()
+{
+    juce::Array<juce::ValueTree> items;
+    std::vector<std::vector<double>> cuts;
+    for (auto& p : selection.getPoints())
+    {
+        auto item = p.getParent();
+        int i = items.indexOf (item);
+        if (i < 0) { items.add (item); cuts.emplace_back(); i = items.size() - 1; }
+        cuts[(size_t) i].push_back (ItemTime (item).absolute ((double) p[IDs::time]));
+    }
+
+    if (items.isEmpty())
+    {
+        showStatus ("Select points to split at (Cmd-click or drag a box around them).");
+        return;
+    }
+
+    auto& um = project.getUndoManager();
+    um.beginNewTransaction ("Split at points");
+    selection.clear();
+    int pieces = 0;
+    for (int i = 0; i < items.size(); ++i)
+        for (auto& piece : ItemSplit::splitAt (items[i], cuts[(size_t) i], &um))
+        {
+            selection.selectItem (piece, true);
+            ++pieces;
+        }
+    showStatus ("Split into " + juce::String (pieces) + " items.");
 }

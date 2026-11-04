@@ -93,6 +93,9 @@ public:
         g.maxValue = (float) juce::jlimit (0.0, 1.0, (double) item.getProperty (IDs::genMax, 1.0));
         g.phase    = (double) item.getProperty (IDs::genPhase, 0.0);
         g.seed     = (int) item.getProperty (IDs::genSeed, 1);
+        g.offset        = (double) item.getProperty (IDs::genOffset, 0.0);
+        g.offsetSeconds = (double) item.getProperty (IDs::genOffsetSeconds, 0.0);
+        g.span          = juce::jmax (0.0, (double) item.getProperty (IDs::genSpan, 0.0));
 
         if (g.type == Automation::GeneratorType::formula)
         {

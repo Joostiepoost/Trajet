@@ -113,7 +113,7 @@ private:
     void dragScale (const juce::MouseEvent&);
     bool startBend (const juce::ValueTree& item, float x);
     void showPointMenu (juce::ValueTree point);
-    void showItemMenu (juce::ValueTree item);
+    void showItemMenu (juce::ValueTree item, double clickSeconds);
     void editPointNumerically (juce::ValueTree point);
 
     Context& ctx;

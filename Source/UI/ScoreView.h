@@ -38,6 +38,10 @@ public:
     void nudge (int direction, bool vertical, bool large);   // arrow keys
     void applyPointOp (const juce::String& name);            // "smooth", "thin", "reverse", "invert"
     void selectAllInActiveLane();
+    /** Split the selected items at the playhead (every item under it if none is selected). */
+    void splitAtPlayhead();
+    /** Split items at their selected points. */
+    void splitAtSelectedPoints();
     void zoomIn()                           { timeView.zoomAround (1.5, (float) trackWidth() * 0.5f); }
     void zoomOut()                          { timeView.zoomAround (1.0 / 1.5, (float) trackWidth() * 0.5f); }
     void zoomToFit()                        { timeView.fitAll(); }
